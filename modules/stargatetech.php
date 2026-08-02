@@ -1,5 +1,6 @@
 <?php
 include("../config.php");
+include_once(__DIR__ . '/formal_logic.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -65,16 +66,16 @@ function sg_research_infra(Game $s, int $uid): array {
     $defaults['ai_directorate'] = (int)($row->ai_directorate ?? 0);
 
     $discount =
-        ($defaults['data_vault'] * 0.015) +
-        ($defaults['quantum_archive'] * 0.010) +
-        ($defaults['ai_directorate'] * 0.005);
+        formalResearchBonus(0.015, $defaults['data_vault']) +
+        formalResearchBonus(0.010, $defaults['quantum_archive']) +
+        formalResearchBonus(0.005, $defaults['ai_directorate']);
     $defaults['cost_discount'] = min(0.45, $discount);
 
     $speed =
         1.0 +
-        ($defaults['research_campus'] * 0.030) +
-        ($defaults['simulation_core'] * 0.015) +
-        ($defaults['ai_directorate'] * 0.020);
+        formalResearchBonus(0.030, $defaults['research_campus']) +
+        formalResearchBonus(0.015, $defaults['simulation_core']) +
+        formalResearchBonus(0.020, $defaults['ai_directorate']);
     $defaults['research_speed'] = max(1.0, $speed);
 
     return $defaults;
@@ -186,11 +187,11 @@ if (isset($_GET['id']) && $_GET['id'] === 'upgrade') {
             $discountFactor = 0.55;
         }
 
-        $costNq = (int)round(($row['base']['nq'] * pow($row['scale'], $cur)) * $discountFactor);
-        $costM = (int)round(($row['base']['metal'] * pow($row['scale'], $cur)) * $discountFactor);
-        $costC = (int)round(($row['base']['crystal'] * pow($row['scale'], $cur)) * $discountFactor);
-        $costD = (int)round(($row['base']['deut'] * pow($row['scale'], $cur)) * $discountFactor);
-        $costE = (int)round(($row['base']['energy'] * pow($row['scale'], $cur)) * $discountFactor);
+        $costNq = (int)round(formalCostValue((int)$row['base']['nq'], $cur, (float)$row['scale'], 0.12) * $discountFactor);
+        $costM = (int)round(formalCostValue((int)$row['base']['metal'], $cur, (float)$row['scale'], 0.12) * $discountFactor);
+        $costC = (int)round(formalCostValue((int)$row['base']['crystal'], $cur, (float)$row['scale'], 0.12) * $discountFactor);
+        $costD = (int)round(formalCostValue((int)$row['base']['deut'], $cur, (float)$row['scale'], 0.12) * $discountFactor);
+        $costE = (int)round(formalCostValue((int)$row['base']['energy'], $cur, (float)$row['scale'], 0.12) * $discountFactor);
 
         $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
         $bank = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
@@ -284,11 +285,11 @@ foreach ($levels as $lv) {
                     if ($discountFactor < 0.55) {
                         $discountFactor = 0.55;
                     }
-                    $needNq = (int)round(($tech['base']['nq'] * pow($tech['scale'], $cur)) * $discountFactor);
-                    $needM = (int)round(($tech['base']['metal'] * pow($tech['scale'], $cur)) * $discountFactor);
-                    $needC = (int)round(($tech['base']['crystal'] * pow($tech['scale'], $cur)) * $discountFactor);
-                    $needD = (int)round(($tech['base']['deut'] * pow($tech['scale'], $cur)) * $discountFactor);
-                    $needE = (int)round(($tech['base']['energy'] * pow($tech['scale'], $cur)) * $discountFactor);
+                    $needNq = (int)round(formalCostValue((int)$tech['base']['nq'], $cur, (float)$tech['scale'], 0.12) * $discountFactor);
+                    $needM = (int)round(formalCostValue((int)$tech['base']['metal'], $cur, (float)$tech['scale'], 0.12) * $discountFactor);
+                    $needC = (int)round(formalCostValue((int)$tech['base']['crystal'], $cur, (float)$tech['scale'], 0.12) * $discountFactor);
+                    $needD = (int)round(formalCostValue((int)$tech['base']['deut'], $cur, (float)$tech['scale'], 0.12) * $discountFactor);
+                    $needE = (int)round(formalCostValue((int)$tech['base']['energy'], $cur, (float)$tech['scale'], 0.12) * $discountFactor);
                 ?>
                 <article class="tech-item <?= sg_theme_class($tech['domain']); ?>">
                     <div class="tech-item-head">

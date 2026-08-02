@@ -1,6 +1,7 @@
 <?php
 include_once("../config.php");
 include_once(__DIR__ . '/entity_name_helpers.php');
+include_once(__DIR__ . '/formal_logic.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -3559,7 +3560,7 @@ if ($main === 'universe' || strpos($cmd, 'uni_') === 0) {
                 $pageActionStatus = 'World boss spawn failed: need at least 25 event points.';
             } else {
                 $nextLevel = max(1, (int)($boss->boss_level ?? 1));
-                $hpMax = (int)(300000 + ($nextLevel * 120000) + ((int)$evt->threat_level * 2500));
+                $hpMax = formalBossHp($nextLevel, (int)$evt->threat_level);
                 $bossNames = ['Leviathan of Orion', 'Rift Tyrant', 'Abyssal Colossus', 'Gatebreaker Behemoth'];
                 $pickName = $bossNames[abs(crc32((string)$uid . '|' . (string)$nextLevel)) % count($bossNames)];
                 $s->query("UPDATE universe_world_boss SET
@@ -4213,8 +4214,8 @@ if ($main === 'empire' && $sub === 'home') {
     $planetCount = count($planets);
     $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . (int)$uid . " LIMIT 1");
     $actionTurns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
-    $reservePressure = max(0, (int)round(($income > 0) ? ($treasury / $income) : 0));
-    $readiness = min(100, max(1, (int)round((($up / 1000) * 25) + (($armySize / 100000) * 35) + (($planetCount / max(1, (int)$uCfg['maxColonies'])) * 20) + (($treasury / 1000000) * 20))));
+    $reservePressure = formalResourcePressure($income, $treasury);
+    $readiness = formalReadinessIndex($armySize, $up, $planetCount, $treasury, max(1, (int)$uCfg['maxColonies']));
     $colonyCap = max(1, (int)$uCfg['maxColonies']);
     $colonyUsage = (int)round(($planetCount / $colonyCap) * 100);
     $warPosture = ($readiness >= 62 || ($armySize >= 180000 && $up >= 260));

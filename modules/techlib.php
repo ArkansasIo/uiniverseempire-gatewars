@@ -1,5 +1,6 @@
 <?php
 include("../config.php");
+include_once(__DIR__ . '/formal_logic.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -115,11 +116,11 @@ if (isset($_GET['id']) && $_GET['id'] === 'upgrade') {
         $cur = ($lvlQ && $lvlQ->num_rows > 0) ? (int)($lvlQ->fetch_object()->lvl ?? 0) : 0;
 
         $def = $catalogByKey[$key];
-        $costNq = (int)round($def['base']['nq'] * pow($def['scale'], $cur));
-        $costM = (int)round($def['base']['metal'] * pow($def['scale'], $cur));
-        $costC = (int)round($def['base']['crystal'] * pow($def['scale'], $cur));
-        $costD = (int)round($def['base']['deut'] * pow($def['scale'], $cur));
-        $costE = (int)round($def['base']['energy'] * pow($def['scale'], $cur));
+        $costNq = formalCostValue((int)$def['base']['nq'], $cur, (float)$def['scale'], 0.12);
+        $costM = formalCostValue((int)$def['base']['metal'], $cur, (float)$def['scale'], 0.12);
+        $costC = formalCostValue((int)$def['base']['crystal'], $cur, (float)$def['scale'], 0.12);
+        $costD = formalCostValue((int)$def['base']['deut'], $cur, (float)$def['scale'], 0.12);
+        $costE = formalCostValue((int)$def['base']['energy'], $cur, (float)$def['scale'], 0.12);
 
         $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
         $bank = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
@@ -154,9 +155,9 @@ $levels = [
     'ai_directorate' => (int)$infra->ai_directorate,
 ];
 
-$costDiscount = min(45, ($levels['data_vault'] * 1.5) + ($levels['quantum_archive'] * 1.0) + ($levels['ai_directorate'] * 0.5));
-$researchSpeed = 1 + (($levels['research_campus'] * 0.03) + ($levels['simulation_core'] * 0.015) + ($levels['ai_directorate'] * 0.02));
-$modelQuality = 1 + (($levels['simulation_core'] * 0.025) + ($levels['quantum_archive'] * 0.02));
+$costDiscount = min(45, formalResearchBonus(1.5, $levels['data_vault']) + formalResearchBonus(1.0, $levels['quantum_archive']) + formalResearchBonus(0.5, $levels['ai_directorate']));
+$researchSpeed = 1 + formalResearchBonus(0.03, $levels['research_campus']) + formalResearchBonus(0.015, $levels['simulation_core']) + formalResearchBonus(0.02, $levels['ai_directorate']);
+$modelQuality = 1 + formalResearchBonus(0.025, $levels['simulation_core']) + formalResearchBonus(0.02, $levels['quantum_archive']);
 
 $resQ = $s->query("SELECT metal,crystal,deuterium,energy FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
 $res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'energy' => 0];
@@ -207,11 +208,11 @@ $bank = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
             <div class="tech-grid">
                 <?php foreach ($catalog as $row) {
                     $cur = (int)($levels[$row['key']] ?? 0);
-                    $needNq = (int)round($row['base']['nq'] * pow($row['scale'], $cur));
-                    $needM = (int)round($row['base']['metal'] * pow($row['scale'], $cur));
-                    $needC = (int)round($row['base']['crystal'] * pow($row['scale'], $cur));
-                    $needD = (int)round($row['base']['deut'] * pow($row['scale'], $cur));
-                    $needE = (int)round($row['base']['energy'] * pow($row['scale'], $cur));
+                    $needNq = formalCostValue((int)$row['base']['nq'], $cur, (float)$row['scale'], 0.12);
+                    $needM = formalCostValue((int)$row['base']['metal'], $cur, (float)$row['scale'], 0.12);
+                    $needC = formalCostValue((int)$row['base']['crystal'], $cur, (float)$row['scale'], 0.12);
+                    $needD = formalCostValue((int)$row['base']['deut'], $cur, (float)$row['scale'], 0.12);
+                    $needE = formalCostValue((int)$row['base']['energy'], $cur, (float)$row['scale'], 0.12);
                 ?>
                 <article class="tech-item <?= tl_theme_class($row['key']); ?>">
                     <div class="tech-item-head">

@@ -1,6 +1,7 @@
 <?php
 include("../config.php");
 include_once(__DIR__ . '/entity_name_helpers.php');
+include_once(__DIR__ . '/formal_logic.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -126,7 +127,7 @@ if (isset($_GET['id']) && $_GET['id'] === 'upgrade') {
         } else {
             $cost = [];
             foreach ($def['base'] as $k => $v) {
-                $cost[$k] = (int)round($v * pow($def['scale'], $curr));
+                $cost[$k] = formalCostValue((int)$v, $curr, (float)$def['scale'], 0.12);
             }
 
             if ((int)$res->metal < $cost['metal'] || (int)$res->crystal < $cost['crystal'] || (int)$res->deuterium < $cost['deuterium'] || (int)$res->food < $cost['food'] || (int)$res->water < $cost['water'] || (int)$res->population < $cost['population']) {
@@ -167,8 +168,8 @@ if (isset($_GET['id']) && $_GET['id'] === 'upgrade') {
 $spaceStationLv = (int)($install->space_station_level ?? 0);
 $starbaseLv = (int)($install->starbase_level ?? 0);
 $moonBaseLv = (int)($install->moon_base_level ?? 0);
-$fleetCapacity = 20 + ($spaceStationLv * 15) + ($starbaseLv * 25) + ($moonBaseLv * 10);
-$missionSafety = min(35, ($starbaseLv * 2) + ($moonBaseLv * 3));
+$fleetCapacity = formalPowerValue(20, $spaceStationLv, 1.08) + formalPowerValue(15, $starbaseLv, 1.07) + formalPowerValue(10, $moonBaseLv, 1.06);
+$missionSafety = min(35, formalPowerValue(2, $starbaseLv, 1.05) + formalPowerValue(3, $moonBaseLv, 1.05));
 
 ?>
 <div class="page-hub">
