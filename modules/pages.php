@@ -1824,22 +1824,21 @@ function powerGridTick(Game $s, int $uid): array {
         return ['generation' => 0, 'load' => 0, 'net' => 0, 'ticks' => 0];
     }
 
-    $nodeQ = $s->query("SELECT node_type,output_mw,load_mw,integrity,status FROM power_grid_nodes WHERE uid=" . $uid . "");
+    $nodeQ = $s->query("SELECT node_id,node_name,node_type,level,output_mw,load_mw,integrity,status FROM power_grid_nodes WHERE uid=" . $uid . "");
     $generation = 0;
     $load = 0;
+    $boost = (int)$state->generation_boost;
     if ($nodeQ) {
         while ($node = $nodeQ->fetch_object()) {
             if ((string)$node->status !== 'active') {
                 continue;
             }
-            $integrityFactor = max(0.35, min(1.0, ((int)$node->integrity / 100.0)));
-            $generation += (int)round((int)$node->output_mw * $integrityFactor);
-            $load += (int)round((int)$node->load_mw * (1.04 - $integrityFactor * 0.2));
+            $generation += formalPowerNodeOutput((float)$node->output_mw, (int)$node->level, (int)$node->integrity, $boost, (string)$node->node_type);
+            $load += formalPowerNodeLoad((float)$node->load_mw, (int)$node->integrity, (string)$state->load_mode);
         }
     }
 
-    $boost = (int)$state->generation_boost;
-    $boostedGen = (int)round($generation * (1 + ($boost / 100)));
+    $boostedGen = $generation;
     $net = $boostedGen - $load;
 
     $lastTickTs = (int)($state->last_tick_ts ?? 0);
@@ -1856,21 +1855,11 @@ function powerGridTick(Game $s, int $uid): array {
         $stability = (int)$state->stability_index;
         $risk = (int)$state->blackout_risk;
 
-        $delta = $net * $ticks * 8;
-        $storedEnergy = max(0, min($storageCap, $storedEnergy + $delta));
-        if ($net >= 0) {
-            $stability = min(100, $stability + $ticks);
-            $risk = max(0, $risk - $ticks);
-        } else {
-            $stability = max(0, $stability - ($ticks * 2));
-            $risk = min(100, $risk + ($ticks * 2));
-        }
-        if ($storedEnergy < (int)round($storageCap * 0.1)) {
-            $risk = min(100, $risk + 5);
-        }
-        if ($storedEnergy > (int)round($storageCap * 0.6)) {
-            $risk = max(0, $risk - 3);
-        }
+        $delta = formalPowerGridDelta($net, $ticks, 8.0);
+        $stateUpdate = formalPowerGridState($stability, $risk, $storedEnergy, $storageCap, $ticks, $delta);
+        $storedEnergy = (int)$stateUpdate['stored_energy'];
+        $stability = (int)$stateUpdate['stability_index'];
+        $risk = (int)$stateUpdate['blackout_risk'];
 
         $s->query("UPDATE power_grid_state SET
             stored_energy=" . $storedEnergy . ",
@@ -1894,11 +1883,11 @@ function powerGridUpgradeNode(Game $s, int $uid, int $nodeId): string {
     }
 
     $level = (int)$node->level;
-    $turnCost = max(1, (int)ceil(($level + 1) / 2));
-    $naqCost = 18000 + ($level * 14000);
-    $metalCost = 12000 + ($level * 9000);
-    $crystalCost = 7000 + ($level * 6500);
-    $deutCost = 3200 + ($level * 2400);
+    $turnCost = max(1, formalTimeValue(1, $level, 1.12));
+    $naqCost = formalCostValue(18000, $level, 1.35, 0.08);
+    $metalCost = formalCostValue(12000, $level, 1.30, 0.09);
+    $crystalCost = formalCostValue(7000, $level, 1.28, 0.08);
+    $deutCost = formalCostValue(3200, $level, 1.26, 0.07);
 
     $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
     $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
@@ -1922,8 +1911,8 @@ function powerGridUpgradeNode(Game $s, int $uid, int $nodeId): string {
     $s->query("UPDATE player_resources SET metal=metal-" . $metalCost . ", crystal=crystal-" . $crystalCost . ", deuterium=deuterium-" . $deutCost . " WHERE uid=" . $uid . " LIMIT 1");
 
     $newLevel = $level + 1;
-    $outputInc = ((string)$node->node_type === 'generator') ? (26 + ($newLevel * 4)) : (((string)$node->node_type === 'relay') ? (8 + ($newLevel * 2)) : 0);
-    $loadInc = ((string)$node->node_type === 'storage') ? (8 + $newLevel) : 5;
+    $outputInc = ((string)$node->node_type === 'generator') ? formalPowerValue(26, $newLevel, 1.12) : (((string)$node->node_type === 'relay') ? formalPowerValue(8, $newLevel, 1.10) : 0);
+    $loadInc = ((string)$node->node_type === 'storage') ? formalPowerValue(8, $newLevel, 1.06) : formalPowerValue(5, $newLevel, 1.05);
     $integrityInc = 3;
 
     $s->query("UPDATE power_grid_nodes SET

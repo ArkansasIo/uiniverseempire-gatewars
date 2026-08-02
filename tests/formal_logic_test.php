@@ -19,4 +19,28 @@ if ($hp !== 300000 + (4 * 120000) + (12 * 2500)) {
     exit(1);
 }
 
+$generation = formalPowerNodeOutput(100, 2, 80, 10, 'generator');
+if ($generation !== 99) {
+    fwrite(STDERR, "formalPowerNodeOutput failed: {$generation}\n");
+    exit(1);
+}
+
+$load = formalPowerNodeLoad(40, 70, 'balanced');
+if ($load !== 36) {
+    fwrite(STDERR, "formalPowerNodeLoad failed: {$load}\n");
+    exit(1);
+}
+
+$delta = formalPowerGridDelta(15, 2, 8.0);
+if ($delta !== 240) {
+    fwrite(STDERR, "formalPowerGridDelta failed: {$delta}\n");
+    exit(1);
+}
+
+$state = formalPowerGridState(40, 10, 5000, 10000, 15, 2);
+if ($state['stability_index'] !== 55 || $state['blackout_risk'] !== 0 || $state['stored_energy'] !== 5002) {
+    fwrite(STDERR, "formalPowerGridState failed: " . json_encode($state) . "\n");
+    exit(1);
+}
+
 echo "formal logic checks passed\n";

@@ -86,3 +86,60 @@ function formalResearchBonus($baseBonus, $researchLevel) {
     $researchLevel = max(0, (int)$researchLevel);
     return (float)round($baseBonus * (1 + ($researchLevel * 0.06)), 2);
 }
+
+function formalPowerNodeOutput($basePower, $level = 0, $integrity = 100, $boost = 0, $nodeType = 'generator') {
+    $basePower = max(0, (float)$basePower);
+    $level = max(0, (int)$level);
+    $integrity = max(0, min(100, (int)$integrity));
+    $boost = max(0, (int)$boost);
+    $nodeType = strtolower((string)$nodeType);
+
+    $integrityFactor = $integrity / 100.0;
+    $levelFactor = 1 + ($level * 0.06);
+    $typeFactor = $nodeType === 'storage' ? 0.55 : ($nodeType === 'relay' ? 0.8 : 1.0);
+    $scaled = $basePower * $levelFactor * $typeFactor * $integrityFactor;
+    return (int)round($scaled * (1 + ($boost / 100.0)));
+}
+
+function formalPowerNodeLoad($baseLoad, $integrity = 100, $loadMode = 'balanced') {
+    $baseLoad = max(0, (float)$baseLoad);
+    $integrity = max(0, min(100, (int)$integrity));
+    $loadMode = strtolower((string)$loadMode);
+
+    $integrityFactor = $integrity / 100.0;
+    $modeFactor = $loadMode === 'surge' ? 1.08 : ($loadMode === 'eco' ? 0.8 : 1.0);
+    return (int)round($baseLoad * $modeFactor * (1.04 - ($integrityFactor * 0.2)));
+}
+
+function formalPowerGridDelta($netMw, $ticks = 1, $efficiency = 8.0) {
+    $netMw = (float)$netMw;
+    $ticks = max(0, (int)$ticks);
+    $efficiency = max(0.1, (float)$efficiency);
+    return (int)round($netMw * $ticks * $efficiency);
+}
+
+function formalPowerGridState($stability, $risk, $storedEnergy, $storageCapacity, $ticks = 1, $netDelta = 0) {
+    $stability = max(0, min(100, (int)$stability));
+    $risk = max(0, min(100, (int)$risk));
+    $storedEnergy = max(0, (int)$storedEnergy);
+    $storageCapacity = max(10000, (int)$storageCapacity);
+    $ticks = max(0, (int)$ticks);
+    $netDelta = (int)$netDelta;
+
+    $nextStored = max(0, min($storageCapacity, $storedEnergy + $netDelta));
+    $nextStability = $netDelta >= 0 ? min(100, $stability + $ticks) : max(0, $stability - ($ticks * 2));
+    $nextRisk = $netDelta >= 0 ? max(0, $risk - $ticks) : min(100, $risk + ($ticks * 2));
+
+    if ($nextStored < (int)round($storageCapacity * 0.1)) {
+        $nextRisk = min(100, $nextRisk + 5);
+    }
+    if ($nextStored > (int)round($storageCapacity * 0.6)) {
+        $nextRisk = max(0, $nextRisk - 3);
+    }
+
+    return [
+        'stored_energy' => $nextStored,
+        'stability_index' => $nextStability,
+        'blackout_risk' => $nextRisk,
+    ];
+}
