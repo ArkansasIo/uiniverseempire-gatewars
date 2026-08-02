@@ -22,6 +22,20 @@ function sg_num($value): string {
     return number_format((float)$value);
 }
 
+function sg_theme_class(string $domain): string {
+    $map = [
+        'Core Science' => 'tech-accent-cyan',
+        'Gate Operations' => 'tech-accent-blue',
+        'Power Systems' => 'tech-accent-amber',
+        'Fleet Integration' => 'tech-accent-emerald',
+        'Defense Tech' => 'tech-accent-violet',
+        'Threat Response' => 'tech-accent-rose',
+        'Ancient Systems' => 'tech-accent-gold',
+    ];
+
+    return $map[$domain] ?? 'tech-accent-cyan';
+}
+
 function sg_research_infra(Game $s, int $uid): array {
     $defaults = [
         'research_campus' => 0,
@@ -218,33 +232,42 @@ foreach ($levels as $lv) {
 }
 
 ?>
-<div class="page-hub">
-    <div class="page-hub-head">
-        <h3>Stargate Technology Command</h3>
-        <p>Research and upgrade complete Stargate-era technology domains for gates, fleets, power, defense, and ancient systems.</p>
+<div class="tech-shell">
+    <div class="tech-hero">
+        <div class="feature-hero">
+            <img src="images/ui/operations-console.svg" alt="Stargate technology" />
+            <div>
+                <h3>Stargate Technology Command</h3>
+                <p>Research and upgrade complete Stargate-era technology domains for gates, fleets, power, defense, and ancient systems.</p>
+            </div>
+        </div>
+        <div class="tech-hero-badge"><?= sg_num($totalLevels); ?> active upgrades</div>
     </div>
 
     <?php if ($status !== '') { ?>
-    <div class="card full"><strong><?= sg_h($status); ?></strong></div>
+    <div class="tech-alert"><strong><?= sg_h($status); ?></strong></div>
     <?php } ?>
 
-    <div class="page-grid">
-        <div class="card">
+    <div class="tech-overview-grid">
+        <div class="tech-card tech-card-accent">
             <h4>Research Reserves</h4>
-            <p><strong>Naquadah:</strong> <?= sg_num((int)$bank->onHand); ?></p>
-            <p><strong>Metal:</strong> <?= sg_num((int)$resources->metal); ?></p>
-            <p><strong>Crystal:</strong> <?= sg_num((int)$resources->crystal); ?></p>
-            <p><strong>Deuterium:</strong> <?= sg_num((int)$resources->deuterium); ?></p>
-            <p><strong>Energy:</strong> <?= sg_num((int)$resources->energy); ?></p>
+            <div class="tech-stat-grid">
+                <div class="tech-stat-pill"><span>Naquadah</span><strong><?= sg_num((int)$bank->onHand); ?></strong></div>
+                <div class="tech-stat-pill"><span>Metal</span><strong><?= sg_num((int)$resources->metal); ?></strong></div>
+                <div class="tech-stat-pill"><span>Crystal</span><strong><?= sg_num((int)$resources->crystal); ?></strong></div>
+                <div class="tech-stat-pill"><span>Energy</span><strong><?= sg_num((int)$resources->energy); ?></strong></div>
+            </div>
         </div>
 
-        <div class="card">
+        <div class="tech-card">
             <h4>Program Summary</h4>
-            <p><strong>Domains:</strong> <?= sg_num(count($groups)); ?></p>
-            <p><strong>Total Technologies:</strong> <?= sg_num(count($catalog)); ?></p>
-            <p><strong>Total Tech Levels:</strong> <?= sg_num($totalLevels); ?></p>
-            <p><strong>Research Speed Multiplier:</strong> <?= sg_num((float)$infra['research_speed']); ?>x</p>
-            <p><strong>Tech Cost Reduction:</strong> <?= sg_num((float)$infra['cost_discount'] * 100); ?>%</p>
+            <ul class="tech-list">
+                <li><span>Domains</span><strong><?= sg_num(count($groups)); ?></strong></li>
+                <li><span>Total Technologies</span><strong><?= sg_num(count($catalog)); ?></strong></li>
+                <li><span>Total Tech Levels</span><strong><?= sg_num($totalLevels); ?></strong></li>
+                <li><span>Research Speed</span><strong><?= sg_num((float)$infra['research_speed']); ?>x</strong></li>
+                <li><span>Cost Reduction</span><strong><?= sg_num((float)$infra['cost_discount'] * 100); ?>%</strong></li>
+            </ul>
             <p><a href="javascript:void(0)" onclick="sendData('technology','get','mainDisplay'); return false">Legacy Technology Module</a></p>
             <p><a href="javascript:void(0)" onclick="sendData('hyperspace','get','mainDisplay'); return false">Hyperspace Command</a></p>
             <p><a href="javascript:void(0)" onclick="sendData('ogamebuildings','get','mainDisplay'); return false">OGame Buildings</a></p>
@@ -252,16 +275,9 @@ foreach ($levels as $lv) {
         </div>
 
         <?php foreach ($groups as $domain => $items) { ?>
-        <div class="card full">
+        <div class="tech-card tech-card-wide">
             <h4><?= sg_h($domain); ?></h4>
-            <table class="mini-table" border="0" width="100%">
-                <tr>
-                    <th align="left">Technology</th>
-                    <th align="left">Level</th>
-                    <th align="left">Next Cost (NQ/M/C/D/E)</th>
-                    <th align="left">Effect</th>
-                    <th align="left">Action</th>
-                </tr>
+            <div class="tech-domain-list">
                 <?php foreach ($items as $tech) {
                     $cur = (int)($levels[$tech['key']] ?? 0);
                     $discountFactor = 1.0 - (float)$infra['cost_discount'];
@@ -274,15 +290,20 @@ foreach ($levels as $lv) {
                     $needD = (int)round(($tech['base']['deut'] * pow($tech['scale'], $cur)) * $discountFactor);
                     $needE = (int)round(($tech['base']['energy'] * pow($tech['scale'], $cur)) * $discountFactor);
                 ?>
-                <tr>
-                    <td><?= sg_h($tech['name']); ?> (<?= sg_h($tech['key']); ?>)</td>
-                    <td><?= sg_num($cur); ?></td>
-                    <td><?= sg_num($needNq); ?>/<?= sg_num($needM); ?>/<?= sg_num($needC); ?>/<?= sg_num($needD); ?>/<?= sg_num($needE); ?></td>
-                    <td><?= sg_h($tech['effect']); ?></td>
-                    <td><a href="javascript:void(0)" onclick="sendData('stargatetech','get','upgrade','<?= sg_h($tech['key']); ?>'); return false">Upgrade</a></td>
-                </tr>
+                <article class="tech-item <?= sg_theme_class($tech['domain']); ?>">
+                    <div class="tech-item-head">
+                        <h5><?= sg_h($tech['name']); ?></h5>
+                        <span class="tech-badge">Lv <?= sg_num($cur); ?></span>
+                    </div>
+                    <p><?= sg_h($tech['effect']); ?></p>
+                    <div class="tech-costs">
+                        <span>Next cost</span>
+                        <strong><?= sg_num($needNq); ?>/<?= sg_num($needM); ?>/<?= sg_num($needC); ?>/<?= sg_num($needD); ?>/<?= sg_num($needE); ?></strong>
+                    </div>
+                    <a class="tech-action" href="javascript:void(0)" onclick="sendData('stargatetech','get','upgrade','<?= sg_h($tech['key']); ?>'); return false">Upgrade</a>
+                </article>
                 <?php } ?>
-            </table>
+            </div>
         </div>
         <?php } ?>
     </div>

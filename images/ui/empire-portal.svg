@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Empire portal">
+  <rect width="240" height="240" rx="28" fill="#0a1117"/>
+  <circle cx="120" cy="120" r="78" fill="#122d2b" stroke="#35b1b1" stroke-width="5"/>
+  <path d="M78 120c0-24 20-44 42-44 21 0 38 16 42 36" stroke="#84ffff" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M82 120h76" stroke="#f5e99b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M91 145c16 14 42 20 58 4" stroke="#7bf5ff" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="120" cy="120" r="12" fill="#ffe29b"/>
+</svg>

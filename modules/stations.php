@@ -1,5 +1,6 @@
 <?php
 include("../config.php");
+include_once(__DIR__ . '/entity_name_helpers.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -42,13 +43,31 @@ $s->query("CREATE TABLE IF NOT EXISTS space_installations (
     defense_grid INT NOT NULL DEFAULT 0,
     dock_matrix INT NOT NULL DEFAULT 0,
     scan_array INT NOT NULL DEFAULT 0,
+    starbase_name VARCHAR(64) NOT NULL DEFAULT 'Starbase',
+    moon_base_name VARCHAR(64) NOT NULL DEFAULT 'Moon Base',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 )");
+$s->query("ALTER TABLE space_installations ADD COLUMN IF NOT EXISTS starbase_name VARCHAR(64) NOT NULL DEFAULT 'Starbase'");
+$s->query("ALTER TABLE space_installations ADD COLUMN IF NOT EXISTS moon_base_name VARCHAR(64) NOT NULL DEFAULT 'Moon Base'");
 
 $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . $uid . ")");
 $s->query("INSERT IGNORE INTO space_installations (uid) VALUES (" . $uid . ")");
 
-$installQ = $s->query("SELECT space_station_level,starbase_level,moon_base_level,defense_grid,dock_matrix,scan_array FROM space_installations WHERE uid=" . $uid . " LIMIT 1");
+if (isset($_GET['id']) && $_GET['id'] === 'rename') {
+    $entity = isset($_GET['entity']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['entity'])) : '';
+    $nameInput = trim((string)(isset($_GET['new_name']) ? $_GET['new_name'] : ''));
+    if ($entity === 'starbase') {
+        $safeName = buildDisplayName($nameInput, 'Starbase');
+        $s->query("UPDATE space_installations SET starbase_name='" . dbSafeEntityName($safeName) . "' WHERE uid=" . $uid . " LIMIT 1");
+        $status = 'Starbase renamed to ' . sb_h($safeName) . '.';
+    } elseif ($entity === 'moonbase') {
+        $safeName = buildDisplayName($nameInput, 'Moon Base');
+        $s->query("UPDATE space_installations SET moon_base_name='" . dbSafeEntityName($safeName) . "' WHERE uid=" . $uid . " LIMIT 1");
+        $status = 'Moon Base renamed to ' . sb_h($safeName) . '.';
+    }
+}
+
+$installQ = $s->query("SELECT space_station_level,starbase_level,moon_base_level,defense_grid,dock_matrix,scan_array,starbase_name,moon_base_name FROM space_installations WHERE uid=" . $uid . " LIMIT 1");
 $install = $installQ ? $installQ->fetch_object() : (object)[
     'space_station_level' => 0,
     'starbase_level' => 0,
@@ -56,6 +75,8 @@ $install = $installQ ? $installQ->fetch_object() : (object)[
     'defense_grid' => 0,
     'dock_matrix' => 0,
     'scan_array' => 0,
+    'starbase_name' => 'Starbase',
+    'moon_base_name' => 'Moon Base',
 ];
 
 $resQ = $s->query("SELECT metal,crystal,deuterium,food,water,population FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
@@ -161,11 +182,15 @@ $missionSafety = min(35, ($starbaseLv * 2) + ($moonBaseLv * 3));
     <?php } ?>
 
     <div class="page-grid">
+        <div class="card full">
+            <div class="feature-hero"><img src="images/ui/operations-console.svg" alt="Orbital bases" /><div><h4>Orbital Base Command</h4><p>Scale stations, starbases, and moon bases into a layered defense and fleet control network.</p></div></div>
+        </div>
+
         <div class="card">
             <h4>Installation Levels</h4>
             <p><strong>Space Station:</strong> <?= sb_num($spaceStationLv); ?></p>
-            <p><strong>Starbase:</strong> <?= sb_num($starbaseLv); ?></p>
-            <p><strong>Moon Base:</strong> <?= sb_num($moonBaseLv); ?></p>
+            <p><strong>Starbase:</strong> <?= sb_num($starbaseLv); ?> <span>(<?= sb_h(buildDisplayName((string)($install->starbase_name ?? ''), 'Starbase')); ?>)</span></p>
+            <p><strong>Moon Base:</strong> <?= sb_num($moonBaseLv); ?> <span>(<?= sb_h(buildDisplayName((string)($install->moon_base_name ?? ''), 'Moon Base')); ?>)</span></p>
             <p><strong>Defense Grid:</strong> <?= sb_num((int)$install->defense_grid); ?></p>
             <p><strong>Dock Matrix:</strong> <?= sb_num((int)$install->dock_matrix); ?></p>
             <p><strong>Scan Array:</strong> <?= sb_num((int)$install->scan_array); ?></p>
@@ -184,6 +209,17 @@ $missionSafety = min(35, ($starbaseLv * 2) + ($moonBaseLv * 3));
             <p><a href="javascript:void(0)" onclick="sendData('stations','get','upgrade','spacestation'); return false">Upgrade Space Station</a> (unlocks advanced orbital logistics)</p>
             <p><a href="javascript:void(0)" onclick="sendData('stations','get','upgrade','starbase'); return false">Upgrade Starbase</a> (requires Space Station level 2+)</p>
             <p><a href="javascript:void(0)" onclick="sendData('stations','get','upgrade','moonbase'); return false">Upgrade Moon Base</a> (requires Starbase level 1+)</p>
+        </div>
+
+        <div class="card full">
+            <h4>Rename Orbital Installations</h4>
+            <form method="get" action="modules/stations.php">
+                <input type="hidden" name="id" value="rename">
+                <input type="hidden" name="time" value="<?= time(); ?>">
+                <p><label>Target <select name="entity"><option value="starbase">Starbase</option><option value="moonbase">Moon Base</option></select></label>
+                <label>New Name <input type="text" name="new_name" maxlength="64" value="" /></label>
+                <button type="submit">Rename</button></p>
+            </form>
         </div>
 
         <div class="card full">

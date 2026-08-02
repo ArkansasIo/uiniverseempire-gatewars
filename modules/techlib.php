@@ -22,6 +22,18 @@ function tl_num($value): string {
     return number_format((float)$value);
 }
 
+function tl_theme_class(string $key): string {
+    $map = [
+        'research_campus' => 'tech-accent-cyan',
+        'data_vault' => 'tech-accent-blue',
+        'simulation_core' => 'tech-accent-amber',
+        'quantum_archive' => 'tech-accent-violet',
+        'ai_directorate' => 'tech-accent-gold',
+    ];
+
+    return $map[$key] ?? 'tech-accent-cyan';
+}
+
 function tl_catalog(): array {
     return [
         [
@@ -151,45 +163,48 @@ $res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'd
 $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
 $bank = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
 ?>
-<div class="page-hub">
-    <div class="page-hub-head">
-        <h3>Tech Library Buildings</h3>
-        <p>Upgrade research infrastructure to accelerate discovery, reduce technology costs, and improve strategic battle modeling.</p>
+<div class="tech-shell">
+    <div class="tech-hero">
+        <div class="feature-hero">
+            <img src="images/ui/research.svg" alt="Tech library" />
+            <div>
+                <h3>Tech Library Command Deck</h3>
+                <p>Upgrade research infrastructure like a fleet command center, with every major payoff visible at a glance.</p>
+            </div>
+        </div>
+        <div class="tech-hero-badge">Research Flow <?= tl_num($researchSpeed); ?>x</div>
     </div>
 
     <?php if ($status !== '') { ?>
-    <div class="card full"><strong><?= tl_h($status); ?></strong></div>
+    <div class="tech-alert"><strong><?= tl_h($status); ?></strong></div>
     <?php } ?>
 
-    <div class="page-grid">
-        <div class="card">
+    <div class="tech-overview-grid">
+        <div class="tech-card tech-card-accent">
             <h4>Research Reserves</h4>
-            <p><strong>Naquadah:</strong> <?= tl_num((int)$bank->onHand); ?></p>
-            <p><strong>Metal:</strong> <?= tl_num((int)$res->metal); ?></p>
-            <p><strong>Crystal:</strong> <?= tl_num((int)$res->crystal); ?></p>
-            <p><strong>Deuterium:</strong> <?= tl_num((int)$res->deuterium); ?></p>
-            <p><strong>Energy:</strong> <?= tl_num((int)$res->energy); ?></p>
+            <div class="tech-stat-grid">
+                <div class="tech-stat-pill"><span>Naquadah</span><strong><?= tl_num((int)$bank->onHand); ?></strong></div>
+                <div class="tech-stat-pill"><span>Metal</span><strong><?= tl_num((int)$res->metal); ?></strong></div>
+                <div class="tech-stat-pill"><span>Crystal</span><strong><?= tl_num((int)$res->crystal); ?></strong></div>
+                <div class="tech-stat-pill"><span>Energy</span><strong><?= tl_num((int)$res->energy); ?></strong></div>
+            </div>
         </div>
 
-        <div class="card">
+        <div class="tech-card">
             <h4>Library Effects</h4>
-            <p><strong>Research Speed:</strong> <?= tl_num($researchSpeed); ?>x</p>
-            <p><strong>Tech Cost Reduction:</strong> <?= tl_num($costDiscount); ?>%</p>
-            <p><strong>Battle Model Quality:</strong> <?= tl_num($modelQuality); ?>x</p>
+            <ul class="tech-list">
+                <li><span>Research Speed</span><strong><?= tl_num($researchSpeed); ?>x</strong></li>
+                <li><span>Cost Reduction</span><strong><?= tl_num($costDiscount); ?>%</strong></li>
+                <li><span>Battle Model Quality</span><strong><?= tl_num($modelQuality); ?>x</strong></li>
+            </ul>
             <p><a href="javascript:void(0)" onclick="sendData('stargatetech','get','mainDisplay'); return false">Open Stargate Tech</a></p>
             <p><a href="javascript:void(0)" onclick="sendData('pages','get','research','techlib'); return false">Open Research Tech Tree</a></p>
+            <p><small>Each tier compounds the payoff of the next, so building toward the archive line creates a snowball effect for your empire.</small></p>
         </div>
 
-        <div class="card full">
-            <h4>Tech Library Infrastructure Matrix</h4>
-            <table class="mini-table" border="0" width="100%">
-                <tr>
-                    <th align="left">Building</th>
-                    <th align="left">Level</th>
-                    <th align="left">Next Cost (NQ/M/C/D/E)</th>
-                    <th align="left">Effect</th>
-                    <th align="left">Action</th>
-                </tr>
+        <div class="tech-card tech-card-wide">
+            <h4>Infrastructure Matrix</h4>
+            <div class="tech-grid">
                 <?php foreach ($catalog as $row) {
                     $cur = (int)($levels[$row['key']] ?? 0);
                     $needNq = (int)round($row['base']['nq'] * pow($row['scale'], $cur));
@@ -198,15 +213,20 @@ $bank = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
                     $needD = (int)round($row['base']['deut'] * pow($row['scale'], $cur));
                     $needE = (int)round($row['base']['energy'] * pow($row['scale'], $cur));
                 ?>
-                <tr>
-                    <td><?= tl_h($row['name']); ?> (<?= tl_h($row['key']); ?>)</td>
-                    <td><?= tl_num($cur); ?></td>
-                    <td><?= tl_num($needNq); ?>/<?= tl_num($needM); ?>/<?= tl_num($needC); ?>/<?= tl_num($needD); ?>/<?= tl_num($needE); ?></td>
-                    <td><?= tl_h($row['effect']); ?></td>
-                    <td><a href="javascript:void(0)" onclick="sendData('techlib','get','upgrade','<?= tl_h($row['key']); ?>'); return false">Upgrade</a></td>
-                </tr>
+                <article class="tech-item <?= tl_theme_class($row['key']); ?>">
+                    <div class="tech-item-head">
+                        <h5><?= tl_h($row['name']); ?></h5>
+                        <span class="tech-badge">Lv <?= tl_num($cur); ?></span>
+                    </div>
+                    <p><?= tl_h($row['effect']); ?></p>
+                    <div class="tech-costs">
+                        <span>Next cost</span>
+                        <strong><?= tl_num($needNq); ?>/<?= tl_num($needM); ?>/<?= tl_num($needC); ?>/<?= tl_num($needD); ?>/<?= tl_num($needE); ?></strong>
+                    </div>
+                    <a class="tech-action" href="javascript:void(0)" onclick="sendData('techlib','get','upgrade','<?= tl_h($row['key']); ?>'); return false">Upgrade</a>
+                </article>
                 <?php } ?>
-            </table>
+            </div>
         </div>
     </div>
 </div>

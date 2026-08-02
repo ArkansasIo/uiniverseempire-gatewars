@@ -223,3 +223,41 @@ CREATE TABLE IF NOT EXISTS `moon_data` (
   UNIQUE KEY `pid_name` (`pid`, `moon_name`),
   KEY `idx_uid` (`uid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- UNIVERSE WORLD CONDITION TABLES — plagues and water sources
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS `universe_world_plagues` (
+  `uid`            int(11)      NOT NULL,
+  `world_index`    int(11)      NOT NULL DEFAULT 0,
+  `target_type`    varchar(10)  NOT NULL DEFAULT 'planet',
+  `moon_no`        int(11)      NOT NULL DEFAULT 0,
+  `biome_name`     varchar(80)  NOT NULL DEFAULT '',
+  `plague_name`    varchar(80)  NOT NULL,
+  `severity`       int(11)      NOT NULL DEFAULT 1,
+  `effect_type`    varchar(24)  NOT NULL DEFAULT 'habitability',
+  `effect_value`   int(11)      NOT NULL DEFAULT 0,
+  `symptom`        varchar(160) NOT NULL DEFAULT '',
+  `status`         varchar(20)  NOT NULL DEFAULT 'active',
+  `created_at`     timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`uid`, `world_index`, `target_type`, `moon_no`, `plague_name`),
+  KEY `idx_uid_world_plagues` (`uid`, `world_index`, `target_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE IF NOT EXISTS `universe_world_water_sources` (
+  `uid`            int(11)      NOT NULL,
+  `world_index`    int(11)      NOT NULL DEFAULT 0,
+  `target_type`    varchar(10)  NOT NULL DEFAULT 'planet',
+  `moon_no`        int(11)      NOT NULL DEFAULT 0,
+  `biome_name`     varchar(80)  NOT NULL DEFAULT '',
+  `water_name`     varchar(80)  NOT NULL,
+  `effect_type`    varchar(24)  NOT NULL DEFAULT 'water',
+  `effect_value`   int(11)      NOT NULL DEFAULT 0,
+  `potency`        int(11)      NOT NULL DEFAULT 1,
+  `description`    varchar(160) NOT NULL DEFAULT '',
+  `status`         varchar(20)  NOT NULL DEFAULT 'active',
+  `created_at`     timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`uid`, `world_index`, `target_type`, `moon_no`, `water_name`),
+  KEY `idx_uid_world_water` (`uid`, `world_index`, `target_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;

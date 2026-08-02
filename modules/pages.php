@@ -1,5 +1,6 @@
 <?php
 include_once("../config.php");
+include_once(__DIR__ . '/entity_name_helpers.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -34,20 +35,400 @@ function universePick(int &$seed, array $list): string {
 }
 
 function universeTaxonomy(): array {
-    return [
-        'worldTypes' => ['Terran', 'Oceanic', 'Arid', 'Volcanic', 'Ice', 'Gas Dwarf', 'Toxic', 'Crystalline', 'Relic'],
-        'biomes' => [
-            'Terran' => ['Temperate Forest', 'Grassland', 'Rain Basin'],
-            'Oceanic' => ['Archipelago', 'Kelp Expanse', 'Storm Sea'],
-            'Arid' => ['Dune Basin', 'Canyon Belt', 'Salt Flats'],
-            'Volcanic' => ['Magma Rift', 'Ash Plateau', 'Basalt Sea'],
-            'Ice' => ['Glacier Shield', 'Frozen Canyons', 'Polar Sink'],
-            'Gas Dwarf' => ['Upper Cloudline', 'Ionic Layer', 'Hydrogen Drift'],
-            'Toxic' => ['Acid Mire', 'Sulfur Crust', 'Caustic Foglands'],
-            'Crystalline' => ['Shard Plains', 'Prism Caves', 'Quartz Highlands'],
-            'Relic' => ['Ancient Arcology', 'Derelict Ring', 'Vault Ruins'],
+    $planetBiomeCatalog = [
+        'Terran' => [
+            ['name' => 'Verdant Spine', 'description' => 'A dense temperate belt rich in flora, water, and long-term colonist comfort.', 'resourceBias' => 'food', 'resourceValue' => 12, 'hazard' => 'humid rot', 'habitatBand' => 'high', 'suitability' => 'agriculture', 'strategy' => 'Great for food production and stable habitation.'],
+            ['name' => 'Cinder Orchard', 'description' => 'Volcanic ash soils produce resilient crop lattices and fast mineral recovery.', 'resourceBias' => 'metal', 'resourceValue' => 8, 'hazard' => 'ash storms', 'habitatBand' => 'moderate', 'suitability' => 'industry', 'strategy' => 'Useful for rapid industrial bootstraps.'],
+            ['name' => 'Silver Fen', 'description' => 'Shallow marshland and peat flats hold abundant water and medicinal algae.', 'resourceBias' => 'water', 'resourceValue' => 14, 'hazard' => 'mire blight', 'habitatBand' => 'high', 'suitability' => 'water', 'strategy' => 'Ideal for water-intensive habitats and research.'],
+            ['name' => 'Ironroot Meadow', 'description' => 'Hardy root systems anchor deep mineral veins beneath rolling plains.', 'resourceBias' => 'metal', 'resourceValue' => 10, 'hazard' => 'thistle storms', 'habitatBand' => 'moderate', 'suitability' => 'mining', 'strategy' => 'Excellent for mining hubs and defensive garrisons.'],
+            ['name' => 'Aurora Reedbeds', 'description' => 'Wide reed marshes glow under polar light and are excellent for bioengineering.', 'resourceBias' => 'crystal', 'resourceValue' => 7, 'hazard' => 'electro fog', 'habitatBand' => 'high', 'suitability' => 'research', 'strategy' => 'Strong for laboratories and high-output synthesis.'],
+        ],
+        'Oceanic' => [
+            ['name' => 'Tidal Veldt', 'description' => 'Saltgrass seas form broad shallows that are ideal for aquaculture and low-pressure living.', 'resourceBias' => 'food', 'resourceValue' => 11, 'hazard' => 'tidal surges', 'habitatBand' => 'high', 'suitability' => 'agriculture', 'strategy' => 'Perfect for sustained food and population growth.'],
+            ['name' => 'Coral Canopy', 'description' => 'A reef-grown skyline produces dense mineral and biotech yields beneath the waves.', 'resourceBias' => 'crystal', 'resourceValue' => 9, 'hazard' => 'reef currents', 'habitatBand' => 'moderate', 'suitability' => 'biotech', 'strategy' => 'Good for advanced eco-industrial districts.'],
+            ['name' => 'Stormglass Shelf', 'description' => 'Glassy shallows with constant wave agitation expose massive deuterium-rich trenches.', 'resourceBias' => 'deuterium', 'resourceValue' => 13, 'hazard' => 'tempest swells', 'habitatBand' => 'moderate', 'suitability' => 'fuel', 'strategy' => 'Excellent for fuel and fleet logistics.'],
+            ['name' => 'Brine Lagoon', 'description' => 'Warm saline pools offer exceptional water recovery and algae bloom potential.', 'resourceBias' => 'water', 'resourceValue' => 12, 'hazard' => 'saline fog', 'habitatBand' => 'high', 'suitability' => 'water', 'strategy' => 'Strong for water- and food-heavy colonies.'],
+            ['name' => 'Sunken Archipelago', 'description' => 'A ring of drowned islands hides deep caverns and fresh resource pockets.', 'resourceBias' => 'metal', 'resourceValue' => 8, 'hazard' => 'subsea collapse', 'habitatBand' => 'moderate', 'suitability' => 'expansion', 'strategy' => 'Best for layered infrastructure and frontier cities.'],
+        ],
+        'Arid' => [
+            ['name' => 'Ember Dune', 'description' => 'Long rolling dunes hold heat and mineral dust that serves strong industrial output.', 'resourceBias' => 'metal', 'resourceValue' => 10, 'hazard' => 'sandstorms', 'habitatBand' => 'moderate', 'suitability' => 'industry', 'strategy' => 'Useful for forging and heavy construction.'],
+            ['name' => 'Glass Canyon', 'description' => 'Sharp ridgelines refract light into crystal-rich seams and broad vistas.', 'resourceBias' => 'crystal', 'resourceValue' => 10, 'hazard' => 'shard winds', 'habitatBand' => 'low', 'suitability' => 'research', 'strategy' => 'Favors crystal production and observatories.'],
+            ['name' => 'Mirrorkeep Basin', 'description' => 'Broad salt basins reflect heat and support resilient solar networks.', 'resourceBias' => 'energy', 'resourceValue' => 9, 'hazard' => 'mirror glare', 'habitatBand' => 'moderate', 'suitability' => 'energy', 'strategy' => 'Good for energy-intensive installations.'],
+            ['name' => 'Saffron Steppe', 'description' => 'Wind-scoured plains with hardy flora support both habitation and supply stockpiles.', 'resourceBias' => 'food', 'resourceValue' => 7, 'hazard' => 'dust devils', 'habitatBand' => 'moderate', 'suitability' => 'agriculture', 'strategy' => 'Balanced for mixed economy colonies.'],
+            ['name' => 'Dust Choir', 'description' => 'Low hills and resonant plateaus produce strong geology and hidden caverns.', 'resourceBias' => 'deuterium', 'resourceValue' => 8, 'hazard' => 'seismic tremors', 'habitatBand' => 'low', 'suitability' => 'mining', 'strategy' => 'Great for deep tunnel networks and defense work.'],
+        ],
+        'Volcanic' => [
+            ['name' => 'Obsidian Rift', 'description' => 'A fractured abyss of black glass and venting heat with massive industrial value.', 'resourceBias' => 'metal', 'resourceValue' => 11, 'hazard' => 'lava bursts', 'habitatBand' => 'low', 'suitability' => 'industry', 'strategy' => 'Excellent for forge-heavy expansion.'],
+            ['name' => 'Sulfur Spine', 'description' => 'Eroded ridges expose sulfur-rich slopes and high-energy geothermal pockets.', 'resourceBias' => 'energy', 'resourceValue' => 10, 'hazard' => 'acid vapors', 'habitatBand' => 'low', 'suitability' => 'energy', 'strategy' => 'Strong for power generation and shield grid support.'],
+            ['name' => 'Magma Splay', 'description' => 'Wide lava fields couple strong metal output with harsh but defensible terrain.', 'resourceBias' => 'metal', 'resourceValue' => 9, 'hazard' => 'fire plumes', 'habitatBand' => 'low', 'suitability' => 'defense', 'strategy' => 'Best where fortress economies matter.'],
+            ['name' => 'Ember Flats', 'description' => 'Stable ash plains offer good harvest and close-to-surface ore extraction.', 'resourceBias' => 'food', 'resourceValue' => 7, 'hazard' => 'cinder rain', 'habitatBand' => 'moderate', 'suitability' => 'agriculture', 'strategy' => 'Balanced for mixed industry and food.'],
+            ['name' => 'Cinder Basin', 'description' => 'A broad lowland ringed by vents and mineral seams, perfect for heavy production.', 'resourceBias' => 'crystal', 'resourceValue' => 8, 'hazard' => 'thermal geysers', 'habitatBand' => 'moderate', 'suitability' => 'production', 'strategy' => 'Valuable for production complexes and shipyards.'],
+        ],
+        'Ice' => [
+            ['name' => 'Frostglass Ridge', 'description' => 'Clear ice ridges refract light into bright corridors and mineral veins.', 'resourceBias' => 'crystal', 'resourceValue' => 9, 'hazard' => 'ice fractures', 'habitatBand' => 'moderate', 'suitability' => 'research', 'strategy' => 'Great for crystal and science infrastructure.'],
+            ['name' => 'Rime Delta', 'description' => 'Slow-moving icewater flats offer abundant water and a cold-adapted biosphere.', 'resourceBias' => 'water', 'resourceValue' => 12, 'hazard' => 'whiteouts', 'habitatBand' => 'high', 'suitability' => 'water', 'strategy' => 'Very good for water and life support.'],
+            ['name' => 'Blue Abyss', 'description' => 'Deep glacial trenches hide rich deuterium veins and dark, frozen seas.', 'resourceBias' => 'deuterium', 'resourceValue' => 13, 'hazard' => 'crevasse collapse', 'habitatBand' => 'low', 'suitability' => 'fuel', 'strategy' => 'Excellent for fuel and fortified outposts.'],
+            ['name' => 'Aurora Shelf', 'description' => 'Polar shelves with shimmering aurora have excellent habitability for adapted populations.', 'resourceBias' => 'food', 'resourceValue' => 8, 'hazard' => 'aurora storms', 'habitatBand' => 'high', 'suitability' => 'habitation', 'strategy' => 'Ideal for large, comfortable colonies.'],
+            ['name' => 'Cryo Moor', 'description' => 'Mossy frozen lowlands preserve ancient ice and provide strong biotech output.', 'resourceBias' => 'crystal', 'resourceValue' => 7, 'hazard' => 'ice quakes', 'habitatBand' => 'moderate', 'suitability' => 'biotech', 'strategy' => 'Great for biotech and small-scale industry.'],
+        ],
+        'Gas Dwarf' => [
+            ['name' => 'Cloudfall Belt', 'description' => 'A ring of storm bands and upper cloud forests ideal for atmospheric harvest.', 'resourceBias' => 'energy', 'resourceValue' => 9, 'hazard' => 'lightning reefs', 'habitatBand' => 'moderate', 'suitability' => 'energy', 'strategy' => 'Good for solar and atmospheric conversion.'],
+            ['name' => 'Ionic Veil', 'description' => 'A bright plasma halo rich in charged compounds and research value.', 'resourceBias' => 'crystal', 'resourceValue' => 10, 'hazard' => 'static blooms', 'habitatBand' => 'low', 'suitability' => 'research', 'strategy' => 'Very strong for advanced laboratories.'],
+            ['name' => 'Helium Shoal', 'description' => 'Drifting gas shelves yield major deuterium and hydrogen output.', 'resourceBias' => 'deuterium', 'resourceValue' => 12, 'hazard' => 'pressure fronts', 'habitatBand' => 'moderate', 'suitability' => 'fuel', 'strategy' => 'Excellent for fleet logistics and fuel economies.'],
+            ['name' => 'Stormwake Layer', 'description' => 'A high-altitude weather layer with enormous power conversion potential.', 'resourceBias' => 'energy', 'resourceValue' => 11, 'hazard' => 'thunder bands', 'habitatBand' => 'low', 'suitability' => 'power', 'strategy' => 'Strong for power production and station support.'],
+            ['name' => 'Halo Mist', 'description' => 'A luminous haze of frozen vapor and rare compounds makes ultra-light habitats possible.', 'resourceBias' => 'crystal', 'resourceValue' => 8, 'hazard' => 'ion fog', 'habitatBand' => 'moderate', 'suitability' => 'habitation', 'strategy' => 'Useful for prestige colonies and orbital support.'],
+        ],
+        'Toxic' => [
+            ['name' => 'Caustic Mire', 'description' => 'A toxic wetland where black water and fungal growth support chemical industry.', 'resourceBias' => 'food', 'resourceValue' => 6, 'hazard' => 'corrosive mists', 'habitatBand' => 'low', 'suitability' => 'industry', 'strategy' => 'Works best with heavy filtration and industrial planning.'],
+            ['name' => 'Violet Fumarole', 'description' => 'Sulfuric vents and mineral lodes create high-value chemical production zones.', 'resourceBias' => 'metal', 'resourceValue' => 9, 'hazard' => 'acid rain', 'habitatBand' => 'low', 'suitability' => 'chemistry', 'strategy' => 'Excellent for grimy industrial ecology.'],
+            ['name' => 'Nox Bloom', 'description' => 'Bioluminescent flora produces rare compounds and strong biotech research potential.', 'resourceBias' => 'crystal', 'resourceValue' => 8, 'hazard' => 'spore clouds', 'habitatBand' => 'low', 'suitability' => 'biotech', 'strategy' => 'Good for biotech and pharma chains.'],
+            ['name' => 'Acid Fjord', 'description' => 'Deep chemical ravines hide rich deuterium and rare mineral pockets.', 'resourceBias' => 'deuterium', 'resourceValue' => 10, 'hazard' => 'caustic tides', 'habitatBand' => 'low', 'suitability' => 'fuel', 'strategy' => 'Very strong for fuel-heavy operations.'],
+            ['name' => 'Toxin Tundra', 'description' => 'An ice-scarred permafrost of toxic salts and dormant microbes.', 'resourceBias' => 'water', 'resourceValue' => 7, 'hazard' => 'radioactive sleet', 'habitatBand' => 'low', 'suitability' => 'defense', 'strategy' => 'Best when you need a harsh but defensible front.'],
+        ],
+        'Crystalline' => [
+            ['name' => 'Prism Valley', 'description' => 'A glittering basin where crystal growth forms broad, resonant fields.', 'resourceBias' => 'crystal', 'resourceValue' => 12, 'hazard' => 'shard blooms', 'habitatBand' => 'moderate', 'suitability' => 'research', 'strategy' => 'Excellent for high-tech and research economies.'],
+            ['name' => 'Quartz Crown', 'description' => 'High ridges produce luminous crystal spires and strong energy resonance.', 'resourceBias' => 'energy', 'resourceValue' => 9, 'hazard' => 'resonance pulses', 'habitatBand' => 'moderate', 'suitability' => 'energy', 'strategy' => 'Useful for power and communications.'],
+            ['name' => 'Lattice Hollow', 'description' => 'Subsurface crystal networks create a maze of high-value mining chambers.', 'resourceBias' => 'metal', 'resourceValue' => 9, 'hazard' => 'crystal fractures', 'habitatBand' => 'low', 'suitability' => 'mining', 'strategy' => 'Great for mining and industrial cities.'],
+            ['name' => 'Diamond Fen', 'description' => 'A bright saline wetland where crystal and water both accumulate.', 'resourceBias' => 'water', 'resourceValue' => 8, 'hazard' => 'lattice fog', 'habitatBand' => 'moderate', 'suitability' => 'water', 'strategy' => 'Balanced for mixed colonies and labs.'],
+            ['name' => 'Halo Spire', 'description' => 'Tall crystal spires sustain strong observatories and refined extraction.', 'resourceBias' => 'crystal', 'resourceValue' => 11, 'hazard' => 'prism flares', 'habitatBand' => 'moderate', 'suitability' => 'observatory', 'strategy' => 'Perfect for science-forward settlements.'],
+        ],
+        'Relic' => [
+            ['name' => 'Ruin Garden', 'description' => 'Ancient terraforming fields still produce strange crops and hidden vaults.', 'resourceBias' => 'food', 'resourceValue' => 8, 'hazard' => 'ghost radiation', 'habitatBand' => 'moderate', 'suitability' => 'archaeology', 'strategy' => 'Excellent for mixed settlements and special projects.'],
+            ['name' => 'Archive Steppe', 'description' => 'A broad, dust-strewn plain littered with derelict megastructures and data caches.', 'resourceBias' => 'crystal', 'resourceValue' => 9, 'hazard' => 'memory storms', 'habitatBand' => 'moderate', 'suitability' => 'research', 'strategy' => 'Great for relic scavenging and research.'],
+            ['name' => 'Null Basin', 'description' => 'A cracked depression where ancient power cells still pulse beneath the surface.', 'resourceBias' => 'energy', 'resourceValue' => 10, 'hazard' => 'null surges', 'habitatBand' => 'low', 'suitability' => 'power', 'strategy' => 'Best for strategic energy and anomaly work.'],
+            ['name' => 'Echo Wastes', 'description' => 'Ruined terrain full of acoustic anomalies and buried infrastructure.', 'resourceBias' => 'metal', 'resourceValue' => 8, 'hazard' => 'echo shrapnel', 'habitatBand' => 'low', 'suitability' => 'mining', 'strategy' => 'Strong for salvage and defensive strongholds.'],
+            ['name' => 'Monolith Flats', 'description' => 'Raised plateaus around ancient monoliths provide a mystic, defensible frontier.', 'resourceBias' => 'deuterium', 'resourceValue' => 7, 'hazard' => 'resonance flares', 'habitatBand' => 'moderate', 'suitability' => 'defense', 'strategy' => 'Excellent for frontier bastions and anomaly teams.'],
         ],
     ];
+
+    $planetBiomes = [];
+    $planetSubBiomes = [];
+    $biomeDetails = [];
+    foreach ($planetBiomeCatalog as $worldType => $biomeRows) {
+        foreach ($biomeRows as $biomeRow) {
+            $biomeName = (string)$biomeRow['name'];
+            $planetBiomes[$worldType][] = $biomeName;
+            $biomeDetails[$biomeName] = [
+                'description' => (string)$biomeRow['description'],
+                'resourceBias' => (string)$biomeRow['resourceBias'],
+                'resourceValue' => (int)$biomeRow['resourceValue'],
+                'hazard' => (string)$biomeRow['hazard'],
+                'habitatBand' => (string)$biomeRow['habitatBand'],
+                'suitability' => (string)$biomeRow['suitability'],
+                'strategy' => (string)$biomeRow['strategy'],
+            ];
+            $planetSubBiomes[$biomeName] = [
+                'Canopy Veil',
+                'Rootwork March',
+                'Sunlit Knoll',
+            ];
+        }
+    }
+
+    $moonBiomeCatalog = [
+        'Rocky' => [
+            ['name' => 'Cinderglass Basin', 'description' => 'A basalt bowl fused with glassy fallout and strong ore veins.', 'resourceBias' => 'metal', 'resourceValue' => 10, 'hazard' => 'microquakes', 'habitatBand' => 'low', 'suitability' => 'mining', 'strategy' => 'Excellent for mining and shield bunkers.'],
+            ['name' => 'Ironbloom Ridge', 'description' => 'High ridges rich in metallic blooms and sheltered crater basins.', 'resourceBias' => 'metal', 'resourceValue' => 9, 'hazard' => 'dust jets', 'habitatBand' => 'low', 'suitability' => 'industry', 'strategy' => 'Great for industrial moon infrastructure.'],
+            ['name' => 'Vesper Crater', 'description' => 'A broad lowland crater with deep regolith and strong scan lines.', 'resourceBias' => 'crystal', 'resourceValue' => 8, 'hazard' => 'resonance tremors', 'habitatBand' => 'low', 'suitability' => 'sensor', 'strategy' => 'Excellent for listening posts and sensor arrays.'],
+            ['name' => 'Hollow Scar', 'description' => 'A massive impact scar with hidden caverns and explosive salvage potential.', 'resourceBias' => 'deuterium', 'resourceValue' => 8, 'hazard' => 'impact vents', 'habitatBand' => 'low', 'suitability' => 'salvage', 'strategy' => 'Good for salvage and emergency depots.'],
+            ['name' => 'Rimefract Shelf', 'description' => 'A cold, fractured shelf of basalt and pale ice near the shadow line.', 'resourceBias' => 'water', 'resourceValue' => 7, 'hazard' => 'shadow frost', 'habitatBand' => 'low', 'suitability' => 'habitation', 'strategy' => 'Useful for small moon colonies.'],
+        ],
+        'Icy' => [
+            ['name' => 'Frostglass Sea', 'description' => 'Frozen seas with shining ice ridges and high deuterium viability.', 'resourceBias' => 'deuterium', 'resourceValue' => 11, 'hazard' => 'ice shear', 'habitatBand' => 'moderate', 'suitability' => 'fuel', 'strategy' => 'Excellent for fuel extraction and station support.'],
+            ['name' => 'Blue Ice Caverns', 'description' => 'Subsurface caverns preserve ancient ice and support deep drilling.', 'resourceBias' => 'water', 'resourceValue' => 10, 'hazard' => 'cavern collapse', 'habitatBand' => 'moderate', 'suitability' => 'water', 'strategy' => 'Great for water recovery and cryo facilities.'],
+            ['name' => 'Aurora Shelf', 'description' => 'Glowing polar shelves that offer low-pressure habitation and science output.', 'resourceBias' => 'crystal', 'resourceValue' => 8, 'hazard' => 'aurora flares', 'habitatBand' => 'moderate', 'suitability' => 'research', 'strategy' => 'Excellent for science and observation.'],
+            ['name' => 'Hollow Basin', 'description' => 'A cold crater basin where pressure pockets preserve trapped gases.', 'resourceBias' => 'energy', 'resourceValue' => 8, 'hazard' => 'gas venting', 'habitatBand' => 'moderate', 'suitability' => 'power', 'strategy' => 'Useful for ion and power systems.'],
+            ['name' => 'Cryo Moor', 'description' => 'Low ridges of frozen moss and mineral salts create a resilient frontier.', 'resourceBias' => 'food', 'resourceValue' => 7, 'hazard' => 'cold snaps', 'habitatBand' => 'moderate', 'suitability' => 'habitation', 'strategy' => 'Good for long-term outposts.'],
+        ],
+        'Metallic' => [
+            ['name' => 'Ferrite Dunes', 'description' => 'Dusty metal plains that are rich in ore and shield substrate.', 'resourceBias' => 'metal', 'resourceValue' => 11, 'hazard' => 'magnet storms', 'habitatBand' => 'low', 'suitability' => 'industry', 'strategy' => 'Perfect for orbital foundries.'],
+            ['name' => 'Alloy Spine', 'description' => 'Pale ridgelines of composite metal that support heavy fabrication.', 'resourceBias' => 'metal', 'resourceValue' => 10, 'hazard' => 'metal fatigue', 'habitatBand' => 'low', 'suitability' => 'production', 'strategy' => 'Great for shipyard-style moon complexes.'],
+            ['name' => 'Magnet Flats', 'description' => 'Broad plains with magnetic anomalies that boost energy conversion.', 'resourceBias' => 'energy', 'resourceValue' => 9, 'hazard' => 'magnetic surges', 'habitatBand' => 'low', 'suitability' => 'power', 'strategy' => 'Strong for energy-intensive facilities.'],
+            ['name' => 'Forge Scar', 'description' => 'A deep impact gouge with metal-rich walls and industrial room.', 'resourceBias' => 'crystal', 'resourceValue' => 8, 'hazard' => 'sparks', 'habitatBand' => 'low', 'suitability' => 'mining', 'strategy' => 'Useful for dense industrial planning.'],
+            ['name' => 'Iron Veil', 'description' => 'A mantle of polished ore that favors strong fortress design.', 'resourceBias' => 'metal', 'resourceValue' => 9, 'hazard' => 'shrapnel dust', 'habitatBand' => 'low', 'suitability' => 'defense', 'strategy' => 'Excellent for defense and bunkered infrastructure.'],
+        ],
+        'Ruined' => [
+            ['name' => 'Derelict Spires', 'description' => 'Collapsed towers and buried machinery still yield salvage and anomaly data.', 'resourceBias' => 'crystal', 'resourceValue' => 9, 'hazard' => 'ghost debris', 'habitatBand' => 'low', 'suitability' => 'salvage', 'strategy' => 'Great for archaeology and salvage teams.'],
+            ['name' => 'Null Dockyards', 'description' => 'Ancient shipyard scars create a rich salvage field and battle history.', 'resourceBias' => 'metal', 'resourceValue' => 8, 'hazard' => 'resonance bursts', 'habitatBand' => 'low', 'suitability' => 'archaeology', 'strategy' => 'Strong for relic and expedition operations.'],
+            ['name' => 'Broken Archive', 'description' => 'Data vault ruins contain latent power and hidden manufacturing logic.', 'resourceBias' => 'energy', 'resourceValue' => 8, 'hazard' => 'archive storms', 'habitatBand' => 'low', 'suitability' => 'research', 'strategy' => 'Very good for research and anomaly hunts.'],
+            ['name' => 'Silent Vault', 'description' => 'A hallowed ruin of ancient habitats and buried stasis chambers.', 'resourceBias' => 'water', 'resourceValue' => 7, 'hazard' => 'null cold', 'habitatBand' => 'moderate', 'suitability' => 'habitation', 'strategy' => 'Useful for long-term moon outposts.'],
+            ['name' => 'Debris Halo', 'description' => 'A broad ring of shredded wreckage and metallic detritus around the moon.', 'resourceBias' => 'metal', 'resourceValue' => 8, 'hazard' => 'debris showers', 'habitatBand' => 'low', 'suitability' => 'defense', 'strategy' => 'Excellent for defense and debris recycling.'],
+        ],
+    ];
+
+    $moonBiomes = [];
+    $moonSubBiomes = [];
+    $moonBiomeDetails = [];
+    foreach ($moonBiomeCatalog as $moonClass => $biomeRows) {
+        foreach ($biomeRows as $biomeRow) {
+            $biomeName = (string)$biomeRow['name'];
+            $moonBiomes[$moonClass][] = $biomeName;
+            $moonBiomeDetails[$biomeName] = [
+                'description' => (string)$biomeRow['description'],
+                'resourceBias' => (string)$biomeRow['resourceBias'],
+                'resourceValue' => (int)$biomeRow['resourceValue'],
+                'hazard' => (string)$biomeRow['hazard'],
+                'habitatBand' => (string)$biomeRow['habitatBand'],
+                'suitability' => (string)$biomeRow['suitability'],
+                'strategy' => (string)$biomeRow['strategy'],
+            ];
+            $moonSubBiomes[$biomeName] = [
+                'Shale Veil',
+                'Ridge Hollow',
+                'Echo Trench',
+            ];
+        }
+    }
+
+    $subBiomeCatalog = [];
+    foreach ($planetSubBiomes as $biomeName => $subBiomeChoices) {
+        $subBiomeCatalog[$biomeName] = $subBiomeChoices;
+    }
+    foreach ($moonSubBiomes as $biomeName => $subBiomeChoices) {
+        $subBiomeCatalog[$biomeName] = $subBiomeChoices;
+    }
+
+    return [
+        'worldTypes' => ['Terran', 'Oceanic', 'Arid', 'Volcanic', 'Ice', 'Gas Dwarf', 'Toxic', 'Crystalline', 'Relic'],
+        'biomes' => $planetBiomes,
+        'subBiomes' => $subBiomeCatalog,
+        'biomeDetails' => $biomeDetails,
+        'moonBiomes' => $moonBiomes,
+        'moonSubBiomes' => $moonSubBiomes,
+        'moonBiomeDetails' => $moonBiomeDetails,
+    ];
+}
+
+function universePlagueCatalog(): array {
+    return [
+        ['name' => 'Blight Bloom', 'effect_type' => 'habitability', 'effect_value' => -8, 'severity' => 2, 'symptom' => 'Fungal spores choke the air and lower habitability.'],
+        ['name' => 'Silt Fever', 'effect_type' => 'resource', 'effect_value' => -18, 'severity' => 3, 'symptom' => 'Toxin runoff corrodes shelters and harvest rigs.'],
+        ['name' => 'Solar Rot', 'effect_type' => 'habitability', 'effect_value' => -10, 'severity' => 4, 'symptom' => 'A luminous contagion warps exposed biospheres.'],
+        ['name' => 'Void Murrain', 'effect_type' => 'resource', 'effect_value' => -24, 'severity' => 5, 'symptom' => 'A cosmic spore storm drains support infrastructure.'],
+    ];
+}
+
+function universePlagueProfile(int &$seed, string $targetType, string $biomeName): array {
+    $catalog = universePlagueCatalog();
+    $entry = $catalog[universeRand($seed, 0, count($catalog) - 1)];
+    $severity = universeRand($seed, 1, 5);
+    $effectValue = (int)$entry['effect_value'] - ($severity * 2);
+    if ($targetType === 'moon') {
+        $effectValue -= 3;
+    }
+    if ($targetType === 'biome') {
+        $effectValue -= 4;
+    }
+    $effectValue = max(-40, $effectValue);
+
+    return [
+        'plague_name' => (string)$entry['name'] . ' ' . $severity,
+        'severity' => $severity,
+        'effect_type' => (string)$entry['effect_type'],
+        'effect_value' => $effectValue,
+        'symptom' => (string)$entry['symptom'],
+        'target_type' => $targetType,
+        'biome_name' => $biomeName,
+    ];
+}
+
+function ensureUniversePlagueTables(Game $s): void {
+    $s->query("CREATE TABLE IF NOT EXISTS universe_world_plagues (
+        uid INT NOT NULL,
+        world_index INT NOT NULL DEFAULT 0,
+        target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
+        moon_no INT NOT NULL DEFAULT 0,
+        biome_name VARCHAR(80) NOT NULL DEFAULT '',
+        plague_name VARCHAR(80) NOT NULL,
+        severity INT NOT NULL DEFAULT 1,
+        effect_type VARCHAR(24) NOT NULL DEFAULT 'habitability',
+        effect_value INT NOT NULL DEFAULT 0,
+        symptom VARCHAR(160) NOT NULL DEFAULT '',
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(uid, world_index, target_type, moon_no, plague_name),
+        KEY idx_uid_world (uid, world_index, target_type)
+    )");
+}
+
+function universeCreatePlague(Game $s, int $uid, array $world, string $targetType, int $moonNo, string $biomeName): string {
+    ensureUniversePlagueTables($s);
+    $targetType = in_array($targetType, ['planet', 'moon', 'biome'], true) ? $targetType : 'planet';
+    $worldIndex = max(1, (int)($world['idx'] ?? 0));
+    $moonNo = max(0, (int)$moonNo);
+    if ($targetType === 'moon' && $moonNo <= 0) {
+        return 'Plague creation failed: a moon index is required.';
+    }
+
+    $checkQ = $s->query("SELECT plague_name FROM universe_world_plagues WHERE uid=" . (int)$uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+    if ($checkQ && $checkQ->num_rows > 0) {
+        return 'Plague creation failed: this target already carries an active plague.';
+    }
+
+    $seed = ((int)$uid * 131) + ($worldIndex * 17) + ($moonNo * 29) + strlen((string)$biomeName);
+    $plague = universePlagueProfile($seed, $targetType, (string)$biomeName);
+    $targetLabel = ($targetType === 'moon') ? 'moon #' . $moonNo : (($targetType === 'biome') ? 'biome' : 'planet');
+    $insert = "INSERT INTO universe_world_plagues (uid, world_index, target_type, moon_no, biome_name, plague_name, severity, effect_type, effect_value, symptom)
+        VALUES (" . (int)$uid . ", " . $worldIndex . ", '" . $targetType . "', " . $moonNo . ", '" . pageSafeToken((string)$biomeName) . "', '" . pageSafeToken((string)$plague['plague_name']) . "', " . (int)$plague['severity'] . ", '" . pageSafeToken((string)$plague['effect_type']) . "', " . (int)$plague['effect_value'] . ", '" . pageSafeToken((string)$plague['symptom']) . "')";
+    if (!$s->query($insert)) {
+        return 'Plague creation failed: could not persist the plague event.';
+    }
+
+    $effectText = ((int)$plague['effect_value'] < 0 ? 'decrease' : 'increase') . ' of ' . (string)$plague['effect_type'];
+    return 'Plague created on ' . $targetLabel . ': ' . (string)$plague['plague_name'] . ' (severity ' . (int)$plague['severity'] . ') — ' . (string)$plague['symptom'] . ' Effect: ' . abs((int)$plague['effect_value']) . ' ' . $effectText . '.';
+}
+
+function universePlagueRowsForWorld(Game $s, int $uid, int $worldIndex): array {
+    ensureUniversePlagueTables($s);
+    $worldIndex = max(1, (int)$worldIndex);
+    $q = $s->query("SELECT world_index, target_type, moon_no, biome_name, plague_name, severity, effect_type, effect_value, symptom, status, UNIX_TIMESTAMP(created_at) AS created_ts
+        FROM universe_world_plagues
+        WHERE uid=" . (int)$uid . " AND world_index=" . $worldIndex . "
+        ORDER BY target_type ASC, moon_no ASC, created_at ASC");
+    $rows = [];
+    if ($q) {
+        while ($row = $q->fetch_assoc()) {
+            $rows[] = $row;
+        }
+    }
+    return $rows;
+}
+
+function universePlagueSummaryText(array $rows): string {
+    if (count($rows) === 0) {
+        return 'None';
+    }
+    $labels = [];
+    foreach ($rows as $row) {
+        $labels[] = (string)($row['plague_name'] ?? 'Plague') . ' (' . ((int)($row['severity'] ?? 1)) . ')';
+    }
+    return implode(', ', array_slice($labels, 0, 2));
+}
+
+function universeWaterCatalog(): array {
+    return [
+        ['name' => 'Aqua Spring', 'effect_type' => 'water', 'effect_value' => 3200, 'potency' => 2, 'description' => 'A clean spring rises from a fractured aquifer.'],
+        ['name' => 'Glacier Lens', 'effect_type' => 'water', 'effect_value' => 4600, 'potency' => 3, 'description' => 'A frozen reservoir feeds deep channels beneath the surface.'],
+        ['name' => 'Tidal Well', 'effect_type' => 'water', 'effect_value' => 5400, 'potency' => 4, 'description' => 'A briny seam shifts with the world tides and moon pull.'],
+        ['name' => 'Orbital Dew Basin', 'effect_type' => 'water', 'effect_value' => 7000, 'potency' => 5, 'description' => 'A cold trap gathers condensate from the upper atmosphere.'],
+    ];
+}
+
+function universeWaterProfile(int &$seed, string $targetType, string $biomeName): array {
+    $catalog = universeWaterCatalog();
+    $entry = $catalog[universeRand($seed, 0, count($catalog) - 1)];
+    $potency = universeRand($seed, 1, 5);
+    $effectValue = (int)$entry['effect_value'] + ($potency * 650);
+    if ($targetType === 'moon') {
+        $effectValue += 700;
+    }
+    if ($targetType === 'biome') {
+        $effectValue += 900;
+    }
+
+    return [
+        'water_name' => (string)$entry['name'] . ' ' . $potency,
+        'effect_type' => (string)$entry['effect_type'],
+        'effect_value' => $effectValue,
+        'potency' => $potency,
+        'description' => (string)$entry['description'],
+        'target_type' => $targetType,
+        'biome_name' => $biomeName,
+    ];
+}
+
+function ensureUniverseWaterTables(Game $s): void {
+    $s->query("CREATE TABLE IF NOT EXISTS universe_world_water_sources (
+        uid INT NOT NULL,
+        world_index INT NOT NULL DEFAULT 0,
+        target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
+        moon_no INT NOT NULL DEFAULT 0,
+        biome_name VARCHAR(80) NOT NULL DEFAULT '',
+        water_name VARCHAR(80) NOT NULL,
+        effect_type VARCHAR(24) NOT NULL DEFAULT 'water',
+        effect_value INT NOT NULL DEFAULT 0,
+        potency INT NOT NULL DEFAULT 1,
+        description VARCHAR(160) NOT NULL DEFAULT '',
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(uid, world_index, target_type, moon_no, water_name),
+        KEY idx_uid_world_water (uid, world_index, target_type)
+    )");
+}
+
+function universeCreateWater(Game $s, int $uid, array $world, string $targetType, int $moonNo, string $biomeName): string {
+    ensureUniverseWaterTables($s);
+    $targetType = in_array($targetType, ['planet', 'moon', 'biome'], true) ? $targetType : 'planet';
+    $worldIndex = max(1, (int)($world['idx'] ?? 0));
+    $moonNo = max(0, (int)$moonNo);
+    if ($targetType === 'moon' && $moonNo <= 0) {
+        return 'Water creation failed: a moon index is required.';
+    }
+
+    $checkQ = $s->query("SELECT water_name FROM universe_world_water_sources WHERE uid=" . (int)$uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+    if ($checkQ && $checkQ->num_rows > 0) {
+        return 'Water creation failed: this target already has a water source.';
+    }
+
+    $seed = ((int)$uid * 173) + ($worldIndex * 29) + ($moonNo * 37) + strlen((string)$biomeName);
+    $water = universeWaterProfile($seed, $targetType, (string)$biomeName);
+    $targetLabel = ($targetType === 'moon') ? 'moon #' . $moonNo : (($targetType === 'biome') ? 'biome' : 'planet');
+    $insert = "INSERT INTO universe_world_water_sources (uid, world_index, target_type, moon_no, biome_name, water_name, effect_type, effect_value, potency, description)
+        VALUES (" . (int)$uid . ", " . $worldIndex . ", '" . $targetType . "', " . $moonNo . ", '" . pageSafeToken((string)$biomeName) . "', '" . pageSafeToken((string)$water['water_name']) . "', '" . pageSafeToken((string)$water['effect_type']) . "', " . (int)$water['effect_value'] . ", " . (int)$water['potency'] . ", '" . pageSafeToken((string)$water['description']) . "')";
+    if (!$s->query($insert)) {
+        return 'Water creation failed: could not persist the water source.';
+    }
+
+    $boostText = 'Water output +' . fnum((int)$water['effect_value']) . ' ' . (string)$water['effect_type'];
+    return 'Water source created on ' . $targetLabel . ': ' . (string)$water['water_name'] . ' (potency ' . (int)$water['potency'] . ') — ' . (string)$water['description'] . ' ' . $boostText . '.';
+}
+
+function universeWaterRowsForWorld(Game $s, int $uid, int $worldIndex): array {
+    ensureUniverseWaterTables($s);
+    $worldIndex = max(1, (int)$worldIndex);
+    $q = $s->query("SELECT world_index, target_type, moon_no, biome_name, water_name, effect_type, effect_value, potency, description, status, UNIX_TIMESTAMP(created_at) AS created_ts
+        FROM universe_world_water_sources
+        WHERE uid=" . (int)$uid . " AND world_index=" . $worldIndex . "
+        ORDER BY target_type ASC, moon_no ASC, created_at ASC");
+    $rows = [];
+    if ($q) {
+        while ($row = $q->fetch_assoc()) {
+            $rows[] = $row;
+        }
+    }
+    return $rows;
+}
+
+function universeWaterSummaryText(array $rows): string {
+    if (count($rows) === 0) {
+        return 'None';
+    }
+    $labels = [];
+    foreach ($rows as $row) {
+        $labels[] = (string)($row['water_name'] ?? 'Water Source') . ' (' . ((int)($row['potency'] ?? 1)) . ')';
+    }
+    return implode(', ', array_slice($labels, 0, 2));
+}
+
+function universeBiomeProfile(int &$seed, string $type): array {
+    $taxonomy = universeTaxonomy();
+    $biomes = $taxonomy['biomes'];
+    $subBiomes = $taxonomy['subBiomes'];
+    $biome = universePick($seed, $biomes[$type] ?? ['Unknown']);
+    $subBiome = universePick($seed, $subBiomes[$biome] ?? ['Frontier Zone']);
+    return ['biome' => $biome, 'subBiome' => $subBiome];
+}
+
+function universeMoonProfile(int &$seed, string $moonClass, int $moonCount): array {
+    $taxonomy = universeTaxonomy();
+    $moonBiomes = $taxonomy['moonBiomes'];
+    $moonSubBiomes = $taxonomy['moonSubBiomes'];
+    if ($moonCount <= 0) {
+        return ['moonBiome' => 'None', 'moonSubBiome' => 'None'];
+    }
+    $moonBiome = universePick($seed, $moonBiomes[$moonClass] ?? ['Unknown Lunar Zone']);
+    $moonSubBiome = universePick($seed, $moonSubBiomes[$moonBiome] ?? ['Uncharted Crater']);
+    return ['moonBiome' => $moonBiome, 'moonSubBiome' => $moonSubBiome];
 }
 
 function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
@@ -72,8 +453,9 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
         for ($sector = 1; $sector <= 6; $sector++) {
             for ($orbit = 1; $orbit <= 6; $orbit++) {
                 $type = universePick($seed, $worldTypes);
-                $biomePool = $biomes[$type] ?? ['Unknown'];
-                $biome = universePick($seed, $biomePool);
+                $biomeProfile = universeBiomeProfile($seed, $type);
+                $biome = (string)$biomeProfile['biome'];
+                $subBiome = (string)$biomeProfile['subBiome'];
 
                 $habitability = universeRand($seed, 18, 98);
                 $metal = universeRand($seed, 220, 1200);
@@ -82,6 +464,7 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
 
                 $moonCount = ($type === 'Gas Dwarf' || $type === 'Relic') ? universeRand($seed, 1, 3) : universeRand($seed, 0, 2);
                 $moonClass = $moonCount > 0 ? universePick($seed, ['Rocky', 'Icy', 'Metallic', 'Ruined']) : '-';
+                $moonProfile = universeMoonProfile($seed, $moonClass, $moonCount);
                 $slots = max(2, (int)floor($habitability / 12));
 
                 $owner = 'Unclaimed';
@@ -97,6 +480,7 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
                     'name' => $planetLabel,
                     'type' => $type,
                     'biome' => $biome,
+                    'subBiome' => $subBiome,
                     'habitability' => $habitability,
                     'slots' => $slots,
                     'metal' => $metal,
@@ -104,6 +488,8 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
                     'deut' => $deut,
                     'moons' => $moonCount,
                     'moonClass' => $moonClass,
+                    'moonBiome' => (string)$moonProfile['moonBiome'],
+                    'moonSubBiome' => (string)$moonProfile['moonSubBiome'],
                     'owner' => $owner,
                 ];
 
@@ -176,13 +562,16 @@ function universeWorldByIndex(int $uid, array $ownedPlanets, int $index, array $
     $biomes = $taxonomy['biomes'];
 
     $type = universePick($seed, $worldTypes);
-    $biome = universePick($seed, $biomes[$type] ?? ['Unknown']);
+    $biomeProfile = universeBiomeProfile($seed, $type);
+    $biome = (string)$biomeProfile['biome'];
+    $subBiome = (string)$biomeProfile['subBiome'];
     $habitability = universeRand($seed, 18, 98);
     $metal = universeRand($seed, 220, 1200);
     $crystal = universeRand($seed, 120, 980);
     $deut = universeRand($seed, 60, 760);
     $moonCount = ($type === 'Gas Dwarf' || $type === 'Relic') ? universeRand($seed, 1, 3) : universeRand($seed, 0, 2);
     $moonClass = $moonCount > 0 ? universePick($seed, ['Rocky', 'Icy', 'Metallic', 'Ruined']) : '-';
+    $moonProfile = universeMoonProfile($seed, $moonClass, $moonCount);
     $slots = max(2, (int)floor($habitability / 12));
 
     $systemsPerGalaxy = (int)($cfg['systemsPerGalaxy'] ?? $cfg['sectorsPerGalaxy']);
@@ -208,6 +597,7 @@ function universeWorldByIndex(int $uid, array $ownedPlanets, int $index, array $
         'name' => $planetLabel,
         'type' => $type,
         'biome' => $biome,
+        'subBiome' => $subBiome,
         'habitability' => $habitability,
         'slots' => $slots,
         'metal' => $metal,
@@ -215,6 +605,8 @@ function universeWorldByIndex(int $uid, array $ownedPlanets, int $index, array $
         'deut' => $deut,
         'moons' => $moonCount,
         'moonClass' => $moonClass,
+        'moonBiome' => (string)$moonProfile['moonBiome'],
+        'moonSubBiome' => (string)$moonProfile['moonSubBiome'],
         'owner' => $owner,
     ];
 }
@@ -1323,6 +1715,315 @@ function militaryQueueNormalizePriorities(Game $s, int $uid): void {
     }
 }
 
+function operationsQueueNormalizePriorities(Game $s, int $uid): void {
+    $q = $s->query("SELECT queue_id FROM operations_turn_queue WHERE uid=" . $uid . " AND status='queued' ORDER BY priority_order ASC, queue_id ASC");
+    if (!$q) {
+        return;
+    }
+    $prio = 1;
+    while ($row = $q->fetch_object()) {
+        $s->query("UPDATE operations_turn_queue SET priority_order=" . $prio . " WHERE queue_id=" . (int)$row->queue_id . " AND uid=" . $uid . " LIMIT 1");
+        $prio++;
+    }
+}
+
+function operationsApplyCycleAction(Game $s, int $uid, array $cfg): string {
+    $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+    $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+    $resQ = $s->query("SELECT metal,crystal,deuterium,food,water,population FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+    $res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'population' => 0];
+    $unitQ = $s->query("SELECT untrained,attack,defense,covert,anticovert FROM units WHERE uid=" . $uid . " LIMIT 1");
+    $unitsObj = $unitQ ? $unitQ->fetch_object() : (object)['untrained' => 0, 'attack' => 0, 'defense' => 0, 'covert' => 0, 'anticovert' => 0];
+    $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+    $bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+
+    if ($turns < (int)$cfg['turn_cost']) {
+        return 'RTS cycle failed: insufficient action turns.';
+    }
+    if ((int)$bankObj->onHand < (int)$cfg['naq_cost']) {
+        return 'RTS cycle failed: insufficient Naquadah reserves.';
+    }
+    if ((int)$res->metal < (int)$cfg['metal_cost'] || (int)$res->crystal < (int)$cfg['crystal_cost'] || (int)$res->deuterium < (int)$cfg['deut_cost'] || (int)$res->food < (int)$cfg['food_cost'] || (int)$res->water < (int)$cfg['water_cost']) {
+        return 'RTS cycle failed: insufficient strategic resources.';
+    }
+    if ((int)$unitsObj->untrained < (int)$cfg['need_untrained']) {
+        return 'RTS cycle failed: insufficient reserve personnel.';
+    }
+
+    $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . (int)$cfg['turn_cost'] . ") WHERE uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE bank SET onHand=onHand-" . (int)$cfg['naq_cost'] . " WHERE uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE player_resources SET
+        metal=metal-" . (int)$cfg['metal_cost'] . ",
+        crystal=crystal-" . (int)$cfg['crystal_cost'] . ",
+        deuterium=deuterium-" . (int)$cfg['deut_cost'] . ",
+        food=food-" . (int)$cfg['food_cost'] . ",
+        water=water-" . (int)$cfg['water_cost'] . "
+        WHERE uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE units SET
+        untrained=GREATEST(0,untrained+" . (int)$cfg['untrained_delta'] . "),
+        attack=GREATEST(0,attack+" . (int)$cfg['attack_delta'] . "),
+        defense=GREATEST(0,defense+" . (int)$cfg['defense_delta'] . "),
+        covert=GREATEST(0,covert+" . (int)$cfg['covert_delta'] . "),
+        anticovert=GREATEST(0,anticovert+" . (int)$cfg['anticovert_delta'] . ")
+        WHERE uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE operations_rts_state SET
+        command_xp=command_xp+" . (int)$cfg['xp_gain'] . ",
+        cycle_index=cycle_index+1,
+        frontline_pressure=LEAST(100,GREATEST(0,frontline_pressure+" . (int)$cfg['pressure_delta'] . ")),
+        reserve_integrity=LEAST(100,GREATEST(0,reserve_integrity+" . (int)$cfg['reserve_delta'] . ")),
+        morale_index=LEAST(100,GREATEST(0,morale_index+" . (int)$cfg['morale_delta'] . ")),
+        last_cycle_at=NOW()
+        WHERE uid=" . $uid . " LIMIT 1");
+
+    return 'RTS cycle complete: ' . (string)$cfg['label'] . ' executed successfully.';
+}
+
+function operationsQueueProcessReady(Game $s, int $uid, array $opsCatalog, int $limit = 10): array {
+    $limit = max(1, min(50, $limit));
+    $queueQ = $s->query("SELECT queue_id, operation_code, eta_seconds, priority_order, UNIX_TIMESTAMP(created_at) AS created_ts
+        FROM operations_turn_queue
+        WHERE uid=" . $uid . " AND status='queued'
+        ORDER BY priority_order ASC, queue_id ASC LIMIT " . $limit);
+    $processed = 0;
+    $failed = 0;
+    $waiting = 0;
+
+    if ($queueQ) {
+        while ($qItem = $queueQ->fetch_object()) {
+            $elapsed = max(0, time() - (int)$qItem->created_ts);
+            if ($elapsed < (int)$qItem->eta_seconds) {
+                $waiting++;
+                continue;
+            }
+            $opCode = (string)$qItem->operation_code;
+            if (!isset($opsCatalog[$opCode])) {
+                $s->query("UPDATE operations_turn_queue SET status='failed', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                $failed++;
+                continue;
+            }
+            $applyResult = operationsApplyCycleAction($s, $uid, $opsCatalog[$opCode]);
+            if (strpos($applyResult, 'RTS cycle complete:') === 0) {
+                $s->query("UPDATE operations_turn_queue SET status='done', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                $processed++;
+            } else {
+                $s->query("UPDATE operations_turn_queue SET status='failed', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                $failed++;
+            }
+        }
+    }
+
+    return ['processed' => $processed, 'waiting' => $waiting, 'failed' => $failed];
+}
+
+function powerGridTick(Game $s, int $uid): array {
+    $stateQ = $s->query("SELECT grid_level,stability_index,storage_capacity,stored_energy,generation_boost,load_mode,blackout_risk,UNIX_TIMESTAMP(last_tick_at) AS last_tick_ts
+        FROM power_grid_state WHERE uid=" . $uid . " LIMIT 1");
+    $state = $stateQ ? $stateQ->fetch_object() : null;
+    if (!$state) {
+        return ['generation' => 0, 'load' => 0, 'net' => 0, 'ticks' => 0];
+    }
+
+    $nodeQ = $s->query("SELECT node_type,output_mw,load_mw,integrity,status FROM power_grid_nodes WHERE uid=" . $uid . "");
+    $generation = 0;
+    $load = 0;
+    if ($nodeQ) {
+        while ($node = $nodeQ->fetch_object()) {
+            if ((string)$node->status !== 'active') {
+                continue;
+            }
+            $integrityFactor = max(0.35, min(1.0, ((int)$node->integrity / 100.0)));
+            $generation += (int)round((int)$node->output_mw * $integrityFactor);
+            $load += (int)round((int)$node->load_mw * (1.04 - $integrityFactor * 0.2));
+        }
+    }
+
+    $boost = (int)$state->generation_boost;
+    $boostedGen = (int)round($generation * (1 + ($boost / 100)));
+    $net = $boostedGen - $load;
+
+    $lastTickTs = (int)($state->last_tick_ts ?? 0);
+    $nowTs = time();
+    $intervalSec = 300;
+    $ticks = 0;
+    if ($lastTickTs > 0) {
+        $ticks = max(0, min(48, (int)floor(($nowTs - $lastTickTs) / $intervalSec)));
+    }
+
+    if ($ticks > 0) {
+        $storedEnergy = (int)$state->stored_energy;
+        $storageCap = max(10000, (int)$state->storage_capacity);
+        $stability = (int)$state->stability_index;
+        $risk = (int)$state->blackout_risk;
+
+        $delta = $net * $ticks * 8;
+        $storedEnergy = max(0, min($storageCap, $storedEnergy + $delta));
+        if ($net >= 0) {
+            $stability = min(100, $stability + $ticks);
+            $risk = max(0, $risk - $ticks);
+        } else {
+            $stability = max(0, $stability - ($ticks * 2));
+            $risk = min(100, $risk + ($ticks * 2));
+        }
+        if ($storedEnergy < (int)round($storageCap * 0.1)) {
+            $risk = min(100, $risk + 5);
+        }
+        if ($storedEnergy > (int)round($storageCap * 0.6)) {
+            $risk = max(0, $risk - 3);
+        }
+
+        $s->query("UPDATE power_grid_state SET
+            stored_energy=" . $storedEnergy . ",
+            stability_index=" . $stability . ",
+            blackout_risk=" . $risk . ",
+            last_tick_at=FROM_UNIXTIME(" . $nowTs . ")
+            WHERE uid=" . $uid . " LIMIT 1");
+    }
+
+    return ['generation' => $boostedGen, 'load' => $load, 'net' => $net, 'ticks' => $ticks];
+}
+
+function powerGridUpgradeNode(Game $s, int $uid, int $nodeId): string {
+    if ($nodeId <= 0) {
+        return 'Power grid upgrade failed: invalid node id.';
+    }
+    $nodeQ = $s->query("SELECT node_id,node_name,node_type,level,output_mw,load_mw,integrity,status FROM power_grid_nodes WHERE node_id=" . $nodeId . " AND uid=" . $uid . " LIMIT 1");
+    $node = $nodeQ ? $nodeQ->fetch_object() : null;
+    if (!$node) {
+        return 'Power grid upgrade failed: node not found.';
+    }
+
+    $level = (int)$node->level;
+    $turnCost = max(1, (int)ceil(($level + 1) / 2));
+    $naqCost = 18000 + ($level * 14000);
+    $metalCost = 12000 + ($level * 9000);
+    $crystalCost = 7000 + ($level * 6500);
+    $deutCost = 3200 + ($level * 2400);
+
+    $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+    $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+    $resQ = $s->query("SELECT metal,crystal,deuterium FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+    $res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0];
+    $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+    $bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+
+    if ($turns < $turnCost) {
+        return 'Power grid upgrade failed: insufficient action turns.';
+    }
+    if ((int)$bankObj->onHand < $naqCost) {
+        return 'Power grid upgrade failed: insufficient Naquadah.';
+    }
+    if ((int)$res->metal < $metalCost || (int)$res->crystal < $crystalCost || (int)$res->deuterium < $deutCost) {
+        return 'Power grid upgrade failed: insufficient metal/crystal/deuterium.';
+    }
+
+    $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $turnCost . ") WHERE uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE bank SET onHand=onHand-" . $naqCost . " WHERE uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE player_resources SET metal=metal-" . $metalCost . ", crystal=crystal-" . $crystalCost . ", deuterium=deuterium-" . $deutCost . " WHERE uid=" . $uid . " LIMIT 1");
+
+    $newLevel = $level + 1;
+    $outputInc = ((string)$node->node_type === 'generator') ? (26 + ($newLevel * 4)) : (((string)$node->node_type === 'relay') ? (8 + ($newLevel * 2)) : 0);
+    $loadInc = ((string)$node->node_type === 'storage') ? (8 + $newLevel) : 5;
+    $integrityInc = 3;
+
+    $s->query("UPDATE power_grid_nodes SET
+        level=" . $newLevel . ",
+        output_mw=output_mw+" . $outputInc . ",
+        load_mw=load_mw+" . $loadInc . ",
+        integrity=LEAST(100,integrity+" . $integrityInc . ")
+        WHERE node_id=" . $nodeId . " AND uid=" . $uid . " LIMIT 1");
+    $s->query("UPDATE power_grid_state SET
+        grid_level=LEAST(30,grid_level+1),
+        storage_capacity=storage_capacity+" . (800 + ($newLevel * 90)) . ",
+        stability_index=LEAST(100,stability_index+2),
+        blackout_risk=GREATEST(0,blackout_risk-1)
+        WHERE uid=" . $uid . " LIMIT 1");
+
+    return 'Power grid node upgraded: ' . (string)$node->node_name . ' is now level ' . fnum($newLevel) . '.';
+}
+
+function powerGridQueueProcessReady(Game $s, int $uid, int $limit = 10): array {
+    $limit = max(1, min(50, $limit));
+    $queueQ = $s->query("SELECT queue_id,action_code,target_node_id,eta_seconds,UNIX_TIMESTAMP(created_at) AS created_ts
+        FROM power_grid_queue
+        WHERE uid=" . $uid . " AND status='queued'
+        ORDER BY priority_order ASC, queue_id ASC LIMIT " . $limit);
+    $processed = 0;
+    $failed = 0;
+    $waiting = 0;
+
+    if ($queueQ) {
+        while ($qItem = $queueQ->fetch_object()) {
+            $elapsed = max(0, time() - (int)$qItem->created_ts);
+            if ($elapsed < (int)$qItem->eta_seconds) {
+                $waiting++;
+                continue;
+            }
+            $result = '';
+            if ((string)$qItem->action_code === 'upgrade_node') {
+                $result = powerGridUpgradeNode($s, $uid, (int)$qItem->target_node_id);
+            } else {
+                $result = 'Power grid queue failed: unknown action code.';
+            }
+            if (strpos($result, 'Power grid node upgraded:') === 0) {
+                $s->query("UPDATE power_grid_queue SET status='done', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                $processed++;
+            } else {
+                $s->query("UPDATE power_grid_queue SET status='failed', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                $failed++;
+            }
+        }
+    }
+
+    return ['processed' => $processed, 'waiting' => $waiting, 'failed' => $failed];
+}
+
+function powerGridQueueNormalizePriorities(Game $s, int $uid): void {
+    $q = $s->query("SELECT queue_id FROM power_grid_queue WHERE uid=" . $uid . " AND status='queued' ORDER BY priority_order ASC, queue_id ASC");
+    if (!$q) {
+        return;
+    }
+    $prio = 1;
+    while ($row = $q->fetch_object()) {
+        $s->query("UPDATE power_grid_queue SET priority_order=" . $prio . " WHERE queue_id=" . (int)$row->queue_id . " AND uid=" . $uid . " LIMIT 1");
+        $prio++;
+    }
+}
+
+function universeStoryActs(): array {
+    $actTitles = [
+        1 => 'Ashes of the Homeworld',
+        2 => 'Lanes of First Contact',
+        3 => 'Echoes in the Nebula',
+        4 => 'The Shattered Accord',
+        5 => 'Warfront of Three Suns',
+        6 => 'Signals from the Deep Gate',
+        7 => 'Storm over the Starbases',
+        8 => 'The Covert Constellation',
+        9 => 'Ruin Keys of the Ancients',
+        10 => 'Collapse at Event Horizon',
+        11 => 'The Last Coalition',
+        12 => 'Crown of the Infinite Map',
+    ];
+    $chapterLabels = [
+        1 => 'Rising Threat',
+        2 => 'Counteroffensive',
+        3 => 'Resolution',
+    ];
+
+    $acts = [];
+    foreach ($actTitles as $actNo => $actTitle) {
+        $acts[$actNo] = [
+            'title' => $actTitle,
+            'chapters' => [
+                1 => 'Chapter 1: ' . $chapterLabels[1],
+                2 => 'Chapter 2: ' . $chapterLabels[2],
+                3 => 'Chapter 3: ' . $chapterLabels[3],
+            ],
+        ];
+    }
+    return $acts;
+}
+
 $main = isset($_GET['id']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['id'])) : 'empire';
 $sub = isset($_GET['atype']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['atype'])) : '';
 
@@ -1355,13 +2056,13 @@ $subDefaults = [
 $subLabels = [
     'empire' => ['home' => 'Home', 'overview' => 'Overview', 'planets' => 'Planets', 'command' => 'Command', 'progress' => 'Progression', 'logistics' => 'Logistics Hub', 'doctrine' => 'Doctrine Board'],
     'military' => ['personnel' => 'Personnel', 'troops' => 'Troop Catalog', 'armory' => 'Armory', 'training' => 'Training', 'fleet' => 'Fleet', 'navy' => 'Navy Ops', 'defensegrid' => 'Defense Grid'],
-    'operations' => ['attack' => 'Attack', 'raid' => 'Raid', 'spy' => 'Spy', 'logs' => 'Combat Logs', 'commandqueue' => 'Command Queue', 'diplomacyops' => 'Diplomatic Ops'],
-    'economy' => ['banking' => 'Banking', 'market' => 'Market', 'technology' => 'Technology', 'production' => 'Production', 'resources' => 'Resource Hub', 'buildings' => 'OGame Buildings', 'logistics' => 'Supply Logistics', 'treasury' => 'Treasury Policy'],
+    'operations' => ['attack' => 'Attack', 'raid' => 'Raid', 'spy' => 'Spy', 'logs' => 'Combat Logs', 'commandqueue' => 'Command Queue', 'diplomacyops' => 'Diplomatic Ops', 'rts' => 'RTS Turn System'],
+    'economy' => ['banking' => 'Banking', 'market' => 'Market', 'technology' => 'Technology', 'production' => 'Production', 'resources' => 'Resource Hub', 'buildings' => 'OGame Buildings', 'logistics' => 'Supply Logistics', 'treasury' => 'Treasury Policy', 'store' => 'In-Game Store', 'battlepass' => 'Battle Pass', 'seasonpass' => 'Season Pass'],
     'diplomacy' => ['alliance' => 'Alliance', 'relations' => 'Relations', 'messages' => 'Messages', 'commander' => 'Commander Chain', 'governance' => 'Commander Governance', 'treaties' => 'Treaties', 'councils' => 'Councils'],
     'intel' => ['rankings' => 'Rankings', 'reports' => 'Battle Reports', 'threats' => 'Threat Matrix', 'map' => 'Sector Map', 'signals' => 'Signal Watch', 'dossiers' => 'Target Dossiers'],
     'community' => ['forums' => 'Forums', 'updates' => 'Updates', 'contact' => 'Contact', 'faq' => 'FAQ', 'events' => 'Events', 'academy' => 'Academy'],
     'help' => ['newplayer' => 'New Player', 'mechanics' => 'Mechanics', 'glossary' => 'Glossary', 'support' => 'Support', 'troubleshooting' => 'Troubleshooting', 'hotkeys' => 'Quick Commands'],
-    'universe' => ['galaxies' => 'Galaxies', 'planets' => 'Planets & Moons', 'objects' => 'Interstellar Objects', 'expedition' => 'Expedition', 'bases' => 'Stations & Bases', 'travel' => 'Jumpgate & Hyperspace', 'lanes' => 'Transit Lanes', 'anomalies' => 'Anomaly Index', 'seeds' => 'Universe Seeds'],
+    'universe' => ['galaxies' => 'Galaxies', 'planets' => 'Planets & Moons', 'objects' => 'Interstellar Objects', 'expedition' => 'Expedition', 'bases' => 'Stations & Bases', 'travel' => 'Jumpgate & Hyperspace', 'lanes' => 'Transit Lanes', 'anomalies' => 'Anomaly Index', 'seeds' => 'Universe Seeds', 'events' => 'Universe Events', 'worldboss' => 'World Boss', 'story' => 'Story Campaign'],
     'research' => ['tree' => 'Research Tree', 'techlib' => 'Technology Tree', 'infrastructure' => 'Tech Library Buildings', 'classes' => 'Class Library', 'talents' => 'Talent Library', 'stargate' => 'Stargate Tech', 'projects' => 'Projects', 'labs' => 'Lab Network', 'blueprints' => 'Blueprint Systems'],
 ];
 
@@ -1454,6 +2155,12 @@ $systemDetails = [
             'functions' => ['Open combat logs', 'Review mission outcomes', 'Refine strategic doctrine'],
             'features' => ['Action history access', 'Debrief framing', 'Feedback loop support'],
             'logic' => ['Historical outcomes reveal matchup patterns', 'Loss analysis informs retraining', 'Frequent review improves tactical consistency'],
+        ],
+        'rts' => [
+            'brief' => 'Turn-based RTS command console for action-turn cycles, doctrine shifts, and queued operations.',
+            'functions' => ['Queue recon, assault, fortify, logistics, and sabotage cycles', 'Run one or many cycles as ETAs complete', 'Adjust doctrine and tempo by campaign phase'],
+            'features' => ['Persistent RTS command state', 'Priority queue with ETA and controls', 'Action-turn synchronized cycle execution'],
+            'logic' => ['Every cycle spends action turns and strategic resources', 'Queue processing validates readiness before execution', 'State metrics track pressure, reserves, morale, and command XP'],
         ],
     ],
     'economy' => [
@@ -1641,6 +2348,24 @@ $systemDetails = [
             'features' => ['Persistent travel routes', 'Transit queue with ETA/return states', 'Fuel and sustainment cost simulation'],
             'logic' => ['Jump Gates bootstrap lane access', 'Stargates improve deep-route safety and throughput', 'Hyperspace Core levels reduce cooldown and improve long-haul efficiency'],
         ],
+        'events' => [
+            'brief' => 'Universe-wide event engine with rotating crisis signals and response tracks by galaxy.',
+            'functions' => ['Scan for active crisis events', 'Resolve event nodes for campaign points', 'Stabilize threat pressure before boss phases'],
+            'features' => ['Persistent event cycle state', 'Event point progression', 'Threat scaling tied to operations'],
+            'logic' => ['Event scans consume action turns and logistics fuel', 'Successful responses increase campaign progression', 'Unmanaged threats increase world boss pressure'],
+        ],
+        'worldboss' => [
+            'brief' => 'Galaxy-class world boss system with spawn, assault, and defeat reward loops.',
+            'functions' => ['Spawn sector boss encounters', 'Launch action-turn assaults', 'Cycle reward payouts and next-tier scaling'],
+            'features' => ['Persistent boss HP state', 'Boss phase statuses', 'Defeat rewards and escalation'],
+            'logic' => ['Boss assaults spend turns and combat reserves', 'Boss HP scales by level and threat pressure', 'Defeats grant economy and campaign progression rewards'],
+        ],
+        'story' => [
+            'brief' => 'Narrative campaign system with prologue, 12 acts, chapter progression, and story logs.',
+            'functions' => ['Unlock and run prologue mission flow', 'Advance through 12 acts with chapter checkpoints', 'Record per-log story entries for campaign history'],
+            'features' => ['Act/chapter progression state', 'Prologue unlock gate', 'Persistent story log timeline'],
+            'logic' => ['Story progression spends turns and consumes campaign momentum', 'Act completion gates later narrative phases', 'Story logs preserve key commander outcomes'],
+        ],
     ],
     'research' => [
         'tree' => [
@@ -1693,7 +2418,12 @@ $troopPage = isset($_GET['tp']) ? (int)$_GET['tp'] : 1;
 $troopPickId = isset($_GET['tpid']) ? (int)$_GET['tpid'] : 0;
 $troopPickQty = isset($_GET['tqty']) ? (int)$_GET['tqty'] : 1;
 $troopQueueId = isset($_GET['tqid']) ? (int)$_GET['tqid'] : 0;
+$opsQueueId = isset($_GET['oqid']) ? (int)$_GET['oqid'] : 0;
+$eventTargetGalaxy = isset($_GET['gal']) ? (int)$_GET['gal'] : 1;
 $targetWorld = isset($_GET['target']) ? (int)$_GET['target'] : 0;
+$targetMoonNo = isset($_GET['moon']) ? (int)$_GET['moon'] : 0;
+$fieldBuildCode = isset($_GET['bld']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['bld'])) : '';
+$fieldTargetType = isset($_GET['ftype']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['ftype'])) : 'planet';
 $bpId = isset($_GET['bp']) ? (int)$_GET['bp'] : 0;
 $bpQty = isset($_GET['qty']) ? (int)$_GET['qty'] : 1;
 $bpMode = isset($_GET['mode']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['mode'])) : 'me';
@@ -1704,6 +2434,60 @@ $personnel = $s->getPersonnel($uid);
 $bank = $s->bank();
 $userStats = $s->getUserInfo($uid);
 $uCfg = universeConfig();
+$pageActionStatus = '';
+$planetRegistryRows = [];
+$ownedMoonRows = [];
+$planetRegistryQ = $s->query("SELECT pid, plnt_name, plnt_size, isHome FROM planets WHERE uid=" . $uid . " ORDER BY isHome DESC, pid ASC LIMIT 100");
+if ($planetRegistryQ) {
+    while ($planetRow = $planetRegistryQ->fetch_assoc()) {
+        $planetRegistryRows[] = $planetRow;
+    }
+}
+$ownedMoonQ = $s->query("SELECT moon_id, moon_name, pid FROM moon_data WHERE uid=" . $uid . " ORDER BY moon_id ASC LIMIT 100");
+if ($ownedMoonQ) {
+    while ($moonRow = $ownedMoonQ->fetch_assoc()) {
+        $ownedMoonRows[] = $moonRow;
+    }
+}
+
+if ($main === 'universe' && $cmd === 'rename_entity') {
+    $entityType = isset($_GET['entity']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['entity'])) : '';
+    $newNameRaw = trim((string)(isset($_GET['new_name']) ? $_GET['new_name'] : ''));
+    $finalName = dbSafeEntityName($newNameRaw);
+    $fallbackName = 'Unnamed';
+    if ($entityType === 'planet') {
+        $pid = isset($_GET['pid']) ? (int)$_GET['pid'] : 0;
+        $fallbackName = $pid > 0 ? ('Planet ' . $pid) : 'Planet';
+        if ($pid > 0) {
+            if ($finalName === '') {
+                $finalName = dbSafeEntityName($fallbackName);
+            }
+            $s->query("UPDATE planets SET plnt_name='" . $finalName . "' WHERE uid=" . $uid . " AND pid=" . $pid . " LIMIT 1");
+            $pageActionStatus = 'Planet renamed to ' . h($finalName) . '.';
+        } else {
+            $pageActionStatus = 'Planet rename failed: choose a colony first.';
+        }
+    } elseif ($entityType === 'moon') {
+        $moonId = isset($_GET['moon_id']) ? (int)$_GET['moon_id'] : 0;
+        $fallbackName = $moonId > 0 ? ('Moon ' . $moonId) : 'Moon';
+        if ($moonId > 0) {
+            if ($finalName === '') {
+                $finalName = dbSafeEntityName($fallbackName);
+            }
+            $existingMoonQ = $s->query("SELECT moon_id FROM moon_data WHERE uid=" . $uid . " AND moon_id=" . $moonId . " LIMIT 1");
+            if (!$existingMoonQ || $existingMoonQ->num_rows === 0) {
+                $s->query("INSERT INTO moon_data (uid, moon_name, pid) VALUES (" . $uid . ", '', 0)");
+            }
+            $s->query("UPDATE moon_data SET moon_name='" . $finalName . "' WHERE uid=" . $uid . " AND moon_id=" . $moonId . " LIMIT 1");
+            $pageActionStatus = 'Moon renamed to ' . h($finalName) . '.';
+        } else {
+            $pageActionStatus = 'Moon rename failed: choose a moon first.';
+        }
+    } else {
+        $pageActionStatus = 'Naming failed: unsupported entity type.';
+    }
+}
+
 $planets = $s->getUserPlanets($uid);
 $universeActionStatus = '';
 if ($main === 'universe' && $cmd === 'colonize') {
@@ -1716,12 +2500,243 @@ $techView = $s->viewTech();
 $researchHub = buildResearchDirectorate($uid, $techView, $personnel);
 $resourceHub = resourceEnsureAndTick($s, $uid, $baseData, $planets, $techView);
 
-$pageActionStatus = '';
 $blueprintCatalog = blueprintCatalog();
 $blueprintOwned = [];
 $blueprintHangar = [];
 $seedSlice = ['rows' => [], 'page' => 1, 'perPage' => 25, 'maxPage' => 1, 'start' => 0, 'end' => 0, 'total' => 0];
 $seedBookmarks = [];
+$operationsRtsCatalog = [
+    'recon' => ['label' => 'Deep Recon Sweep', 'turn_cost' => 2, 'naq_cost' => 0, 'metal_cost' => 0, 'crystal_cost' => 0, 'deut_cost' => 2200, 'food_cost' => 900, 'water_cost' => 700, 'need_untrained' => 0, 'untrained_delta' => 0, 'attack_delta' => 0, 'defense_delta' => 0, 'covert_delta' => 35, 'anticovert_delta' => 20, 'xp_gain' => 8, 'pressure_delta' => 2, 'reserve_delta' => -1, 'morale_delta' => 1, 'eta_seconds' => 210],
+    'assault' => ['label' => 'Shock Assault Wave', 'turn_cost' => 4, 'naq_cost' => 90000, 'metal_cost' => 0, 'crystal_cost' => 0, 'deut_cost' => 7200, 'food_cost' => 4200, 'water_cost' => 0, 'need_untrained' => 60, 'untrained_delta' => -60, 'attack_delta' => 120, 'defense_delta' => 45, 'covert_delta' => 0, 'anticovert_delta' => 0, 'xp_gain' => 15, 'pressure_delta' => 6, 'reserve_delta' => -3, 'morale_delta' => 2, 'eta_seconds' => 300],
+    'fortify' => ['label' => 'Defense Fortification Cycle', 'turn_cost' => 3, 'naq_cost' => 0, 'metal_cost' => 22000, 'crystal_cost' => 14000, 'deut_cost' => 0, 'food_cost' => 0, 'water_cost' => 0, 'need_untrained' => 0, 'untrained_delta' => 0, 'attack_delta' => 0, 'defense_delta' => 140, 'covert_delta' => 0, 'anticovert_delta' => 60, 'xp_gain' => 12, 'pressure_delta' => -2, 'reserve_delta' => 5, 'morale_delta' => 1, 'eta_seconds' => 260],
+    'logistics' => ['label' => 'Reserve Logistics Surge', 'turn_cost' => 2, 'naq_cost' => 65000, 'metal_cost' => 0, 'crystal_cost' => 0, 'deut_cost' => 0, 'food_cost' => 3000, 'water_cost' => 3000, 'need_untrained' => 0, 'untrained_delta' => 260, 'attack_delta' => 0, 'defense_delta' => 0, 'covert_delta' => 0, 'anticovert_delta' => 0, 'xp_gain' => 9, 'pressure_delta' => -1, 'reserve_delta' => 4, 'morale_delta' => 2, 'eta_seconds' => 240],
+    'sabotage' => ['label' => 'Covert Sabotage Grid', 'turn_cost' => 3, 'naq_cost' => 50000, 'metal_cost' => 0, 'crystal_cost' => 0, 'deut_cost' => 4600, 'food_cost' => 0, 'water_cost' => 0, 'need_untrained' => 0, 'untrained_delta' => 0, 'attack_delta' => 0, 'defense_delta' => 0, 'covert_delta' => 90, 'anticovert_delta' => 0, 'xp_gain' => 13, 'pressure_delta' => 4, 'reserve_delta' => -2, 'morale_delta' => 0, 'eta_seconds' => 280],
+];
+$operationsRtsState = null;
+$operationsRtsTurnBalance = 0;
+$universeEventState = null;
+$universeBossState = null;
+$universeStoryState = null;
+$universeStoryActs = universeStoryActs();
+$universeColonyProfiles = [];
+$universeColonyFields = [];
+
+if (($main === 'economy' && ($sub === 'store' || $sub === 'battlepass' || $sub === 'seasonpass')) || ($main === 'economy' && strpos($cmd, 'store_') === 0) || ($main === 'economy' && strpos($cmd, 'pass_') === 0)) {
+    $s->query("CREATE TABLE IF NOT EXISTS economy_store_catalog (
+        item_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        item_key VARCHAR(40) NOT NULL UNIQUE,
+        item_name VARCHAR(80) NOT NULL,
+        item_type VARCHAR(24) NOT NULL DEFAULT 'resource',
+        price_nq BIGINT NOT NULL DEFAULT 0,
+        price_metal BIGINT NOT NULL DEFAULT 0,
+        price_crystal BIGINT NOT NULL DEFAULT 0,
+        price_deut BIGINT NOT NULL DEFAULT 0,
+        price_energy BIGINT NOT NULL DEFAULT 0,
+        reward_amount BIGINT NOT NULL DEFAULT 0,
+        reward_label VARCHAR(120) NOT NULL DEFAULT '',
+        rarity VARCHAR(16) NOT NULL DEFAULT 'common',
+        active TINYINT(1) NOT NULL DEFAULT 1
+    )");
+    $s->query("CREATE TABLE IF NOT EXISTS economy_store_purchases (
+        uid INT NOT NULL,
+        item_key VARCHAR(40) NOT NULL,
+        purchased_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(uid, item_key)
+    )");
+    $s->query("CREATE TABLE IF NOT EXISTS economy_pass_progress (
+        uid INT NOT NULL PRIMARY KEY,
+        season_id INT NOT NULL DEFAULT 1,
+        battle_pass_level INT NOT NULL DEFAULT 0,
+        battle_pass_xp INT NOT NULL DEFAULT 0,
+        season_pass_level INT NOT NULL DEFAULT 0,
+        season_pass_xp INT NOT NULL DEFAULT 0,
+        last_claimed_level INT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+    $s->query("INSERT IGNORE INTO economy_pass_progress (uid) VALUES (" . $uid . ")");
+    $s->query("CREATE TABLE IF NOT EXISTS economy_pass_claims (
+        uid INT NOT NULL,
+        pass_type VARCHAR(20) NOT NULL,
+        level INT NOT NULL,
+        reward_key VARCHAR(64) NOT NULL,
+        claimed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY(uid, pass_type, level, reward_key)
+    )");
+    $storeCatalog = [
+        ['item_key' => 'energy_boost', 'item_name' => 'Energy Burst', 'item_type' => 'resource', 'price_nq' => 25000, 'price_metal' => 0, 'price_crystal' => 0, 'price_deut' => 0, 'price_energy' => 0, 'reward_amount' => 120000, 'reward_label' => 'Energy', 'rarity' => 'common'],
+        ['item_key' => 'water_refill', 'item_name' => 'Water Refill', 'item_type' => 'resource', 'price_nq' => 18000, 'price_metal' => 0, 'price_crystal' => 0, 'price_deut' => 0, 'price_energy' => 0, 'reward_amount' => 90000, 'reward_label' => 'Water', 'rarity' => 'common'],
+        ['item_key' => 'crystal_reserve', 'item_name' => 'Crystal Reserve', 'item_type' => 'resource', 'price_nq' => 32000, 'price_metal' => 0, 'price_crystal' => 0, 'price_deut' => 0, 'price_energy' => 0, 'reward_amount' => 140000, 'reward_label' => 'Crystal', 'rarity' => 'common'],
+        ['item_key' => 'food_cache', 'item_name' => 'Food Cache', 'item_type' => 'resource', 'price_nq' => 28000, 'price_metal' => 0, 'price_crystal' => 0, 'price_deut' => 0, 'price_energy' => 0, 'reward_amount' => 110000, 'reward_label' => 'Food', 'rarity' => 'common'],
+        ['item_key' => 'command_cache', 'item_name' => 'Command Cache', 'item_type' => 'resource', 'price_nq' => 50000, 'price_metal' => 0, 'price_crystal' => 0, 'price_deut' => 0, 'price_energy' => 0, 'reward_amount' => 250000, 'reward_label' => 'Naquadah', 'rarity' => 'rare'],
+        ['item_key' => 'fleet_booster', 'item_name' => 'Fleet Booster', 'item_type' => 'boost', 'price_nq' => 80000, 'price_metal' => 0, 'price_crystal' => 0, 'price_deut' => 0, 'price_energy' => 0, 'reward_amount' => 1, 'reward_label' => 'Fleet tempo boost', 'rarity' => 'epic'],
+    ];
+    foreach ($storeCatalog as $item) {
+        $s->query("INSERT IGNORE INTO economy_store_catalog (item_key, item_name, item_type, price_nq, price_metal, price_crystal, price_deut, price_energy, reward_amount, reward_label, rarity) VALUES ('" . pageSafeToken($item['item_key']) . "', '" . pageSafeToken($item['item_name']) . "', '" . pageSafeToken($item['item_type']) . "', " . (int)$item['price_nq'] . ", " . (int)$item['price_metal'] . ", " . (int)$item['price_crystal'] . ", " . (int)$item['price_deut'] . ", " . (int)$item['price_energy'] . ", " . (int)$item['reward_amount'] . ", '" . pageSafeToken($item['reward_label']) . "', '" . pageSafeToken($item['rarity']) . "')");
+    }
+    $passProgressQ = $s->query("SELECT season_id, battle_pass_level, battle_pass_xp, season_pass_level, season_pass_xp, last_claimed_level FROM economy_pass_progress WHERE uid=" . $uid . " LIMIT 1");
+    $passProgress = $passProgressQ && $passProgressQ->num_rows > 0 ? $passProgressQ->fetch_object() : (object)['season_id' => 1, 'battle_pass_level' => 0, 'battle_pass_xp' => 0, 'season_pass_level' => 0, 'season_pass_xp' => 0, 'last_claimed_level' => 0];
+    $purchasedQ = $s->query("SELECT item_key FROM economy_store_purchases WHERE uid=" . $uid . "");
+    $purchasedKeys = [];
+    if ($purchasedQ) {
+        while ($row = $purchasedQ->fetch_object()) {
+            $purchasedKeys[(string)$row->item_key] = true;
+        }
+    }
+    $storeRows = [];
+    $storeQ = $s->query("SELECT item_key, item_name, item_type, price_nq, price_metal, price_crystal, price_deut, price_energy, reward_amount, reward_label, rarity FROM economy_store_catalog WHERE active=1 ORDER BY price_nq ASC");
+    if ($storeQ) {
+        while ($row = $storeQ->fetch_assoc()) {
+            $storeRows[] = $row;
+        }
+    }
+    if (isset($_GET['cmd']) && $cmd === 'store_purchase') {
+        $itemKey = isset($_GET['item']) ? preg_replace('/[^a-z_]/', '', strtolower((string)$_GET['item'])) : '';
+        $itemRow = null;
+        $resourceCurrent = $resourceHub['current'] ?? ['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'population' => 0, 'energy' => 0];
+        foreach ($storeRows as $row) {
+            if ($row['item_key'] === $itemKey) {
+                $itemRow = $row;
+                break;
+            }
+        }
+        if ($itemRow === null) {
+            $pageActionStatus = 'Store item not found.';
+        } else {
+            $canAfford = true;
+            $canAfford = $canAfford && ((int)$bank->onHand >= (int)$itemRow['price_nq']);
+            $canAfford = $canAfford && ((int)$resourceCurrent['metal'] >= (int)$itemRow['price_metal']);
+            $canAfford = $canAfford && ((int)$resourceCurrent['crystal'] >= (int)$itemRow['price_crystal']);
+            $canAfford = $canAfford && ((int)$resourceCurrent['deuterium'] >= (int)$itemRow['price_deut']);
+            $canAfford = $canAfford && ((int)$resourceCurrent['energy'] >= (int)$itemRow['price_energy']);
+            if (!$canAfford) {
+                $pageActionStatus = 'Insufficient resources for that store purchase.';
+            } elseif (isset($purchasedKeys[$itemKey])) {
+                $pageActionStatus = 'That item has already been purchased.';
+            } else {
+                $s->query("UPDATE bank SET onHand=onHand-" . (int)$itemRow['price_nq'] . " WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE player_resources SET metal=metal-" . (int)$itemRow['price_metal'] . ", crystal=crystal-" . (int)$itemRow['price_crystal'] . ", deuterium=deuterium-" . (int)$itemRow['price_deut'] . ", energy=energy-" . (int)$itemRow['price_energy'] . " WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("INSERT INTO economy_store_purchases (uid, item_key) VALUES (" . $uid . ", '" . pageSafeToken($itemKey) . "')");
+                if ((string)$itemRow['item_type'] === 'resource') {
+                    $rewardLabel = (string)$itemRow['reward_label'];
+                    if ($rewardLabel === 'Naquadah') {
+                        $s->query("UPDATE bank SET onHand=onHand+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    } elseif ($rewardLabel === 'Metal') {
+                        $s->query("UPDATE player_resources SET metal=metal+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    } elseif ($rewardLabel === 'Crystal') {
+                        $s->query("UPDATE player_resources SET crystal=crystal+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    } elseif ($rewardLabel === 'Deuterium') {
+                        $s->query("UPDATE player_resources SET deuterium=deuterium+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    } elseif ($rewardLabel === 'Food') {
+                        $s->query("UPDATE player_resources SET food=food+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    } elseif ($rewardLabel === 'Water') {
+                        $s->query("UPDATE player_resources SET water=water+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    } else {
+                        $s->query("UPDATE player_resources SET energy=energy+" . (int)$itemRow['reward_amount'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    }
+                } else {
+                    $s->query("UPDATE economy_pass_progress SET battle_pass_xp=battle_pass_xp+100, season_pass_xp=season_pass_xp+120 WHERE uid=" . $uid . " LIMIT 1");
+                }
+                $pageActionStatus = 'Purchased ' . h($itemRow['item_name']) . '.';
+                $purchasedKeys[$itemKey] = true;
+            }
+        }
+    }
+    if (isset($_GET['cmd']) && $cmd === 'pass_claim') {
+        $passType = isset($_GET['pass']) ? preg_replace('/[^a-z]/', '', strtolower((string)$_GET['pass'])) : 'battle';
+        $level = isset($_GET['level']) ? (int)$_GET['level'] : 0;
+        $rewardKey = isset($_GET['reward']) ? preg_replace('/[^a-z_]/', '', strtolower((string)$_GET['reward'])) : '';
+        if ($passType === 'battle') {
+            $currentLevel = (int)$passProgress->battle_pass_level;
+            $xp = (int)$passProgress->battle_pass_xp;
+            $targetLevel = max(1, min(100, $level));
+            if ($targetLevel > $currentLevel) {
+                $s->query("UPDATE economy_pass_progress SET battle_pass_level=" . $targetLevel . ", battle_pass_xp=" . $xp . " WHERE uid=" . $uid . " LIMIT 1");
+                $passProgress->battle_pass_level = $targetLevel;
+            }
+            $rewardKey = $rewardKey !== '' ? $rewardKey : 'battle_reward_' . $targetLevel;
+        } else {
+            $rewardKey = $rewardKey !== '' ? $rewardKey : 'season_reward_' . $level;
+        }
+        $claimQ = $s->query("SELECT 1 FROM economy_pass_claims WHERE uid=" . $uid . " AND pass_type='" . pageSafeToken($passType) . "' AND level=" . $level . " AND reward_key='" . pageSafeToken($rewardKey) . "' LIMIT 1");
+        if ($claimQ && $claimQ->num_rows > 0) {
+            $pageActionStatus = 'Reward already claimed.';
+        } else {
+            $s->query("INSERT INTO economy_pass_claims (uid, pass_type, level, reward_key) VALUES (" . $uid . ", '" . pageSafeToken($passType) . "', " . $level . ", '" . pageSafeToken($rewardKey) . "')");
+            if ($passType === 'battle') {
+                $rewardAmount = 150000;
+                $rewardLabel = 'Energy';
+                if ($level % 5 === 0) {
+                    $rewardAmount = 220000;
+                    $rewardLabel = 'Naquadah';
+                } elseif ($level % 3 === 0) {
+                    $rewardAmount = 90000;
+                    $rewardLabel = 'Water';
+                } elseif ($level % 2 === 0) {
+                    $rewardAmount = 120000;
+                    $rewardLabel = 'Metal';
+                }
+                if ($rewardLabel === 'Naquadah') {
+                    $s->query("UPDATE bank SET onHand=onHand+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                } elseif ($rewardLabel === 'Metal') {
+                    $s->query("UPDATE player_resources SET metal=metal+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                } elseif ($rewardLabel === 'Water') {
+                    $s->query("UPDATE player_resources SET water=water+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                } else {
+                    $s->query("UPDATE player_resources SET energy=energy+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                }
+            } else {
+                $rewardAmount = 180000;
+                $rewardLabel = 'Crystal';
+                if ($level % 5 === 0) {
+                    $rewardAmount = 300000;
+                    $rewardLabel = 'Food';
+                } elseif ($level % 3 === 0) {
+                    $rewardAmount = 110000;
+                    $rewardLabel = 'Deuterium';
+                } elseif ($level % 2 === 0) {
+                    $rewardAmount = 140000;
+                    $rewardLabel = 'Water';
+                }
+                if ($rewardLabel === 'Water') {
+                    $s->query("UPDATE player_resources SET water=water+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                } elseif ($rewardLabel === 'Deuterium') {
+                    $s->query("UPDATE player_resources SET deuterium=deuterium+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                } elseif ($rewardLabel === 'Food') {
+                    $s->query("UPDATE player_resources SET food=food+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                } else {
+                    $s->query("UPDATE player_resources SET crystal=crystal+" . $rewardAmount . " WHERE uid=" . $uid . " LIMIT 1");
+                }
+            }
+            $pageActionStatus = 'Claimed pass reward for level ' . $level . '.';
+        }
+    }
+    if (isset($_GET['cmd']) && $cmd === 'pass_gain') {
+        $xpGain = isset($_GET['xp']) ? (int)$_GET['xp'] : 120;
+        $s->query("UPDATE economy_pass_progress SET battle_pass_xp=battle_pass_xp+" . $xpGain . ", season_pass_xp=season_pass_xp+" . (int)round($xpGain * 0.8) . " WHERE uid=" . $uid . " LIMIT 1");
+        $pageActionStatus = 'Pass experience updated.';
+    }
+    $passProgressQ = $s->query("SELECT season_id, battle_pass_level, battle_pass_xp, season_pass_level, season_pass_xp, last_claimed_level FROM economy_pass_progress WHERE uid=" . $uid . " LIMIT 1");
+    $passProgress = $passProgressQ && $passProgressQ->num_rows > 0 ? $passProgressQ->fetch_object() : (object)['season_id' => 1, 'battle_pass_level' => 0, 'battle_pass_xp' => 0, 'season_pass_level' => 0, 'season_pass_xp' => 0, 'last_claimed_level' => 0];
+    $battleLevels = [];
+    for ($i = 1; $i <= 10; $i++) {
+        $battleLevels[] = ['level' => $i, 'xp' => $i * 120, 'reward' => 'Tier ' . $i . ' reward', 'bonus' => ($i % 2 === 0 ? 'Naquadah' : 'Energy')];
+    }
+    $seasonLevels = [];
+    for ($i = 1; $i <= 10; $i++) {
+        $seasonLevels[] = ['level' => $i, 'xp' => $i * 160, 'reward' => 'Season ' . $i . ' reward', 'bonus' => ($i % 2 === 0 ? 'Water' : 'Metal')];
+    }
+    $claimedPassRows = [];
+    $claimedPassQ = $s->query("SELECT pass_type, level, reward_key FROM economy_pass_claims WHERE uid=" . $uid . "");
+    if ($claimedPassQ) {
+        while ($row = $claimedPassQ->fetch_assoc()) {
+            $claimedPassRows[] = $row;
+        }
+    }
+    $claimedPassSet = [];
+    foreach ($claimedPassRows as $claimedRow) {
+        $claimedPassSet[(string)$claimedRow['pass_type'] . ':' . (int)$claimedRow['level']] = true;
+    }
+}
 
 if ($main === 'military' || strpos($cmd, 'mil_') === 0) {
     $s->query("CREATE TABLE IF NOT EXISTS military_command_state (
@@ -2108,6 +3123,736 @@ if ($main === 'military' || strpos($cmd, 'mil_') === 0) {
     }
 }
 
+if ($main === 'operations' || strpos($cmd, 'ops_') === 0) {
+    $s->query("CREATE TABLE IF NOT EXISTS operations_rts_state (
+        uid INT NOT NULL PRIMARY KEY,
+        doctrine VARCHAR(24) NOT NULL DEFAULT 'balanced',
+        tempo_mode VARCHAR(24) NOT NULL DEFAULT 'standard',
+        theater_level INT NOT NULL DEFAULT 1,
+        command_xp INT NOT NULL DEFAULT 0,
+        cycle_index INT NOT NULL DEFAULT 0,
+        frontline_pressure INT NOT NULL DEFAULT 45,
+        reserve_integrity INT NOT NULL DEFAULT 60,
+        morale_index INT NOT NULL DEFAULT 55,
+        last_cycle_at TIMESTAMP NULL DEFAULT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+    $s->query("INSERT IGNORE INTO operations_rts_state (uid) VALUES (" . $uid . ")");
+    $s->query("CREATE TABLE IF NOT EXISTS operations_turn_queue (
+        queue_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uid INT NOT NULL,
+        operation_code VARCHAR(30) NOT NULL,
+        operation_label VARCHAR(80) NOT NULL,
+        turn_cost INT NOT NULL DEFAULT 1,
+        eta_seconds INT NOT NULL DEFAULT 180,
+        reward_focus VARCHAR(30) NOT NULL DEFAULT 'mixed',
+        priority_order INT NOT NULL DEFAULT 0,
+        status VARCHAR(20) NOT NULL DEFAULT 'queued',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        completed_at TIMESTAMP NULL DEFAULT NULL
+    )");
+    $prioColQ = $s->query("SHOW COLUMNS FROM operations_turn_queue LIKE 'priority_order'");
+    $hasPriority = $prioColQ ? (int)$prioColQ->num_rows : 0;
+    if ($hasPriority === 0) {
+        $s->query("ALTER TABLE operations_turn_queue ADD COLUMN priority_order INT NOT NULL DEFAULT 0 AFTER reward_focus");
+    }
+
+    $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+    $operationsRtsTurnBalance = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+    $stateQ = $s->query("SELECT doctrine, tempo_mode, theater_level, command_xp, cycle_index, frontline_pressure, reserve_integrity, morale_index, UNIX_TIMESTAMP(last_cycle_at) AS last_cycle_ts
+        FROM operations_rts_state WHERE uid=" . $uid . " LIMIT 1");
+    $operationsRtsState = $stateQ ? $stateQ->fetch_object() : null;
+
+    if (strpos($cmd, 'ops_') === 0) {
+        if ($cmd === 'ops_set_doctrine_aggressive' || $cmd === 'ops_set_doctrine_balanced' || $cmd === 'ops_set_doctrine_defensive' || $cmd === 'ops_set_doctrine_covert') {
+            $doctrine = 'balanced';
+            if ($cmd === 'ops_set_doctrine_aggressive') {
+                $doctrine = 'aggressive';
+            }
+            if ($cmd === 'ops_set_doctrine_defensive') {
+                $doctrine = 'defensive';
+            }
+            if ($cmd === 'ops_set_doctrine_covert') {
+                $doctrine = 'covert';
+            }
+            $s->query("UPDATE operations_rts_state SET doctrine='" . $doctrine . "' WHERE uid=" . $uid . " LIMIT 1");
+            $pageActionStatus = 'RTS doctrine updated to ' . ucfirst($doctrine) . '.';
+        }
+
+        if ($cmd === 'ops_set_tempo_standard' || $cmd === 'ops_set_tempo_surge' || $cmd === 'ops_set_tempo_overwatch') {
+            $tempo = 'standard';
+            if ($cmd === 'ops_set_tempo_surge') {
+                $tempo = 'surge';
+            }
+            if ($cmd === 'ops_set_tempo_overwatch') {
+                $tempo = 'overwatch';
+            }
+            $s->query("UPDATE operations_rts_state SET tempo_mode='" . $tempo . "' WHERE uid=" . $uid . " LIMIT 1");
+            $pageActionStatus = 'RTS tempo mode updated to ' . ucfirst($tempo) . '.';
+        }
+
+        if ($cmd === 'ops_queue_recon' || $cmd === 'ops_queue_assault' || $cmd === 'ops_queue_fortify' || $cmd === 'ops_queue_logistics' || $cmd === 'ops_queue_sabotage') {
+            $opCode = str_replace('ops_queue_', '', $cmd);
+            if (!isset($operationsRtsCatalog[$opCode])) {
+                $pageActionStatus = 'RTS queue failed: operation code not recognized.';
+            } else {
+                $queuedCountQ = $s->query("SELECT COUNT(*) AS c FROM operations_turn_queue WHERE uid=" . $uid . " AND status='queued'");
+                $queuedCount = $queuedCountQ ? (int)($queuedCountQ->fetch_object()->c ?? 0) : 0;
+                if ($queuedCount >= 40) {
+                    $pageActionStatus = 'RTS queue failed: queue is at capacity (40 queued operations).';
+                } else {
+                    $opCfg = $operationsRtsCatalog[$opCode];
+                    $prioQ = $s->query("SELECT COALESCE(MAX(priority_order), 0) AS p FROM operations_turn_queue WHERE uid=" . $uid . "");
+                    $nextPrio = $prioQ ? ((int)($prioQ->fetch_object()->p ?? 0) + 1) : 1;
+                    $s->query("INSERT INTO operations_turn_queue (uid, operation_code, operation_label, turn_cost, eta_seconds, reward_focus, priority_order, status)
+                        VALUES (" . $uid . ", '" . pageSafeToken($opCode) . "', '" . pageSafeToken((string)$opCfg['label']) . "', " . (int)$opCfg['turn_cost'] . ", " . (int)$opCfg['eta_seconds'] . ", 'mixed', " . $nextPrio . ", 'queued')");
+                    operationsQueueNormalizePriorities($s, $uid);
+                    $pageActionStatus = 'RTS queue updated: ' . (string)$opCfg['label'] . ' added with ETA ' . fnum((int)$opCfg['eta_seconds']) . 's.';
+                }
+            }
+        }
+
+        if ($cmd === 'ops_cycle_run') {
+            $queueQ = $s->query("SELECT queue_id, operation_code, eta_seconds, priority_order, UNIX_TIMESTAMP(created_at) AS created_ts
+                FROM operations_turn_queue
+                WHERE uid=" . $uid . " AND status='queued'
+                ORDER BY priority_order ASC, queue_id ASC LIMIT 1");
+            $qItem = $queueQ ? $queueQ->fetch_object() : null;
+            if (!$qItem) {
+                $pageActionStatus = 'RTS cycle run: no queued operations found.';
+            } else {
+                $elapsed = max(0, time() - (int)$qItem->created_ts);
+                if ($elapsed < (int)$qItem->eta_seconds) {
+                    $remain = (int)$qItem->eta_seconds - $elapsed;
+                    $pageActionStatus = 'RTS cycle run: next operation still preparing (' . fnum($remain) . 's remaining).';
+                } elseif (!isset($operationsRtsCatalog[(string)$qItem->operation_code])) {
+                    $s->query("UPDATE operations_turn_queue SET status='failed', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                    $pageActionStatus = 'RTS cycle run failed: operation profile missing.';
+                } else {
+                    $opCfg = $operationsRtsCatalog[(string)$qItem->operation_code];
+                    $applyResult = operationsApplyCycleAction($s, $uid, $opCfg);
+                    if (strpos($applyResult, 'RTS cycle complete:') === 0) {
+                        $s->query("UPDATE operations_turn_queue SET status='done', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                        $pageActionStatus = $applyResult;
+                    } else {
+                        $s->query("UPDATE operations_turn_queue SET status='failed', completed_at=NOW() WHERE queue_id=" . (int)$qItem->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                        $pageActionStatus = $applyResult;
+                    }
+                }
+            }
+            operationsQueueNormalizePriorities($s, $uid);
+        }
+
+        if ($cmd === 'ops_cycle_run_all') {
+            $sync = operationsQueueProcessReady($s, $uid, $operationsRtsCatalog, 12);
+            operationsQueueNormalizePriorities($s, $uid);
+            $pageActionStatus = 'RTS cycle run-all: processed ' . fnum((int)$sync['processed']) . ', waiting ' . fnum((int)$sync['waiting']) . ', failed ' . fnum((int)$sync['failed']) . '.';
+        }
+
+        if ($cmd === 'ops_queue_cancel') {
+            if ($opsQueueId <= 0) {
+                $pageActionStatus = 'RTS queue cancel failed: invalid queue id.';
+            } else {
+                $rowQ = $s->query("SELECT status FROM operations_turn_queue WHERE queue_id=" . $opsQueueId . " AND uid=" . $uid . " LIMIT 1");
+                $row = $rowQ ? $rowQ->fetch_object() : null;
+                if (!$row) {
+                    $pageActionStatus = 'RTS queue cancel failed: queue row not found.';
+                } elseif ((string)$row->status !== 'queued') {
+                    $pageActionStatus = 'RTS queue cancel skipped: row is already ' . h((string)$row->status) . '.';
+                } else {
+                    $s->query("UPDATE operations_turn_queue SET status='cancelled', completed_at=NOW() WHERE queue_id=" . $opsQueueId . " AND uid=" . $uid . " LIMIT 1");
+                    operationsQueueNormalizePriorities($s, $uid);
+                    $pageActionStatus = 'RTS queue row #' . fnum($opsQueueId) . ' cancelled.';
+                }
+            }
+        }
+
+        if ($cmd === 'ops_queue_up' || $cmd === 'ops_queue_down') {
+            if ($opsQueueId <= 0) {
+                $pageActionStatus = 'RTS queue priority update failed: invalid queue id.';
+            } else {
+                $selfQ = $s->query("SELECT queue_id, priority_order, status FROM operations_turn_queue WHERE queue_id=" . $opsQueueId . " AND uid=" . $uid . " LIMIT 1");
+                $self = $selfQ ? $selfQ->fetch_object() : null;
+                if (!$self) {
+                    $pageActionStatus = 'RTS queue priority update failed: queue row not found.';
+                } elseif ((string)$self->status !== 'queued') {
+                    $pageActionStatus = 'RTS queue priority update skipped: row is already ' . h((string)$self->status) . '.';
+                } else {
+                    $cmp = ($cmd === 'ops_queue_up') ? '<' : '>';
+                    $dir = ($cmd === 'ops_queue_up') ? 'DESC' : 'ASC';
+                    $adjQ = $s->query("SELECT queue_id, priority_order FROM operations_turn_queue
+                        WHERE uid=" . $uid . " AND status='queued' AND priority_order " . $cmp . " " . (int)$self->priority_order . "
+                        ORDER BY priority_order " . $dir . ", queue_id " . $dir . " LIMIT 1");
+                    $adj = $adjQ ? $adjQ->fetch_object() : null;
+                    if (!$adj) {
+                        $pageActionStatus = ($cmd === 'ops_queue_up') ? 'RTS queue row is already highest priority.' : 'RTS queue row is already lowest priority.';
+                    } else {
+                        $selfPrio = (int)$self->priority_order;
+                        $adjPrio = (int)$adj->priority_order;
+                        $s->query("UPDATE operations_turn_queue SET priority_order=" . $adjPrio . " WHERE queue_id=" . (int)$self->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                        $s->query("UPDATE operations_turn_queue SET priority_order=" . $selfPrio . " WHERE queue_id=" . (int)$adj->queue_id . " AND uid=" . $uid . " LIMIT 1");
+                        operationsQueueNormalizePriorities($s, $uid);
+                        $pageActionStatus = 'RTS queue priority updated for row #' . fnum((int)$self->queue_id) . '.';
+                    }
+                }
+            }
+        }
+    }
+
+    if ($sub === 'rts' && $cmd === '') {
+        $sync = operationsQueueProcessReady($s, $uid, $operationsRtsCatalog, 6);
+        operationsQueueNormalizePriorities($s, $uid);
+        if ((int)$sync['processed'] > 0 || (int)$sync['failed'] > 0) {
+            $pageActionStatus = 'RTS auto-sync: processed ' . fnum((int)$sync['processed']) . ', failed ' . fnum((int)$sync['failed']) . ', still waiting ' . fnum((int)$sync['waiting']) . '.';
+        }
+    }
+
+    $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+    $operationsRtsTurnBalance = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+    $stateQ = $s->query("SELECT doctrine, tempo_mode, theater_level, command_xp, cycle_index, frontline_pressure, reserve_integrity, morale_index, UNIX_TIMESTAMP(last_cycle_at) AS last_cycle_ts
+        FROM operations_rts_state WHERE uid=" . $uid . " LIMIT 1");
+    $operationsRtsState = $stateQ ? $stateQ->fetch_object() : null;
+}
+
+if ($main === 'universe' || strpos($cmd, 'uni_') === 0) {
+    ensureUniversePlagueTables($s);
+    ensureUniverseWaterTables($s);
+    $s->query("CREATE TABLE IF NOT EXISTS universe_event_state (
+        uid INT NOT NULL PRIMARY KEY,
+        event_cycle INT NOT NULL DEFAULT 1,
+        current_event VARCHAR(80) NOT NULL DEFAULT 'Calm Front',
+        event_points INT NOT NULL DEFAULT 0,
+        threat_level INT NOT NULL DEFAULT 20,
+        last_event_at TIMESTAMP NULL DEFAULT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+    $s->query("INSERT IGNORE INTO universe_event_state (uid) VALUES (" . $uid . ")");
+    $s->query("CREATE TABLE IF NOT EXISTS universe_event_log (
+        event_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uid INT NOT NULL,
+        galaxy_no INT NOT NULL,
+        event_name VARCHAR(90) NOT NULL,
+        event_type VARCHAR(40) NOT NULL,
+        resolution_status VARCHAR(20) NOT NULL DEFAULT 'open',
+        reward_points INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        resolved_at TIMESTAMP NULL DEFAULT NULL
+    )");
+    $s->query("CREATE TABLE IF NOT EXISTS universe_world_boss (
+        uid INT NOT NULL PRIMARY KEY,
+        boss_name VARCHAR(90) NOT NULL DEFAULT 'Dormant Leviathan',
+        boss_level INT NOT NULL DEFAULT 1,
+        boss_hp BIGINT NOT NULL DEFAULT 0,
+        boss_hp_max BIGINT NOT NULL DEFAULT 0,
+        status VARCHAR(20) NOT NULL DEFAULT 'idle',
+        last_spawn_at TIMESTAMP NULL DEFAULT NULL,
+        last_defeated_at TIMESTAMP NULL DEFAULT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+    $s->query("INSERT IGNORE INTO universe_world_boss (uid) VALUES (" . $uid . ")");
+    $s->query("CREATE TABLE IF NOT EXISTS universe_story_progress (
+        uid INT NOT NULL PRIMARY KEY,
+        prologue_unlocked TINYINT(1) NOT NULL DEFAULT 0,
+        current_act INT NOT NULL DEFAULT 1,
+        current_chapter INT NOT NULL DEFAULT 1,
+        chapter_points INT NOT NULL DEFAULT 0,
+        completed_acts INT NOT NULL DEFAULT 0,
+        last_story_at TIMESTAMP NULL DEFAULT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )");
+    $s->query("INSERT IGNORE INTO universe_story_progress (uid) VALUES (" . $uid . ")");
+    $s->query("CREATE TABLE IF NOT EXISTS universe_story_log (
+        log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uid INT NOT NULL,
+        act_no INT NOT NULL DEFAULT 1,
+        chapter_no INT NOT NULL DEFAULT 1,
+        entry_code VARCHAR(30) NOT NULL,
+        entry_text VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+    $s->query("CREATE TABLE IF NOT EXISTS universe_colony_profiles (
+        uid INT NOT NULL,
+        world_index INT NOT NULL,
+        target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
+        moon_no INT NOT NULL DEFAULT 0,
+        world_type VARCHAR(40) NOT NULL,
+        biome VARCHAR(80) NOT NULL,
+        sub_biome VARCHAR(80) NOT NULL,
+        city_name VARCHAR(90) NOT NULL,
+        district_focus VARCHAR(40) NOT NULL DEFAULT 'balanced',
+        field_total INT NOT NULL DEFAULT 16,
+        field_used INT NOT NULL DEFAULT 0,
+        infrastructure_tier INT NOT NULL DEFAULT 1,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY(uid, world_index, target_type, moon_no)
+    )");
+    $s->query("CREATE TABLE IF NOT EXISTS universe_colony_fields (
+        field_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        uid INT NOT NULL,
+        world_index INT NOT NULL,
+        target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
+        moon_no INT NOT NULL DEFAULT 0,
+        slot_no INT NOT NULL DEFAULT 1,
+        building_code VARCHAR(24) NOT NULL,
+        building_name VARCHAR(90) NOT NULL,
+        building_level INT NOT NULL DEFAULT 1,
+        power_draw INT NOT NULL DEFAULT 0,
+        population_use INT NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_field_slot (uid, world_index, target_type, moon_no, slot_no)
+    )");
+
+    $fieldWorldIndex = $targetWorld > 0 ? $targetWorld : (int)$worldSlice['start'];
+    $fieldWorldIndex = max(1, min((int)$uCfg['maxWorlds'], $fieldWorldIndex));
+    $fieldTargetType = ($fieldTargetType === 'moon') ? 'moon' : 'planet';
+    $selectedWorld = universeWorldByIndex($uid, $planets, $fieldWorldIndex, $uCfg);
+
+    $planetFieldTotal = max(16, ((int)$selectedWorld['slots'] * 8) + (int)floor((int)$selectedWorld['habitability'] / 5));
+    $planetCityName = 'Colony City ' . $fieldWorldIndex;
+    $s->query("INSERT IGNORE INTO universe_colony_profiles
+        (uid, world_index, target_type, moon_no, world_type, biome, sub_biome, city_name, field_total)
+        VALUES (
+            " . $uid . ",
+            " . $fieldWorldIndex . ",
+            'planet',
+            0,
+            '" . pageSafeToken((string)$selectedWorld['type']) . "',
+            '" . pageSafeToken((string)$selectedWorld['biome']) . "',
+            '" . pageSafeToken((string)$selectedWorld['subBiome']) . "',
+            '" . pageSafeToken($planetCityName) . "',
+            " . $planetFieldTotal . "
+        )");
+
+    $moonCount = (int)($selectedWorld['moons'] ?? 0);
+    for ($mn = 1; $mn <= $moonCount; $mn++) {
+        $moonFieldTotal = max(6, 4 + ($mn * 2) + (int)floor((int)$selectedWorld['habitability'] / 18));
+        $moonCity = 'Moon Outpost ' . $fieldWorldIndex . '-' . $mn;
+        $s->query("INSERT IGNORE INTO universe_colony_profiles
+            (uid, world_index, target_type, moon_no, world_type, biome, sub_biome, city_name, field_total)
+            VALUES (
+                " . $uid . ",
+                " . $fieldWorldIndex . ",
+                'moon',
+                " . $mn . ",
+                '" . pageSafeToken((string)$selectedWorld['moonClass']) . " Moon',
+                '" . pageSafeToken((string)$selectedWorld['moonBiome']) . "',
+                '" . pageSafeToken((string)$selectedWorld['moonSubBiome']) . "',
+                '" . pageSafeToken($moonCity) . "',
+                " . $moonFieldTotal . "
+            )");
+    }
+
+    $fieldBuildCatalog = [
+        'habdome' => ['name' => 'Habitat Dome', 'turns' => 1, 'naq' => 18000, 'metal' => 12000, 'crystal' => 8000, 'deut' => 2000, 'food' => 1200, 'water' => 1200, 'power' => 12, 'pop' => 0],
+        'foundry' => ['name' => 'Foundry Grid', 'turns' => 2, 'naq' => 26000, 'metal' => 20000, 'crystal' => 11000, 'deut' => 4000, 'food' => 900, 'water' => 900, 'power' => 18, 'pop' => 120],
+        'reactor' => ['name' => 'Fusion Reactor Node', 'turns' => 2, 'naq' => 30000, 'metal' => 18000, 'crystal' => 17000, 'deut' => 6000, 'food' => 500, 'water' => 500, 'power' => -20, 'pop' => 80],
+        'hydrolab' => ['name' => 'Hydro Lab', 'turns' => 1, 'naq' => 16000, 'metal' => 9000, 'crystal' => 9000, 'deut' => 2500, 'food' => 0, 'water' => 0, 'power' => 9, 'pop' => 60],
+        'bastion' => ['name' => 'Bastion District', 'turns' => 2, 'naq' => 22000, 'metal' => 17000, 'crystal' => 9000, 'deut' => 3800, 'food' => 700, 'water' => 700, 'power' => 14, 'pop' => 110],
+    ];
+
+    if (strpos($cmd, 'uni_') === 0) {
+        if ($cmd === 'uni_create_plague' || $cmd === 'uni_create_moon_plague' || $cmd === 'uni_create_biome_plague') {
+            $targetType = 'planet';
+            $moonNo = 0;
+            $biomeName = (string)$selectedWorld['biome'];
+            if ($cmd === 'uni_create_moon_plague') {
+                $targetType = 'moon';
+                $moonNo = max(1, $targetMoonNo > 0 ? $targetMoonNo : 1);
+            } elseif ($cmd === 'uni_create_biome_plague') {
+                $targetType = 'biome';
+                $biomeName = (string)$selectedWorld['biome'];
+            }
+            $pageActionStatus = universeCreatePlague($s, $uid, $selectedWorld, $targetType, $moonNo, $biomeName);
+        }
+
+        if ($cmd === 'uni_create_water' || $cmd === 'uni_create_moon_water' || $cmd === 'uni_create_biome_water') {
+            $targetType = 'planet';
+            $moonNo = 0;
+            $biomeName = (string)$selectedWorld['biome'];
+            if ($cmd === 'uni_create_moon_water') {
+                $targetType = 'moon';
+                $moonNo = max(1, $targetMoonNo > 0 ? $targetMoonNo : 1);
+            } elseif ($cmd === 'uni_create_biome_water') {
+                $targetType = 'biome';
+                $biomeName = (string)$selectedWorld['biome'];
+            }
+            $pageActionStatus = universeCreateWater($s, $uid, $selectedWorld, $targetType, $moonNo, $biomeName);
+        }
+
+        if ($cmd === 'uni_event_scan') {
+            $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+            $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+            $resQ = $s->query("SELECT deuterium FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+            $res = $resQ ? $resQ->fetch_object() : (object)['deuterium' => 0];
+            if ($turns < 1) {
+                $pageActionStatus = 'Universe event scan failed: insufficient action turns.';
+            } elseif ((int)$res->deuterium < 1800) {
+                $pageActionStatus = 'Universe event scan failed: insufficient deuterium.';
+            } else {
+                $eventPool = [
+                    ['name' => 'Aether Storm Corridor', 'type' => 'hazard', 'points' => 8],
+                    ['name' => 'Derelict Gate Relay', 'type' => 'salvage', 'points' => 10],
+                    ['name' => 'Rogue Raider Armada', 'type' => 'combat', 'points' => 12],
+                    ['name' => 'Void Plague Quarantine', 'type' => 'relief', 'points' => 9],
+                    ['name' => 'Ancient Signal Cascade', 'type' => 'intel', 'points' => 11],
+                ];
+                $pickSeed = abs(crc32((string)$uid . '|' . (string)time()));
+                $pick = $eventPool[$pickSeed % count($eventPool)];
+                $galaxyMax = max(1, (int)$uCfg['galaxies']);
+                $galaxyNo = max(1, min($galaxyMax, $eventTargetGalaxy));
+                $threatGain = 2 + ($pickSeed % 4);
+                $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-1) WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE player_resources SET deuterium=deuterium-1800 WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE universe_event_state SET
+                    current_event='" . pageSafeToken((string)$pick['name']) . "',
+                    event_cycle=event_cycle+1,
+                    threat_level=LEAST(100,threat_level+" . (int)$threatGain . "),
+                    last_event_at=NOW()
+                    WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("INSERT INTO universe_event_log (uid,galaxy_no,event_name,event_type,reward_points,resolution_status)
+                    VALUES (" . $uid . "," . $galaxyNo . ",'" . pageSafeToken((string)$pick['name']) . "','" . pageSafeToken((string)$pick['type']) . "'," . (int)$pick['points'] . ",'open')");
+                $pageActionStatus = 'Universe event detected in G' . fnum($galaxyNo) . ': ' . (string)$pick['name'] . '.';
+            }
+        }
+
+        if ($cmd === 'uni_event_resolve') {
+            $eventQ = $s->query("SELECT event_id,event_name,reward_points FROM universe_event_log
+                WHERE uid=" . $uid . " AND resolution_status='open'
+                ORDER BY event_id ASC LIMIT 1");
+            $event = $eventQ ? $eventQ->fetch_object() : null;
+            if (!$event) {
+                $pageActionStatus = 'Universe event resolve: no open events.';
+            } else {
+                $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+                $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+                $resQ = $s->query("SELECT food,water FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+                $res = $resQ ? $resQ->fetch_object() : (object)['food' => 0, 'water' => 0];
+                if ($turns < 2) {
+                    $pageActionStatus = 'Universe event resolve failed: insufficient action turns.';
+                } elseif ((int)$res->food < 2200 || (int)$res->water < 2200) {
+                    $pageActionStatus = 'Universe event resolve failed: insufficient food/water.';
+                } else {
+                    $rewardPoints = max(6, (int)$event->reward_points);
+                    $naqReward = 65000 + ($rewardPoints * 1800);
+                    $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-2) WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE player_resources SET food=food-2200, water=water-2200 WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE bank SET onHand=onHand+" . $naqReward . " WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE universe_event_state SET
+                        event_points=event_points+" . $rewardPoints . ",
+                        threat_level=GREATEST(0,threat_level-5),
+                        current_event='Front Stabilized'
+                        WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE universe_event_log SET resolution_status='resolved',resolved_at=NOW() WHERE event_id=" . (int)$event->event_id . " AND uid=" . $uid . " LIMIT 1");
+                    $pageActionStatus = 'Universe event resolved: ' . (string)$event->event_name . ' (+'. fnum($rewardPoints) . ' event points).';
+                }
+            }
+        }
+
+        if ($cmd === 'uni_boss_spawn') {
+            $bossQ = $s->query("SELECT status,boss_level FROM universe_world_boss WHERE uid=" . $uid . " LIMIT 1");
+            $boss = $bossQ ? $bossQ->fetch_object() : null;
+            $eventQ = $s->query("SELECT event_points,threat_level FROM universe_event_state WHERE uid=" . $uid . " LIMIT 1");
+            $evt = $eventQ ? $eventQ->fetch_object() : (object)['event_points' => 0, 'threat_level' => 0];
+            if ($boss && (string)$boss->status === 'active') {
+                $pageActionStatus = 'World boss spawn skipped: a boss is already active.';
+            } elseif ((int)$evt->event_points < 25) {
+                $pageActionStatus = 'World boss spawn failed: need at least 25 event points.';
+            } else {
+                $nextLevel = max(1, (int)($boss->boss_level ?? 1));
+                $hpMax = (int)(300000 + ($nextLevel * 120000) + ((int)$evt->threat_level * 2500));
+                $bossNames = ['Leviathan of Orion', 'Rift Tyrant', 'Abyssal Colossus', 'Gatebreaker Behemoth'];
+                $pickName = $bossNames[abs(crc32((string)$uid . '|' . (string)$nextLevel)) % count($bossNames)];
+                $s->query("UPDATE universe_world_boss SET
+                    boss_name='" . pageSafeToken($pickName) . "',
+                    boss_hp=" . $hpMax . ",
+                    boss_hp_max=" . $hpMax . ",
+                    status='active',
+                    last_spawn_at=NOW()
+                    WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE universe_event_state SET event_points=GREATEST(0,event_points-25) WHERE uid=" . $uid . " LIMIT 1");
+                $pageActionStatus = 'World boss spawned: ' . $pickName . ' with ' . fnum($hpMax) . ' HP.';
+            }
+        }
+
+        if ($cmd === 'uni_boss_attack') {
+            $bossQ = $s->query("SELECT boss_name,boss_level,boss_hp,boss_hp_max,status FROM universe_world_boss WHERE uid=" . $uid . " LIMIT 1");
+            $boss = $bossQ ? $bossQ->fetch_object() : null;
+            if (!$boss || (string)$boss->status !== 'active' || (int)$boss->boss_hp <= 0) {
+                $pageActionStatus = 'World boss attack failed: no active boss encounter.';
+            } else {
+                $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+                $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+                $unitQ = $s->query("SELECT attack,defense,covert,anticovert FROM units WHERE uid=" . $uid . " LIMIT 1");
+                $unitsObj = $unitQ ? $unitQ->fetch_object() : (object)['attack' => 0, 'defense' => 0, 'covert' => 0, 'anticovert' => 0];
+                $needTurns = 3;
+                if ($turns < $needTurns) {
+                    $pageActionStatus = 'World boss attack failed: insufficient action turns.';
+                } else {
+                    $damage = max(8000, (int)round(((int)$unitsObj->attack * 11) + ((int)$unitsObj->covert * 5) + ((int)$unitsObj->defense * 3) + ((int)$unitsObj->anticovert * 2)));
+                    $damage = min($damage, (int)$boss->boss_hp);
+                    $newHp = max(0, (int)$boss->boss_hp - $damage);
+                    $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $needTurns . ") WHERE uid=" . $uid . " LIMIT 1");
+                    if ($newHp <= 0) {
+                        $naqReward = 220000 + ((int)$boss->boss_level * 95000);
+                        $xpReward = 45 + ((int)$boss->boss_level * 12);
+                        $s->query("UPDATE universe_world_boss SET
+                            status='defeated',
+                            boss_hp=0,
+                            boss_level=boss_level+1,
+                            last_defeated_at=NOW()
+                            WHERE uid=" . $uid . " LIMIT 1");
+                        $s->query("UPDATE bank SET onHand=onHand+" . $naqReward . " WHERE uid=" . $uid . " LIMIT 1");
+                        $s->query("UPDATE universe_event_state SET
+                            event_points=event_points+" . $xpReward . ",
+                            threat_level=GREATEST(0,threat_level-12),
+                            current_event='Boss Front Cleared'
+                            WHERE uid=" . $uid . " LIMIT 1");
+                        $s->query("INSERT INTO universe_story_log (uid,act_no,chapter_no,entry_code,entry_text)
+                            VALUES (" . $uid . ",1,1,'boss_defeat','Commander strike wing defeated the active world boss and stabilized the star lanes.')");
+                        $pageActionStatus = 'World boss defeated: ' . (string)$boss->boss_name . ' eliminated. Rewards issued.';
+                    } else {
+                        $s->query("UPDATE universe_world_boss SET boss_hp=" . $newHp . " WHERE uid=" . $uid . " LIMIT 1");
+                        $pageActionStatus = 'World boss hit confirmed: -' . fnum($damage) . ' HP on ' . (string)$boss->boss_name . '.';
+                    }
+                }
+            }
+        }
+
+        if ($cmd === 'uni_story_unlock_prologue') {
+            $storyQ = $s->query("SELECT prologue_unlocked FROM universe_story_progress WHERE uid=" . $uid . " LIMIT 1");
+            $story = $storyQ ? $storyQ->fetch_object() : (object)['prologue_unlocked' => 0];
+            if ((int)$story->prologue_unlocked === 1) {
+                $pageActionStatus = 'Story prologue is already unlocked.';
+            } else {
+                $s->query("UPDATE universe_story_progress SET prologue_unlocked=1,last_story_at=NOW() WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("INSERT INTO universe_story_log (uid,act_no,chapter_no,entry_code,entry_text)
+                    VALUES (" . $uid . ",0,0,'prologue_unlock','Prologue unlocked: the expedition council authorized the first interstellar response doctrine.')");
+                $pageActionStatus = 'Story prologue unlocked.';
+            }
+        }
+
+        if ($cmd === 'uni_story_advance') {
+            $storyQ = $s->query("SELECT prologue_unlocked,current_act,current_chapter,chapter_points,completed_acts FROM universe_story_progress WHERE uid=" . $uid . " LIMIT 1");
+            $story = $storyQ ? $storyQ->fetch_object() : null;
+            $eventQ = $s->query("SELECT event_points FROM universe_event_state WHERE uid=" . $uid . " LIMIT 1");
+            $evt = $eventQ ? $eventQ->fetch_object() : (object)['event_points' => 0];
+            $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+            $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+            if (!$story || (int)$story->prologue_unlocked !== 1) {
+                $pageActionStatus = 'Story advance failed: unlock prologue first.';
+            } elseif ($turns < 1) {
+                $pageActionStatus = 'Story advance failed: insufficient action turns.';
+            } elseif ((int)$evt->event_points < 6) {
+                $pageActionStatus = 'Story advance failed: insufficient event points.';
+            } elseif ((int)$story->current_act > 12) {
+                $pageActionStatus = 'Story campaign complete: all 12 acts are finished.';
+            } else {
+                $act = max(1, (int)$story->current_act);
+                $chapter = max(1, (int)$story->current_chapter);
+                $nextAct = $act;
+                $nextChapter = $chapter + 1;
+                $completedActs = (int)$story->completed_acts;
+                if ($nextChapter > 3) {
+                    $completedActs = max($completedActs, $act);
+                    $nextAct = $act + 1;
+                    $nextChapter = 1;
+                }
+                if ($nextAct > 12) {
+                    $nextAct = 13;
+                    $nextChapter = 1;
+                }
+
+                $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-1) WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE universe_event_state SET event_points=GREATEST(0,event_points-6) WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE universe_story_progress SET
+                    current_act=" . $nextAct . ",
+                    current_chapter=" . $nextChapter . ",
+                    chapter_points=chapter_points+1,
+                    completed_acts=" . $completedActs . ",
+                    last_story_at=NOW()
+                    WHERE uid=" . $uid . " LIMIT 1");
+
+                $entryTitle = isset($universeStoryActs[$act]) ? $universeStoryActs[$act]['title'] : 'Campaign Finale';
+                $entryText = 'Advanced story checkpoint in Act ' . $act . ': ' . $entryTitle . ' (Chapter ' . $chapter . ').';
+                $s->query("INSERT INTO universe_story_log (uid,act_no,chapter_no,entry_code,entry_text)
+                    VALUES (" . $uid . "," . $act . "," . $chapter . ",'chapter_advance','" . pageSafeToken($entryText) . "')");
+                $pageActionStatus = 'Story progressed: Act ' . fnum($act) . ', Chapter ' . fnum($chapter) . ' complete.';
+            }
+        }
+
+        if ($cmd === 'uni_story_log_victory' || $cmd === 'uni_story_log_discovery' || $cmd === 'uni_story_log_loss') {
+            $storyQ = $s->query("SELECT current_act,current_chapter FROM universe_story_progress WHERE uid=" . $uid . " LIMIT 1");
+            $story = $storyQ ? $storyQ->fetch_object() : (object)['current_act' => 1, 'current_chapter' => 1];
+            $code = 'story_note';
+            $text = 'Commander filed a campaign note.';
+            if ($cmd === 'uni_story_log_victory') {
+                $code = 'victory';
+                $text = 'Victory log: fleet and ground detachments secured the objective and stabilized the sector.';
+            }
+            if ($cmd === 'uni_story_log_discovery') {
+                $code = 'discovery';
+                $text = 'Discovery log: scouts recovered an ancient data fragment linked to gate network anomalies.';
+            }
+            if ($cmd === 'uni_story_log_loss') {
+                $code = 'loss';
+                $text = 'Loss log: strike wing regrouped after attrition and marked the sector for reinforcement.';
+            }
+            $s->query("INSERT INTO universe_story_log (uid,act_no,chapter_no,entry_code,entry_text)
+                VALUES (" . $uid . "," . (int)$story->current_act . "," . (int)$story->current_chapter . ",'" . $code . "','" . pageSafeToken($text) . "')");
+            $pageActionStatus = 'Story log recorded: ' . ucfirst($code) . '.';
+        }
+
+        if ($cmd === 'uni_city_found') {
+            $targetType = ($fieldTargetType === 'moon') ? 'moon' : 'planet';
+            $moonNo = ($targetType === 'moon') ? max(1, $targetMoonNo) : 0;
+            if ($targetType === 'moon' && $moonNo > $moonCount) {
+                $pageActionStatus = 'City founding failed: moon index is out of range for this world.';
+            } else {
+                $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+                $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+                $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+                $bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+                if ($turns < 1) {
+                    $pageActionStatus = 'City founding failed: insufficient action turns.';
+                } elseif ((int)$bankObj->onHand < 42000) {
+                    $pageActionStatus = 'City founding failed: insufficient Naquadah.';
+                } else {
+                    $cityName = ($targetType === 'planet')
+                        ? ('City-' . $fieldWorldIndex . '-' . strtoupper(substr((string)$selectedWorld['biome'], 0, 3)))
+                        : ('MoonCity-' . $fieldWorldIndex . '-' . $moonNo . '-' . strtoupper(substr((string)$selectedWorld['moonBiome'], 0, 3)));
+                    $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-1) WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE bank SET onHand=onHand-42000 WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE universe_colony_profiles SET city_name='" . pageSafeToken($cityName) . "' WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+                    $pageActionStatus = 'City founded: ' . $cityName . ' established on ' . ucfirst($targetType) . ' zone.';
+                }
+            }
+        }
+
+        if ($cmd === 'uni_field_expand') {
+            $targetType = ($fieldTargetType === 'moon') ? 'moon' : 'planet';
+            $moonNo = ($targetType === 'moon') ? max(1, $targetMoonNo) : 0;
+            $profileQ = $s->query("SELECT field_total,infrastructure_tier FROM universe_colony_profiles WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+            $profile = $profileQ ? $profileQ->fetch_object() : null;
+            if (!$profile) {
+                $pageActionStatus = 'Field expansion failed: colony profile missing.';
+            } else {
+                $tier = max(1, (int)$profile->infrastructure_tier);
+                $needTurns = 2;
+                $needNaq = 26000 + ($tier * 12000);
+                $needMetal = 18000 + ($tier * 9000);
+                $needCrystal = 12000 + ($tier * 7000);
+                $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+                $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+                $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+                $bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+                $resQ = $s->query("SELECT metal,crystal FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+                $res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0];
+                if ($turns < $needTurns) {
+                    $pageActionStatus = 'Field expansion failed: insufficient action turns.';
+                } elseif ((int)$bankObj->onHand < $needNaq || (int)$res->metal < $needMetal || (int)$res->crystal < $needCrystal) {
+                    $pageActionStatus = 'Field expansion failed: insufficient Naquadah/metal/crystal.';
+                } else {
+                    $addFields = ($targetType === 'planet') ? 3 : 2;
+                    $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $needTurns . ") WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE bank SET onHand=onHand-" . $needNaq . " WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE player_resources SET metal=metal-" . $needMetal . ", crystal=crystal-" . $needCrystal . " WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE universe_colony_profiles SET field_total=field_total+" . $addFields . ", infrastructure_tier=infrastructure_tier+1 WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+                    $pageActionStatus = 'Field expansion complete: +' . fnum($addFields) . ' build fields unlocked.';
+                }
+            }
+        }
+
+        if ($cmd === 'uni_field_build') {
+            $targetType = ($fieldTargetType === 'moon') ? 'moon' : 'planet';
+            $moonNo = ($targetType === 'moon') ? max(1, $targetMoonNo) : 0;
+            if (!isset($fieldBuildCatalog[$fieldBuildCode])) {
+                $pageActionStatus = 'Field build failed: unknown building blueprint.';
+            } else {
+                $profileQ = $s->query("SELECT field_total,field_used FROM universe_colony_profiles WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+                $profile = $profileQ ? $profileQ->fetch_object() : null;
+                if (!$profile) {
+                    $pageActionStatus = 'Field build failed: colony profile missing.';
+                } elseif ((int)$profile->field_used >= (int)$profile->field_total) {
+                    $pageActionStatus = 'Field build failed: no free fields. Expand first.';
+                } else {
+                    $cfg = $fieldBuildCatalog[$fieldBuildCode];
+                    $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+                    $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+                    $bankQ = $s->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+                    $bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+                    $resQ = $s->query("SELECT metal,crystal,deuterium,food,water,population FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+                    $res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'population' => 0];
+                    if ($turns < (int)$cfg['turns']) {
+                        $pageActionStatus = 'Field build failed: insufficient action turns.';
+                    } elseif ((int)$bankObj->onHand < (int)$cfg['naq']) {
+                        $pageActionStatus = 'Field build failed: insufficient Naquadah.';
+                    } elseif ((int)$res->metal < (int)$cfg['metal'] || (int)$res->crystal < (int)$cfg['crystal'] || (int)$res->deuterium < (int)$cfg['deut'] || (int)$res->food < (int)$cfg['food'] || (int)$res->water < (int)$cfg['water'] || (int)$res->population < (int)$cfg['pop']) {
+                        $pageActionStatus = 'Field build failed: insufficient resources/population.';
+                    } else {
+                        $nextSlot = ((int)$profile->field_used) + 1;
+                        $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . (int)$cfg['turns'] . ") WHERE uid=" . $uid . " LIMIT 1");
+                        $s->query("UPDATE bank SET onHand=onHand-" . (int)$cfg['naq'] . " WHERE uid=" . $uid . " LIMIT 1");
+                        $s->query("UPDATE player_resources SET
+                            metal=metal-" . (int)$cfg['metal'] . ",
+                            crystal=crystal-" . (int)$cfg['crystal'] . ",
+                            deuterium=deuterium-" . (int)$cfg['deut'] . ",
+                            food=food-" . (int)$cfg['food'] . ",
+                            water=water-" . (int)$cfg['water'] . ",
+                            population=GREATEST(0,population-" . (int)$cfg['pop'] . ")
+                            WHERE uid=" . $uid . " LIMIT 1");
+                        $s->query("INSERT INTO universe_colony_fields
+                            (uid,world_index,target_type,moon_no,slot_no,building_code,building_name,building_level,power_draw,population_use)
+                            VALUES (
+                                " . $uid . ",
+                                " . $fieldWorldIndex . ",
+                                '" . $targetType . "',
+                                " . $moonNo . ",
+                                " . $nextSlot . ",
+                                '" . pageSafeToken($fieldBuildCode) . "',
+                                '" . pageSafeToken((string)$cfg['name']) . "',
+                                1,
+                                " . (int)$cfg['power'] . ",
+                                " . (int)$cfg['pop'] . "
+                            )");
+                        $s->query("UPDATE universe_colony_profiles SET field_used=field_used+1 WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+                        $pageActionStatus = 'Field build complete: ' . (string)$cfg['name'] . ' placed in slot #' . fnum($nextSlot) . '.';
+                    }
+                }
+            }
+        }
+    }
+
+    $eventStateQ = $s->query("SELECT event_cycle,current_event,event_points,threat_level,UNIX_TIMESTAMP(last_event_at) AS last_event_ts
+        FROM universe_event_state WHERE uid=" . $uid . " LIMIT 1");
+    $universeEventState = $eventStateQ ? $eventStateQ->fetch_object() : null;
+    $bossStateQ = $s->query("SELECT boss_name,boss_level,boss_hp,boss_hp_max,status,UNIX_TIMESTAMP(last_spawn_at) AS last_spawn_ts,UNIX_TIMESTAMP(last_defeated_at) AS last_defeat_ts
+        FROM universe_world_boss WHERE uid=" . $uid . " LIMIT 1");
+    $universeBossState = $bossStateQ ? $bossStateQ->fetch_object() : null;
+    $storyStateQ = $s->query("SELECT prologue_unlocked,current_act,current_chapter,chapter_points,completed_acts,UNIX_TIMESTAMP(last_story_at) AS last_story_ts
+        FROM universe_story_progress WHERE uid=" . $uid . " LIMIT 1");
+    $universeStoryState = $storyStateQ ? $storyStateQ->fetch_object() : null;
+
+    $profilesQ = $s->query("SELECT world_index,target_type,moon_no,world_type,biome,sub_biome,city_name,district_focus,field_total,field_used,infrastructure_tier
+        FROM universe_colony_profiles
+        WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . "
+        ORDER BY target_type ASC, moon_no ASC");
+    if ($profilesQ) {
+        while ($pr = $profilesQ->fetch_assoc()) {
+            $universeColonyProfiles[] = $pr;
+        }
+    }
+
+    $fieldsQ = $s->query("SELECT field_id,world_index,target_type,moon_no,slot_no,building_code,building_name,building_level,power_draw,population_use,UNIX_TIMESTAMP(created_at) AS created_ts
+        FROM universe_colony_fields
+        WHERE uid=" . $uid . " AND world_index=" . $fieldWorldIndex . "
+        ORDER BY target_type ASC, moon_no ASC, slot_no ASC LIMIT 60");
+    if ($fieldsQ) {
+        while ($fr = $fieldsQ->fetch_assoc()) {
+            $universeColonyFields[] = $fr;
+        }
+    }
+}
+
 if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && $sub === 'seeds') || strpos($cmd, 'bp_') === 0 || $cmd === 'seed_bookmark') {
     blueprintEnsureTables($s, $blueprintCatalog);
     $s->query("CREATE TABLE IF NOT EXISTS universe_seed_bookmarks (
@@ -2236,16 +3981,19 @@ if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && 
 $title = $mainTitles[$main];
 $subTitle = $subLabels[$main][$sub];
 
-echo '<div class="page-hub">';
+echo '<div class="page-hub page-hub-shell">';
 echo '<div class="page-hub-head">';
+echo '<div class="page-hub-copy">';
 echo '<h3>' . h($title) . ' - ' . h($subTitle) . '</h3>';
 echo '<p>Page: ' . h($main) . ' / ' . h($sub) . ' | Player: ' . h($_SESSION['username']) . '</p>';
 echo '</div>';
+echo '<div class="page-hub-badge">' . h(ucfirst($main)) . ' / ' . h(ucfirst($sub)) . '</div>';
+echo '</div>';
 if ($universeActionStatus !== '') {
-    echo '<div class="card full"><strong>' . h($universeActionStatus) . '</strong></div>';
+    echo '<div class="card full page-status"><strong>' . h($universeActionStatus) . '</strong></div>';
 }
 if ($pageActionStatus !== '') {
-    echo '<div class="card full"><strong>' . h($pageActionStatus) . '</strong></div>';
+    echo '<div class="card full page-status"><strong>' . h($pageActionStatus) . '</strong></div>';
 }
 
 echo '<div class="page-subnav-title">Sub Pages</div>';
@@ -2279,6 +4027,7 @@ $featureButtons = [
         ['label' => 'Spy', 'js' => "sendData('spy','get','mainDisplay'); return false"],
         ['label' => 'Combat Logs', 'js' => "sendData('logs','get','mainDisplay'); return false"],
         ['label' => 'Action Reports', 'js' => "sendData('actionLogs','get','mainDisplay'); return false"],
+        ['label' => 'RTS Turn System', 'js' => "sendData('pages','get','operations','rts'); return false"],
         ['label' => 'Command Queue', 'js' => "sendData('pages','get','operations','commandqueue'); return false"],
     ],
     'economy' => [
@@ -2286,6 +4035,9 @@ $featureButtons = [
         ['label' => 'Market', 'js' => "sendData('market','get','mainDisplay'); return false"],
         ['label' => 'Resource HQ', 'js' => "sendData('resourcehq','get','mainDisplay'); return false"],
         ['label' => 'OGame Buildings', 'js' => "sendData('ogamebuildings','get','mainDisplay'); return false"],
+        ['label' => 'Store', 'js' => "sendData('pages','get','economy','store'); return false"],
+        ['label' => 'Battle Pass', 'js' => "sendData('pages','get','economy','battlepass'); return false"],
+        ['label' => 'Season Pass', 'js' => "sendData('pages','get','economy','seasonpass'); return false"],
         ['label' => 'Supply Logistics', 'js' => "sendData('pages','get','economy','logistics'); return false"],
         ['label' => 'Technology', 'js' => "sendData('technology','get','mainDisplay'); return false"],
         ['label' => 'Stargate Tech', 'js' => "sendData('stargatetech','get','mainDisplay'); return false"],
@@ -2317,6 +4069,9 @@ $featureButtons = [
     'universe' => [
         ['label' => 'Galaxy Map', 'js' => "sendData('pages','get','universe','galaxies'); return false"],
         ['label' => 'Transit Lanes', 'js' => "sendData('pages','get','universe','lanes'); return false"],
+        ['label' => 'Universe Events', 'js' => "sendData('pages','get','universe','events'); return false"],
+        ['label' => 'World Boss', 'js' => "sendData('pages','get','universe','worldboss'); return false"],
+        ['label' => 'Story Campaign', 'js' => "sendData('pages','get','universe','story'); return false"],
         ['label' => 'Stations', 'js' => "sendData('stations','get','mainDisplay'); return false"],
         ['label' => 'Hyperspace', 'js' => "sendData('hyperspace','get','mainDisplay'); return false"],
         ['label' => 'Expedition', 'js' => "sendData('pages','get','universe','expedition'); return false"],
@@ -2367,6 +4122,7 @@ $subPageGroups = [
             ['attack', 'Attack Missions'],
             ['raid', 'Raid Missions'],
             ['spy', 'Spy Network'],
+            ['rts', 'RTS Turn System'],
             ['commandqueue', 'Command Queue'],
             ['diplomacyops', 'Diplomatic Ops'],
         ],
@@ -2375,6 +4131,9 @@ $subPageGroups = [
         'Economic Layers' => [
             ['banking', 'Banking'],
             ['resources', 'Resource Hub'],
+            ['store', 'In-Game Store'],
+            ['battlepass', 'Battle Pass'],
+            ['seasonpass', 'Season Pass'],
             ['logistics', 'Supply Logistics'],
             ['treasury', 'Treasury Policy'],
         ],
@@ -2416,6 +4175,9 @@ $subPageGroups = [
             ['planets', 'Planets & Moons'],
             ['lanes', 'Transit Lanes'],
             ['anomalies', 'Anomaly Index'],
+            ['events', 'Universe Events'],
+            ['worldboss', 'World Boss'],
+            ['story', 'Story Campaign'],
         ],
     ],
     'research' => [
@@ -2863,6 +4625,79 @@ if ($main === 'operations') {
     if ($sub === 'diplomacyops') {
         echo '<div class="card"><h4>Diplomatic Operations</h4><p>Use messages and relation changes to reduce escalation before or after operations.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'diplomacy\',\'messages\'); return false">Open Messaging</a></p></div>';
     }
+    if ($sub === 'rts') {
+        $opsState = $operationsRtsState ?: (object)[
+            'doctrine' => 'balanced',
+            'tempo_mode' => 'standard',
+            'theater_level' => 1,
+            'command_xp' => 0,
+            'cycle_index' => 0,
+            'frontline_pressure' => 45,
+            'reserve_integrity' => 60,
+            'morale_index' => 55,
+            'last_cycle_ts' => 0,
+        ];
+        $lastCycleText = ((int)$opsState->last_cycle_ts > 0) ? date('Y-m-d H:i:s', (int)$opsState->last_cycle_ts) : 'Never';
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="Operations console" /><div><h4>RTS Turn-Based Operations Console</h4><p>Command your theater with live turn cycles, queue priority, and doctrine shifts.</p></div></div>';
+        echo '<p><strong>Action Turns:</strong> ' . fnum((int)$operationsRtsTurnBalance) . ' | <strong>Doctrine:</strong> ' . h((string)$opsState->doctrine) . ' | <strong>Tempo:</strong> ' . h((string)$opsState->tempo_mode) . '</p>';
+        echo '<p><strong>Theater Level:</strong> ' . fnum((int)$opsState->theater_level) . ' | <strong>Command XP:</strong> ' . fnum((int)$opsState->command_xp) . ' | <strong>Cycle Index:</strong> ' . fnum((int)$opsState->cycle_index) . '</p>';
+        echo '<p><strong>Frontline Pressure:</strong> ' . fnum((int)$opsState->frontline_pressure) . ' | <strong>Reserve Integrity:</strong> ' . fnum((int)$opsState->reserve_integrity) . ' | <strong>Morale:</strong> ' . fnum((int)$opsState->morale_index) . '</p>';
+        echo '<p><strong>Last Cycle:</strong> ' . h($lastCycleText) . '</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_aggressive\'); return false">Doctrine: Aggressive</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_balanced\'); return false">Balanced</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_defensive\'); return false">Defensive</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_covert\'); return false">Covert</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_tempo_standard\'); return false">Tempo: Standard</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_tempo_surge\'); return false">Surge</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_tempo_overwatch\'); return false">Overwatch</a></p>';
+        echo '</div>';
+
+        echo '<div class="card"><h4>Queue Operations</h4>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_recon\'); return false">Queue Recon</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_assault\'); return false">Queue Assault</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_fortify\'); return false">Queue Fortify</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_logistics\'); return false">Queue Logistics</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_sabotage\'); return false">Queue Sabotage</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_cycle_run\'); return false">Run Next Ready Cycle</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_cycle_run_all\'); return false">Run All Ready Cycles</a></p>';
+        echo '</div>';
+
+        $opsQueueRows = [];
+        $opsQueueQ = $s->query("SELECT queue_id, operation_code, operation_label, turn_cost, eta_seconds, status, priority_order, UNIX_TIMESTAMP(created_at) AS created_ts
+            FROM operations_turn_queue
+            WHERE uid=" . $uid . "
+            ORDER BY status='queued' DESC, priority_order ASC, queue_id ASC LIMIT 20");
+        if ($opsQueueQ) {
+            while ($row = $opsQueueQ->fetch_assoc()) {
+                $opsQueueRows[] = $row;
+            }
+        }
+
+        echo '<div class="card full"><h4>RTS Queue Status</h4>';
+        if (count($opsQueueRows) === 0) {
+            echo '<p>No RTS operations queued yet.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Queue ID</th><th align="left">Priority</th><th align="left">Operation</th><th align="left">Turn Cost</th><th align="left">ETA</th><th align="left">Status</th><th align="left">Actions</th></tr>';
+            foreach ($opsQueueRows as $row) {
+                $statusName = (string)($row['status'] ?? 'queued');
+                $etaSec = (int)($row['eta_seconds'] ?? 0);
+                $createdTs = (int)($row['created_ts'] ?? time());
+                $elapsed = max(0, time() - $createdTs);
+                $remaining = max(0, $etaSec - $elapsed);
+                $etaText = ($statusName === 'queued') ? (fnum($remaining) . 's') : '0s';
+                echo '<tr>';
+                echo '<td>#' . fnum((int)$row['queue_id']) . '</td>';
+                echo '<td>' . fnum((int)$row['priority_order']) . '</td>';
+                echo '<td>' . h((string)$row['operation_label']) . '</td>';
+                echo '<td>' . fnum((int)$row['turn_cost']) . '</td>';
+                echo '<td>' . h($etaText) . '</td>';
+                echo '<td>' . h($statusName) . '</td>';
+                if ($statusName === 'queued') {
+                    echo '<td><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_up&oqid=' . (int)$row['queue_id'] . '\'); return false">Up</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_down&oqid=' . (int)$row['queue_id'] . '\'); return false">Down</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_queue_cancel&oqid=' . (int)$row['queue_id'] . '\'); return false">Cancel</a></td>';
+                } else {
+                    echo '<td>-</td>';
+                }
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
+    }
 }
 
 if ($main === 'economy') {
@@ -2951,6 +4786,72 @@ if ($main === 'economy') {
 
     if ($sub === 'treasury') {
         echo '<div class="card full"><h4>Treasury Policy</h4><p>Set reserve thresholds to avoid operational lock during spikes in war spending.</p><ul><li>War reserve: 35%</li><li>Research reserve: 20%</li><li>Expansion reserve: 15%</li><li>Flexible capital: 30%</li></ul></div>';
+    }
+
+    if ($sub === 'store') {
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/empire-portal.svg" alt="Empire portal" /><div><h4>In-Game Store</h4><p>Spend Naquadah on instant strategic boosts and resource relief.</p></div></div></div>';
+        echo '<div class="card full"><h4>Economy Pulse</h4>';
+        echo '<p><strong>Naquadah:</strong> ' . fnum((int)($bank->onHand ?? 0)) . ' | <strong>Energy:</strong> ' . fnum((int)$resourceHub['current']['energy']) . ' | <strong>Water:</strong> ' . fnum((int)$resourceHub['current']['water']) . '</p>';
+        echo '</div>';
+        echo '<div class="store-grid">';
+        foreach ($storeRows as $item) {
+            $purchased = isset($purchasedKeys[$item['item_key']]);
+            $buttonLabel = $purchased ? 'Owned' : 'Purchase';
+            echo '<div class="card">';
+            echo '<h4>' . h($item['item_name']) . '</h4>';
+            echo '<p><strong>Type:</strong> ' . h($item['item_type']) . ' | <strong>Rarity:</strong> ' . h($item['rarity']) . '</p>';
+            echo '<p><strong>Cost:</strong> ' . fnum((int)$item['price_nq']) . ' Naquadah</p>';
+            echo '<p><strong>Reward:</strong> ' . fnum((int)$item['reward_amount']) . ' ' . h($item['reward_label']) . '</p>';
+            echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'store&cmd=store_purchase&item=' . h($item['item_key']) . '\'); return false">' . h($buttonLabel) . '</a></p>';
+            echo '</div>';
+        }
+        echo '</div>';
+    }
+
+    if ($sub === 'battlepass') {
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="Battle pass" /><div><h4>Battle Pass</h4><p>Climb the combat track and unlock rewards by earning pass XP through missions and operations.</p></div></div></div>';
+        echo '<div class="card full"><h4>Progress Summary</h4>';
+        echo '<p><strong>Level:</strong> ' . fnum((int)$passProgress->battle_pass_level) . ' | <strong>XP:</strong> ' . fnum((int)$passProgress->battle_pass_xp) . ' | <strong>Next Threshold:</strong> ' . fnum((int)((int)$passProgress->battle_pass_level + 1) * 120) . '</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'battlepass&cmd=pass_gain&xp=120\'); return false">Gain 120 XP</a></p>';
+        echo '</div>';
+        echo '<div class="pass-grid">';
+        foreach ($battleLevels as $lvl) {
+            $isClaimed = isset($claimedPassSet['battle:' . (int)$lvl['level']]);
+            $claimable = 'Locked';
+            if ((int)$passProgress->battle_pass_level >= (int)$lvl['level']) {
+                $claimable = $isClaimed ? 'Claimed' : 'Claim';
+            }
+            echo '<div class="card">';
+            echo '<h4>Level ' . fnum((int)$lvl['level']) . '</h4>';
+            echo '<p><strong>XP Needed:</strong> ' . fnum((int)$lvl['xp']) . '</p>';
+            echo '<p><strong>Reward:</strong> ' . h($lvl['reward']) . ' (' . h($lvl['bonus']) . ')</p>';
+            echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'battlepass&cmd=pass_claim&pass=battle&level=' . (int)$lvl['level'] . '\'); return false">' . h($claimable) . '</a></p>';
+            echo '</div>';
+        }
+        echo '</div>';
+    }
+
+    if ($sub === 'seasonpass') {
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/universe-archive.svg" alt="Season pass" /><div><h4>Season Pass</h4><p>Advance through the seasonal progression track for long-term empire rewards.</p></div></div></div>';
+        echo '<div class="card full"><h4>Progress Summary</h4>';
+        echo '<p><strong>Level:</strong> ' . fnum((int)$passProgress->season_pass_level) . ' | <strong>XP:</strong> ' . fnum((int)$passProgress->season_pass_xp) . ' | <strong>Next Threshold:</strong> ' . fnum((int)((int)$passProgress->season_pass_level + 1) * 160) . '</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'seasonpass&cmd=pass_gain&xp=160\'); return false">Gain 160 XP</a></p>';
+        echo '</div>';
+        echo '<div class="pass-grid">';
+        foreach ($seasonLevels as $lvl) {
+            $isClaimed = isset($claimedPassSet['season:' . (int)$lvl['level']]);
+            $claimable = 'Locked';
+            if ((int)$passProgress->season_pass_level >= (int)$lvl['level']) {
+                $claimable = $isClaimed ? 'Claimed' : 'Claim';
+            }
+            echo '<div class="card">';
+            echo '<h4>Level ' . fnum((int)$lvl['level']) . '</h4>';
+            echo '<p><strong>XP Needed:</strong> ' . fnum((int)$lvl['xp']) . '</p>';
+            echo '<p><strong>Reward:</strong> ' . h($lvl['reward']) . ' (' . h($lvl['bonus']) . ')</p>';
+            echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'seasonpass&cmd=pass_claim&pass=season&level=' . (int)$lvl['level'] . '\'); return false">' . h($claimable) . '</a></p>';
+            echo '</div>';
+        }
+        echo '</div>';
     }
 }
 
@@ -3060,20 +4961,24 @@ if ($main === 'universe') {
         echo '</p>';
 
         echo '<table class="mini-table" border="0" width="100%">';
-        echo '<tr><th align="left">#</th><th align="left">Coordinate</th><th align="left">World</th><th align="left">Type</th><th align="left">Biome</th><th align="left">Habitability</th><th align="left">Moons</th><th align="left">Moon Class</th><th align="left">Status</th></tr>';
+        echo '<tr><th align="left">#</th><th align="left">Coordinate</th><th align="left">World</th><th align="left">Type</th><th align="left">Biome</th><th align="left">Sub-Biome</th><th align="left">Habitability</th><th align="left">Moons</th><th align="left">Moon Class</th><th align="left">Plague</th><th align="left">Water</th><th align="left">Status</th></tr>';
             foreach ($worldSlice['rows'] as $w) {
+                $plagueRows = universePlagueRowsForWorld($s, $uid, (int)$w['idx']);
+                $plagueLabel = universePlagueSummaryText($plagueRows);
+                $waterRows = universeWaterRowsForWorld($s, $uid, (int)$w['idx']);
+                $waterLabel = universeWaterSummaryText($waterRows);
                 $pd = htmlspecialchars(json_encode([
                     'idx'    => $w['idx'],
                     'coord'  => $w['coord'],  'name'  => $w['name'],  'type'  => $w['type'],
-                    'biome'  => $w['biome'],  'hab'   => $w['habitability'], 'slots' => $w['slots'],
+                    'biome'  => $w['biome'],  'subBiome' => $w['subBiome'], 'hab'   => $w['habitability'], 'slots' => $w['slots'],
                     'metal'  => $w['metal'],  'crystal' => $w['crystal'], 'deut' => $w['deut'],
-                    'moons'  => $w['moons'],  'moonClass' => $w['moonClass'], 'owner' => $w['owner'],
+                    'moons'  => $w['moons'],  'moonClass' => $w['moonClass'], 'moonBiome' => $w['moonBiome'], 'moonSubBiome' => $w['moonSubBiome'], 'owner' => $w['owner'],
                 ]), ENT_QUOTES);
                 $moonOnclick = '';
                 if ($w['moons'] > 0) {
                     $md = htmlspecialchars(json_encode([
                         'parent' => $w['name'], 'coord' => $w['coord'],
-                        'count'  => $w['moons'], 'class' => $w['moonClass'],
+                        'count'  => $w['moons'], 'class' => $w['moonClass'], 'moonBiome' => $w['moonBiome'], 'moonSubBiome' => $w['moonSubBiome'],
                     ]), ENT_QUOTES);
                     $moonOnclick = ' onclick="showMoonDetail(' . $md . ')" style="cursor:pointer;text-decoration:underline;color:#8cf"';
                 }
@@ -3083,9 +4988,12 @@ if ($main === 'universe') {
                 echo '<td><a href="javascript:void(0)" onclick="showPlanetDetail(' . $pd . ')" style="color:#adf">' . h($w['name']) . '</a></td>';
                 echo '<td>' . h($w['type']) . '</td>';
                 echo '<td>' . h($w['biome']) . '</td>';
+                echo '<td>' . h($w['subBiome']) . '</td>';
                 echo '<td>' . fnum($w['habitability']) . '%</td>';
                 echo '<td' . $moonOnclick . '>' . fnum($w['moons']) . '</td>';
                 echo '<td' . $moonOnclick . '>' . h($w['moonClass']) . '</td>';
+                echo '<td>' . h($plagueLabel) . '</td>';
+                echo '<td>' . h($waterLabel) . '</td>';
                 echo '<td>' . h($w['owner']) . '</td>';
                 echo '</tr>';
             }
@@ -3111,6 +5019,36 @@ if ($main === 'universe') {
         echo '<p><strong>Water Reserves:</strong> ' . fnum($resourceHub['current']['water']) . '</p>';
         echo '<p><strong>Energy Grid:</strong> ' . fnum($resourceHub['current']['energy']) . '</p>';
         echo '<p><strong>Population:</strong> ' . fnum($resourceHub['current']['population']) . '</p>';
+        echo '</div>';
+
+        echo '<div class="card full"><h4>Rename Owned Holdings</h4>';
+        echo '<form method="get" action="modules/pages.php">';
+        echo '<input type="hidden" name="id" value="universe">';
+        echo '<input type="hidden" name="atype" value="planets">';
+        echo '<input type="hidden" name="time" value="' . h((string)time()) . '">';
+        echo '<input type="hidden" name="cmd" value="rename_entity">';
+        echo '<p><label>Entity <select name="entity"><option value="planet">Planet</option><option value="moon">Moon</option></select></label> ';
+        if (count($planetRegistryRows) > 0) {
+            echo '<label>Planet <select name="pid">';
+            foreach ($planetRegistryRows as $planetRow) {
+                echo '<option value="' . (int)$planetRow['pid'] . '">' . h((string)$planetRow['plnt_name']) . '</option>';
+            }
+            echo '</select></label> ';
+        } else {
+            echo '<span>No colonies yet.</span> ';
+        }
+        if (count($ownedMoonRows) > 0) {
+            echo '<label>Moon <select name="moon_id">';
+            foreach ($ownedMoonRows as $moonRow) {
+                echo '<option value="' . (int)$moonRow['moon_id'] . '">' . h((string)($moonRow['moon_name'] !== '' ? $moonRow['moon_name'] : ('Moon #' . $moonRow['moon_id']))) . '</option>';
+            }
+            echo '</select></label> ';
+        } else {
+            echo '<span>No moon records yet.</span> ';
+        }
+        echo '<label>New Name <input type="text" name="new_name" maxlength="64" value="" /></label> ';
+        echo '<button type="submit">Rename</button></p>';
+        echo '</form>';
         echo '</div>';
 
         echo '<div class="card full"><h4>Planet, Moon, and Biome Registry</h4>';
@@ -3144,23 +5082,27 @@ if ($main === 'universe') {
         }
         echo '</div>';
 
-        echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">#</th><th align="left">Coordinate</th><th align="left">World</th><th align="left">Type</th><th align="left">Biome</th><th align="left">Habitability</th><th align="left">Moons</th><th align="left">Resource Signature</th><th align="left">Status</th><th align="left">Action</th></tr>';
+        echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">#</th><th align="left">Coordinate</th><th align="left">World</th><th align="left">Type</th><th align="left">Biome</th><th align="left">Sub-Biome</th><th align="left">Habitability</th><th align="left">Moons</th><th align="left">Resource Signature</th><th align="left">Plague</th><th align="left">Water</th><th align="left">Status</th><th align="left">Action</th></tr>';
         foreach ($worldSlice['rows'] as $w) {
+            $plagueRows = universePlagueRowsForWorld($s, $uid, (int)$w['idx']);
+            $plagueLabel = universePlagueSummaryText($plagueRows);
+            $waterRows = universeWaterRowsForWorld($s, $uid, (int)$w['idx']);
+            $waterLabel = universeWaterSummaryText($waterRows);
             $resSig = 'M' . fnum($w['metal']) . ' / C' . fnum($w['crystal']) . ' / D' . fnum($w['deut']);
             $moonSig = ($w['moons'] > 0) ? (fnum($w['moons']) . ' (' . h($w['moonClass']) . ')') : '0';
             $costs = universeColonizeCosts($w);
             $pd = htmlspecialchars(json_encode([
             'idx'    => $w['idx'],
                 'coord'  => $w['coord'],  'name'  => $w['name'],  'type'  => $w['type'],
-                'biome'  => $w['biome'],  'hab'   => $w['habitability'], 'slots' => $w['slots'],
+                'biome'  => $w['biome'],  'subBiome' => $w['subBiome'], 'hab'   => $w['habitability'], 'slots' => $w['slots'],
                 'metal'  => $w['metal'],  'crystal' => $w['crystal'], 'deut' => $w['deut'],
-                'moons'  => $w['moons'],  'moonClass' => $w['moonClass'], 'owner' => $w['owner'],
+                'moons'  => $w['moons'],  'moonClass' => $w['moonClass'], 'moonBiome' => $w['moonBiome'], 'moonSubBiome' => $w['moonSubBiome'], 'owner' => $w['owner'],
             ]), ENT_QUOTES);
             $moonOnclick = '';
             if ($w['moons'] > 0) {
                 $md = htmlspecialchars(json_encode([
                     'parent' => $w['name'], 'coord' => $w['coord'],
-                    'count'  => $w['moons'], 'class' => $w['moonClass'],
+                    'count'  => $w['moons'], 'class' => $w['moonClass'], 'moonBiome' => $w['moonBiome'], 'moonSubBiome' => $w['moonSubBiome'],
                 ]), ENT_QUOTES);
                 $moonOnclick = ' onclick="showMoonDetail(' . $md . ')" style="cursor:pointer;text-decoration:underline;color:#8cf"';
             }
@@ -3170,20 +5112,102 @@ if ($main === 'universe') {
             echo '<td><a href="javascript:void(0)" onclick="showPlanetDetail(' . $pd . ')" style="color:#adf">' . h($w['name']) . '</a></td>';
             echo '<td>' . h($w['type']) . '</td>';
             echo '<td>' . h($w['biome']) . '</td>';
+            echo '<td>' . h($w['subBiome']) . '</td>';
             echo '<td>' . fnum($w['habitability']) . '%</td>';
             echo '<td' . $moonOnclick . '>' . $moonSig . '</td>';
             echo '<td>' . $resSig . '</td>';
+            echo '<td>' . h($plagueLabel) . '</td>';
+            echo '<td>' . h($waterLabel) . '</td>';
             echo '<td>' . h($w['owner']) . '</td>';
             if ((string)$w['owner'] === 'Unclaimed' && (int)$w['habitability'] >= 46) {
                 echo '<td><a href="javascript:void(0)" onclick="httpRequest(\'GET\',\'' . $actBase . (int)$w['idx'] . '&time=\'+(new Date().getTime()),true); return false">Colonize</a><br><small>' . fnum($costs['naq']) . ' Naq / ' . fnum($costs['turns']) . 'T</small></td>';
             } elseif ((string)$w['owner'] === 'Unclaimed') {
-                echo '<td><small>Needs 46%+ hab</small></td>';
+                echo '<td><small>Needs 46%+ hab</small><br><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . (int)$w['idx'] . '\'); return false">Open Build</a></td>';
             } else {
-                echo '<td><small>Owned</small></td>';
+                echo '<td><small>Owned</small><br><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . (int)$w['idx'] . '\'); return false">Open Build</a></td>';
             }
             echo '</tr>';
         }
         echo '</table></div>';
+
+        $selectedBuildWorld = max(1, min((int)$uCfg['maxWorlds'], $targetWorld > 0 ? $targetWorld : (int)$worldSlice['start']));
+        $selectedBuildData = universeWorldByIndex($uid, $planets, $selectedBuildWorld, $uCfg);
+        echo '<div class="card full"><h4>Planet and Moon Field Build Console</h4>';
+        echo '<p><strong>Selected World:</strong> #' . fnum($selectedBuildWorld) . ' ' . h((string)$selectedBuildData['coord']) . ' | <strong>Biome:</strong> ' . h((string)$selectedBuildData['biome']) . ' / ' . h((string)$selectedBuildData['subBiome']) . '</p>';
+        echo '<p><strong>Primary Moon Biome:</strong> ' . h((string)$selectedBuildData['moonBiome']) . ' / ' . h((string)$selectedBuildData['moonSubBiome']) . ' | <strong>Moon Count:</strong> ' . fnum((int)$selectedBuildData['moons']) . '</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&cmd=uni_city_found&ftype=planet\'); return false">Found Planet City</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&cmd=uni_field_expand&ftype=planet\'); return false">Expand Planet Fields</a></p>';
+        $selectedWorldPlagues = universePlagueRowsForWorld($s, $uid, $selectedBuildWorld);
+        echo '<p><strong>Plague Controls:</strong> <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&cmd=uni_create_plague\'); return false">Create Planet Plague</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_create_moon_plague\'); return false">Create Moon Plague</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&cmd=uni_create_biome_plague\'); return false">Create Biome Plague</a></p>';
+        $selectedWorldWater = universeWaterRowsForWorld($s, $uid, $selectedBuildWorld);
+        echo '<p><strong>Water Controls:</strong> <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&cmd=uni_create_water\'); return false">Create Planet Water Source</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_create_moon_water\'); return false">Create Moon Water Source</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&cmd=uni_create_biome_water\'); return false">Create Biome Water Source</a></p>';
+        if (count($selectedWorldPlagues) === 0) {
+            echo '<p>No active plagues on this world yet. Seeds can be created for the planet, a moon, or the biome profile.</p>';
+        } else {
+            echo '<ul>';
+            foreach ($selectedWorldPlagues as $plague) {
+                $targetLabel = ((string)$plague['target_type'] === 'moon') ? ('Moon #' . fnum((int)$plague['moon_no'])) : (((string)$plague['target_type'] === 'biome') ? 'Biome' : 'Planet');
+                echo '<li><strong>' . h((string)$plague['plague_name']) . '</strong> on ' . h($targetLabel) . ' (severity ' . fnum((int)$plague['severity']) . '): ' . h((string)$plague['symptom']) . ' Effect ' . fnum(abs((int)$plague['effect_value'])) . ' ' . h((string)$plague['effect_type']) . '.</li>';
+            }
+            echo '</ul>';
+        }
+        if (count($selectedWorldWater) === 0) {
+            echo '<p>No active water sources on this world yet. Water can be seeded for the planet, a moon, or the biome profile.</p>';
+        } else {
+            echo '<ul>';
+            foreach ($selectedWorldWater as $water) {
+                $targetLabel = ((string)$water['target_type'] === 'moon') ? ('Moon #' . fnum((int)$water['moon_no'])) : (((string)$water['target_type'] === 'biome') ? 'Biome' : 'Planet');
+                echo '<li><strong>' . h((string)$water['water_name']) . '</strong> on ' . h($targetLabel) . ' (potency ' . fnum((int)$water['potency']) . '): ' . h((string)$water['description']) . ' Output ' . fnum((int)$water['effect_value']) . ' ' . h((string)$water['effect_type']) . '.</li>';
+            }
+            echo '</ul>';
+        }
+        if ((int)$selectedBuildData['moons'] > 0) {
+            echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_city_found\'); return false">Found Moon City #1</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_field_expand\'); return false">Expand Moon #1 Fields</a></p>';
+        }
+        echo '<p><strong>Build:</strong> <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&ftype=planet&cmd=uni_field_build&bld=habdome\'); return false">Habitat Dome</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&ftype=planet&cmd=uni_field_build&bld=foundry\'); return false">Foundry Grid</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&ftype=planet&cmd=uni_field_build&bld=reactor\'); return false">Fusion Reactor</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&ftype=planet&cmd=uni_field_build&bld=hydrolab\'); return false">Hydro Lab</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&ftype=planet&cmd=uni_field_build&bld=bastion\'); return false">Bastion District</a></p>';
+        echo '<p><strong>Moon Build #1:</strong> <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_field_build&bld=habdome\'); return false">Habitat Dome</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_field_build&bld=reactor\'); return false">Fusion Reactor</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'planets&target=' . $selectedBuildWorld . '&moon=1&ftype=moon&cmd=uni_field_build&bld=bastion\'); return false">Bastion District</a></p>';
+        echo '</div>';
+
+        echo '<div class="card full"><h4>City Profiles and Field Capacity</h4>';
+        if (count($universeColonyProfiles) === 0) {
+            echo '<p>No colony field profiles found for selected world.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Target</th><th align="left">City</th><th align="left">Biome</th><th align="left">Sub-Biome</th><th align="left">Fields Used</th><th align="left">Infrastructure Tier</th></tr>';
+            foreach ($universeColonyProfiles as $pr) {
+                $targetLabel = ((string)$pr['target_type'] === 'moon') ? ('Moon #' . fnum((int)$pr['moon_no'])) : 'Planet';
+                echo '<tr>';
+                echo '<td>' . h($targetLabel) . '</td>';
+                echo '<td>' . h((string)$pr['city_name']) . '</td>';
+                echo '<td>' . h((string)$pr['biome']) . '</td>';
+                echo '<td>' . h((string)$pr['sub_biome']) . '</td>';
+                echo '<td>' . fnum((int)$pr['field_used']) . ' / ' . fnum((int)$pr['field_total']) . '</td>';
+                echo '<td>T' . fnum((int)$pr['infrastructure_tier']) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
+
+        echo '<div class="card full"><h4>Field Build Log</h4>';
+        if (count($universeColonyFields) === 0) {
+            echo '<p>No field builds yet on this world.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Field</th><th align="left">Target</th><th align="left">Building</th><th align="left">Power Draw</th><th align="left">Population Use</th><th align="left">Built At</th></tr>';
+            foreach ($universeColonyFields as $fb) {
+                $targetLabel = ((string)$fb['target_type'] === 'moon') ? ('Moon #' . fnum((int)$fb['moon_no'])) : 'Planet';
+                echo '<tr>';
+                echo '<td>#' . fnum((int)$fb['slot_no']) . '</td>';
+                echo '<td>' . h($targetLabel) . '</td>';
+                echo '<td>' . h((string)$fb['building_name']) . ' (Lv' . fnum((int)$fb['building_level']) . ')</td>';
+                echo '<td>' . fnum((int)$fb['power_draw']) . '</td>';
+                echo '<td>' . fnum((int)$fb['population_use']) . '</td>';
+                echo '<td>' . h(date('Y-m-d H:i:s', (int)$fb['created_ts'])) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
     }
 
     if ($sub === 'objects') {
@@ -3284,6 +5308,139 @@ if ($main === 'universe') {
     if ($sub === 'anomalies') {
         echo '<div class="card"><h4>Anomaly Index</h4><p>Catalog wormholes, ruins, and volatile fields for expedition targeting.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'objects\'); return false">Open Object Scanner</a></p></div>';
     }
+
+    if ($sub === 'events') {
+        $evt = $universeEventState ?: (object)['event_cycle' => 1, 'current_event' => 'Calm Front', 'event_points' => 0, 'threat_level' => 20, 'last_event_ts' => 0];
+        $lastEvtText = ((int)$evt->last_event_ts > 0) ? date('Y-m-d H:i:s', (int)$evt->last_event_ts) : 'Never';
+        $openEvents = 0;
+        $resolvedEvents = 0;
+        $eventStatsQ = $s->query("SELECT
+            SUM(CASE WHEN resolution_status='open' THEN 1 ELSE 0 END) AS open_count,
+            SUM(CASE WHEN resolution_status='resolved' THEN 1 ELSE 0 END) AS resolved_count
+            FROM universe_event_log WHERE uid=" . $uid);
+        if ($eventStatsQ) {
+            $es = $eventStatsQ->fetch_object();
+            $openEvents = (int)($es->open_count ?? 0);
+            $resolvedEvents = (int)($es->resolved_count ?? 0);
+        }
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/universe-archive.svg" alt="Universe events" /><div><h4>Universe Event Control</h4><p>Track active anomalies, response cycles, and galactic threat pressure.</p></div></div>';
+        echo '<p><strong>Cycle:</strong> ' . fnum((int)$evt->event_cycle) . ' | <strong>Current Event:</strong> ' . h((string)$evt->current_event) . '</p>';
+        echo '<p><strong>Event Points:</strong> ' . fnum((int)$evt->event_points) . ' | <strong>Threat Level:</strong> ' . fnum((int)$evt->threat_level) . '</p>';
+        echo '<p><strong>Open Events:</strong> ' . fnum($openEvents) . ' | <strong>Resolved:</strong> ' . fnum($resolvedEvents) . ' | <strong>Last Scan:</strong> ' . h($lastEvtText) . '</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'events&cmd=uni_event_scan&gal=1\'); return false">Scan Galaxy 1</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'events&cmd=uni_event_scan&gal=2\'); return false">Scan Galaxy 2</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'events&cmd=uni_event_resolve\'); return false">Resolve Oldest Event</a></p>';
+        echo '</div>';
+
+        $eventRows = [];
+        $eventLogQ = $s->query("SELECT event_id,galaxy_no,event_name,event_type,resolution_status,reward_points,UNIX_TIMESTAMP(created_at) AS created_ts
+            FROM universe_event_log WHERE uid=" . $uid . " ORDER BY event_id DESC LIMIT 12");
+        if ($eventLogQ) {
+            while ($er = $eventLogQ->fetch_assoc()) {
+                $eventRows[] = $er;
+            }
+        }
+        echo '<div class="card full"><h4>Event Timeline</h4>';
+        if (count($eventRows) === 0) {
+            echo '<p>No event records yet.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">ID</th><th align="left">Galaxy</th><th align="left">Event</th><th align="left">Type</th><th align="left">Status</th><th align="left">Points</th><th align="left">Detected</th></tr>';
+            foreach ($eventRows as $er) {
+                echo '<tr>';
+                echo '<td>#' . fnum((int)$er['event_id']) . '</td>';
+                echo '<td>G' . fnum((int)$er['galaxy_no']) . '</td>';
+                echo '<td>' . h((string)$er['event_name']) . '</td>';
+                echo '<td>' . h((string)$er['event_type']) . '</td>';
+                echo '<td>' . h((string)$er['resolution_status']) . '</td>';
+                echo '<td>' . fnum((int)$er['reward_points']) . '</td>';
+                echo '<td>' . h(date('Y-m-d H:i:s', (int)$er['created_ts'])) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
+    }
+
+    if ($sub === 'worldboss') {
+        $boss = $universeBossState ?: (object)['boss_name' => 'Dormant Leviathan', 'boss_level' => 1, 'boss_hp' => 0, 'boss_hp_max' => 0, 'status' => 'idle', 'last_spawn_ts' => 0, 'last_defeat_ts' => 0];
+        $evt = $universeEventState ?: (object)['event_points' => 0, 'threat_level' => 20];
+        $hpPct = ((int)$boss->boss_hp_max > 0) ? (int)round(((int)$boss->boss_hp / (int)$boss->boss_hp_max) * 100) : 0;
+        $lastSpawnText = ((int)$boss->last_spawn_ts > 0) ? date('Y-m-d H:i:s', (int)$boss->last_spawn_ts) : 'Never';
+        $lastDefeatText = ((int)$boss->last_defeat_ts > 0) ? date('Y-m-d H:i:s', (int)$boss->last_defeat_ts) : 'Never';
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="World boss" /><div><h4>Galaxy World Boss Command</h4><p>Coordinate the assault, monitor the boss health bar, and stabilize the frontier.</p></div></div>';
+        echo '<p><strong>Boss:</strong> ' . h((string)$boss->boss_name) . ' | <strong>Level:</strong> ' . fnum((int)$boss->boss_level) . ' | <strong>Status:</strong> ' . h((string)$boss->status) . '</p>';
+        echo '<p><strong>HP:</strong> ' . fnum((int)$boss->boss_hp) . ' / ' . fnum((int)$boss->boss_hp_max) . ' (' . fnum($hpPct) . '%)</p>';
+        echo '<p><strong>Event Points:</strong> ' . fnum((int)$evt->event_points) . ' | <strong>Threat Level:</strong> ' . fnum((int)$evt->threat_level) . '</p>';
+        echo '<p><strong>Last Spawn:</strong> ' . h($lastSpawnText) . ' | <strong>Last Defeat:</strong> ' . h($lastDefeatText) . '</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'worldboss&cmd=uni_boss_spawn\'); return false">Spawn World Boss</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'worldboss&cmd=uni_boss_attack\'); return false">Attack World Boss</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'events&cmd=uni_event_resolve\'); return false">Stabilize Event Front</a></p>';
+        echo '</div>';
+    }
+
+    if ($sub === 'story') {
+        $story = $universeStoryState ?: (object)['prologue_unlocked' => 0, 'current_act' => 1, 'current_chapter' => 1, 'chapter_points' => 0, 'completed_acts' => 0, 'last_story_ts' => 0];
+        $evt = $universeEventState ?: (object)['event_points' => 0];
+        $lastStoryText = ((int)$story->last_story_ts > 0) ? date('Y-m-d H:i:s', (int)$story->last_story_ts) : 'Never';
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/empire-portal.svg" alt="Story campaign" /><div><h4>Story Campaign: Prologue + 12 Acts</h4><p>Advance the campaign narrative and watch the galaxy react to your decisions.</p></div></div>';
+        echo '<p><strong>Prologue:</strong> ' . (((int)$story->prologue_unlocked === 1) ? 'Unlocked' : 'Locked') . ' | <strong>Current Act:</strong> ' . fnum((int)$story->current_act) . ' | <strong>Current Chapter:</strong> ' . fnum((int)$story->current_chapter) . '</p>';
+        echo '<p><strong>Completed Acts:</strong> ' . fnum((int)$story->completed_acts) . ' / 12 | <strong>Chapter Points:</strong> ' . fnum((int)$story->chapter_points) . ' | <strong>Event Points:</strong> ' . fnum((int)$evt->event_points) . '</p>';
+        echo '<p><strong>Last Story Update:</strong> ' . h($lastStoryText) . '</p>';
+        echo '<p><strong>Prologue Brief:</strong> "The gate network fractures at the edge of known space. Your command is tasked with holding the lanes, uniting rival fleets, and uncovering the signal behind the collapse."</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'story&cmd=uni_story_unlock_prologue\'); return false">Unlock Prologue</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'story&cmd=uni_story_advance\'); return false">Advance Story Chapter</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'story&cmd=uni_story_log_victory\'); return false">Log Victory</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'story&cmd=uni_story_log_discovery\'); return false">Log Discovery</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'story&cmd=uni_story_log_loss\'); return false">Log Setback</a></p>';
+        echo '</div>';
+
+        echo '<div class="card full"><h4>Act and Chapter Matrix</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Act</th><th align="left">Title</th><th align="left">Chapter 1</th><th align="left">Chapter 2</th><th align="left">Chapter 3</th><th align="left">Status</th></tr>';
+        foreach ($universeStoryActs as $actNo => $actMeta) {
+            $status = 'Locked';
+            if ((int)$story->completed_acts >= $actNo) {
+                $status = 'Complete';
+            } elseif ((int)$story->current_act === (int)$actNo) {
+                $status = 'In Progress';
+            } elseif ((int)$story->current_act > (int)$actNo) {
+                $status = 'Complete';
+            } elseif ((int)$story->current_act + 1 === (int)$actNo || (int)$story->prologue_unlocked === 1) {
+                $status = 'Unlocked';
+            }
+            echo '<tr>';
+            echo '<td>' . fnum((int)$actNo) . '</td>';
+            echo '<td>' . h((string)$actMeta['title']) . '</td>';
+            echo '<td>' . h((string)$actMeta['chapters'][1]) . '</td>';
+            echo '<td>' . h((string)$actMeta['chapters'][2]) . '</td>';
+            echo '<td>' . h((string)$actMeta['chapters'][3]) . '</td>';
+            echo '<td>' . h($status) . '</td>';
+            echo '</tr>';
+        }
+        echo '</table></div>';
+
+        $storyLogs = [];
+        $storyLogQ = $s->query("SELECT log_id,act_no,chapter_no,entry_code,entry_text,UNIX_TIMESTAMP(created_at) AS created_ts
+            FROM universe_story_log WHERE uid=" . $uid . " ORDER BY log_id DESC LIMIT 14");
+        if ($storyLogQ) {
+            while ($sr = $storyLogQ->fetch_assoc()) {
+                $storyLogs[] = $sr;
+            }
+        }
+        echo '<div class="card full"><h4>Per-Log Story Timeline</h4>';
+        if (count($storyLogs) === 0) {
+            echo '<p>No story logs yet.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Log</th><th align="left">Act</th><th align="left">Chapter</th><th align="left">Code</th><th align="left">Entry</th><th align="left">Time</th></tr>';
+            foreach ($storyLogs as $sr) {
+                echo '<tr>';
+                echo '<td>#' . fnum((int)$sr['log_id']) . '</td>';
+                echo '<td>' . fnum((int)$sr['act_no']) . '</td>';
+                echo '<td>' . fnum((int)$sr['chapter_no']) . '</td>';
+                echo '<td>' . h((string)$sr['entry_code']) . '</td>';
+                echo '<td>' . h((string)$sr['entry_text']) . '</td>';
+                echo '<td>' . h(date('Y-m-d H:i:s', (int)$sr['created_ts'])) . '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
+    }
 }
 
 if ($main === 'research') {
@@ -3311,7 +5468,7 @@ if ($main === 'research') {
 
     if ($sub === 'tree') {
         echo '<div class="card full wows-brief">';
-        echo '<h4>Research Fleet Tree</h4>';
+        echo '<div class="feature-hero"><img src="images/ui/empire-portal.svg" alt="Research tree" /><div><h4>Research Fleet Tree</h4><p>Progress each domain left-to-right through six tiers with a high-command research cadence.</p></div></div>';
         echo '<p>Progress each domain left-to-right through six tiers. Nodes marked <strong>available</strong> are current unlock candidates based on your level state.</p>';
         echo '<div class="wows-pill-row">';
         echo '<span class="wows-pill">Command Lv ' . fnum($researchHub['level']['commandLevel']) . '</span>';
@@ -3348,7 +5505,7 @@ if ($main === 'research') {
     }
 
     if ($sub === 'techlib') {
-        echo '<div class="card full wows-brief"><h4>Technology Fleet Tree</h4>';
+        echo '<div class="card full wows-brief"><div class="feature-hero"><img src="images/ui/universe-archive.svg" alt="Technology tree" /><div><h4>Technology Fleet Tree</h4><p>Technology progression follows branch lanes similar to naval class lines, with richer specialization and output power.</p></div></div>';
         echo '<p>Technology progression follows branch lanes similar to naval class lines, where each tier unlocks deeper specialization and output power.</p>';
         echo '<div class="wows-pill-row">';
         echo '<span class="wows-pill">Technology Lv ' . fnum($researchHub['level']['technologyLevel']) . '</span>';
@@ -3429,7 +5586,7 @@ if ($main === 'research') {
     }
 
     if ($sub === 'stargate') {
-        echo '<div class="card"><h4>Stargate Technology Program</h4>';
+        echo '<div class="card"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="Stargate technology" /><div><h4>Stargate Technology Program</h4><p>Research complete Stargate-era technologies including gate science, power matrices, fleet integration, and threat response.</p></div></div>';
         echo '<p>Research complete Stargate-era technologies including gate science, power matrices, fleet integration, and threat response.</p>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'stargatetech\',\'get\',\'mainDisplay\'); return false">Open Stargate Technology Command</a></p>';
         echo '</div>';
@@ -3450,7 +5607,7 @@ if ($main === 'research') {
     }
 
     if ($sub === 'projects') {
-        echo '<div class="card full"><h4>Research Projects</h4><p>Track active projects by branch and priority band.</p><ul><li>Military Optimization Project</li><li>Economic Throughput Project</li><li>Gate Stability Project</li></ul></div>';
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/empire-portal.svg" alt="Research projects" /><div><h4>Research Projects</h4><p>Track active projects by branch and priority band.</p></div></div><ul><li>Military Optimization Project</li><li>Economic Throughput Project</li><li>Gate Stability Project</li></ul></div>';
     }
 
     if ($sub === 'labs') {
@@ -3524,7 +5681,7 @@ function showPlanetDetail(d){
     var hab = d.hab || 0;
     var habCol = hab >= 70 ? '#6f6' : (hab >= 45 ? '#ff9' : '#f77');
     var moonStr = d.moons > 0
-        ? '<span style="cursor:pointer;color:#8cf;text-decoration:underline" onclick="showMoonDetail({parent:\''+esc(d.name)+'\',coord:\''+esc(d.coord)+'\',count:'+d.moons+',\'class\':\''+esc(d.moonClass)+'\'})">'+d.moons+' &times; '+esc(d.moonClass)+'</span>'
+        ? '<span style="cursor:pointer;color:#8cf;text-decoration:underline" onclick="showMoonDetail({parent:\''+esc(d.name)+'\',coord:\''+esc(d.coord)+'\',count:'+d.moons+',\'class\':\''+esc(d.moonClass)+'\',moonBiome:\''+esc(d.moonBiome || '')+'\',moonSubBiome:\''+esc(d.moonSubBiome || '')+'\'})">'+d.moons+' &times; '+esc(d.moonClass)+'</span>'
         : '<em>None</em>';
     var colonizeBtn = (d.owner === 'Unclaimed' && hab >= 48)
         ? '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'expedition\'); closeSgwModal();" style="color:#6cf">&#x1F680; Plan Colonization Mission</a></p>'
@@ -3535,6 +5692,7 @@ function showPlanetDetail(d){
         row('Coordinate', esc(d.coord))+
         row('World Type', esc(d.type))+
         row('Biome', esc(d.biome))+
+        row('Sub-Biome', esc(d.subBiome || 'Frontier Zone'))+
         row('Habitability', '<span style="color:'+habCol+'">'+hab+'%</span>')+
         row('Build Slots', d.slots)+
         row('Metal Deposit', num(d.metal))+
@@ -3564,6 +5722,8 @@ function showMoonDetail(d){
         '<ul style="padding-left:18px">'+moons.join('')+'</ul>'+
         '<table style="width:100%;border-collapse:collapse;font-size:.9em">'+
         row('Moon Class', esc(cls))+
+        row('Moon Biome', esc(d.moonBiome || 'Unknown Lunar Zone'))+
+        row('Moon Sub-Biome', esc(d.moonSubBiome || 'Uncharted Crater'))+
         row('Classification', info.desc)+
         row('Strategic Bonus', '<span style="color:#8f8">'+info.bonus+'</span>')+
         '</table>'+

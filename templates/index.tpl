@@ -74,6 +74,9 @@
           <summary><span class="menu-summary"><span>Universe Suites</span></span></summary>
           <a href="javascript:void(0)" onclick="sendData('pages','get','universe','lanes'); return false">Transit Lanes</a>
           <a href="javascript:void(0)" onclick="sendData('pages','get','universe','anomalies'); return false">Anomaly Index</a>
+          <a href="javascript:void(0)" onclick="sendData('pages','get','universe','events'); return false">Universe Events</a>
+          <a href="javascript:void(0)" onclick="sendData('pages','get','universe','worldboss'); return false">World Boss</a>
+          <a href="javascript:void(0)" onclick="sendData('pages','get','universe','story'); return false">Story Campaign</a>
           <a href="javascript:void(0)" onclick="sendData('pages','get','universe','seeds'); return false">Universe Seeds</a>
         </details>
       </details>
@@ -136,6 +139,9 @@
         <a href="javascript:void(0)" onclick="sendData('ogamebuildings','get','mainDisplay'); return false">OGame Buildings Command</a>
         <details>
           <summary><span class="menu-summary"><span>Economy Suites</span></span></summary>
+          <a href="javascript:void(0)" onclick="sendData('pages','get','economy','store'); return false">In-Game Store</a>
+          <a href="javascript:void(0)" onclick="sendData('pages','get','economy','battlepass'); return false">Battle Pass</a>
+          <a href="javascript:void(0)" onclick="sendData('pages','get','economy','seasonpass'); return false">Season Pass</a>
           <a href="javascript:void(0)" onclick="sendData('pages','get','economy','logistics'); return false">Supply Logistics</a>
           <a href="javascript:void(0)" onclick="sendData('pages','get','economy','treasury'); return false">Treasury Policy</a>
         </details>
