@@ -243,3 +243,20 @@ function formalPowerGridState($stability, $risk, $storedEnergy, $storageCapacity
         'blackout_risk' => $nextRisk,
     ];
 }
+
+function formalArknitEndfieldPower($level = 0, $baseGeneration = 100, $baseStability = 40, $baseRisk = 20) {
+    $level = max(0, (int)$level);
+    $baseGeneration = max(0, (float)$baseGeneration);
+    $baseStability = max(0, min(100, (int)$baseStability));
+    $baseRisk = max(0, min(100, (int)$baseRisk));
+
+    $generationBoost = (int)round($baseGeneration * (1 + ($level * 0.08)));
+    $stabilityBoost = min(100, $baseStability + (int)floor($level * 2.5));
+    $riskReduction = max(0, $baseRisk - (int)floor($level * 1.5));
+
+    return [
+        'generation' => $generationBoost,
+        'stability' => $stabilityBoost,
+        'risk' => $riskReduction,
+    ];
+}

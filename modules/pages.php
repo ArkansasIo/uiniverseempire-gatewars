@@ -1828,6 +1828,12 @@ function powerGridTick(Game $s, int $uid): array {
     $generation = 0;
     $load = 0;
     $boost = (int)$state->generation_boost;
+    $techLevelQ = $s->query("SELECT level FROM stargate_tech_levels WHERE uid=" . $uid . " AND tech_key='arkknit_endfield_power' LIMIT 1");
+    $arkknitLevel = 0;
+    if ($techLevelQ && $techLevelQ->num_rows > 0) {
+        $arkknitLevel = (int)($techLevelQ->fetch_object()->level ?? 0);
+    }
+    $endfield = $arkknitLevel > 0 ? formalArknitEndfieldPower($arkknitLevel, 100, (int)$state->stability_index, (int)$state->blackout_risk) : null;
     if ($nodeQ) {
         while ($node = $nodeQ->fetch_object()) {
             if ((string)$node->status !== 'active') {
@@ -1839,6 +1845,9 @@ function powerGridTick(Game $s, int $uid): array {
     }
 
     $boostedGen = $generation;
+    if ($endfield) {
+        $boostedGen = (int)round($boostedGen * (1 + ($endfield['generation'] / 100.0)));
+    }
     $net = $boostedGen - $load;
 
     $lastTickTs = (int)($state->last_tick_ts ?? 0);

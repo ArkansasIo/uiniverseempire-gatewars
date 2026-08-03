@@ -100,6 +100,7 @@ function sg_catalog(): array {
         ['key' => 'capacitor_lattices', 'name' => 'Capacitor Lattices', 'domain' => 'Power Systems', 'base' => ['nq' => 155000, 'metal' => 7200, 'crystal' => 9000, 'deut' => 3200, 'energy' => 1200], 'scale' => 1.56, 'effect' => 'Peak-load buffering +2.1% per level.'],
         ['key' => 'phase_inverters', 'name' => 'Phase Inverters', 'domain' => 'Power Systems', 'base' => ['nq' => 180000, 'metal' => 7800, 'crystal' => 10500, 'deut' => 3500, 'energy' => 1400], 'scale' => 1.58, 'effect' => 'Power loss mitigation +2.0% per level.'],
         ['key' => 'grid_redundancy', 'name' => 'Grid Redundancy', 'domain' => 'Power Systems', 'base' => ['nq' => 125000, 'metal' => 6000, 'crystal' => 7000, 'deut' => 2400, 'energy' => 800], 'scale' => 1.54, 'effect' => 'Energy network survivability +2.0% per level.'],
+        ['key' => 'arkknit_endfield_power', 'name' => 'Arkknit Endfield Power', 'domain' => 'Power Systems', 'base' => ['nq' => 720000, 'metal' => 26000, 'crystal' => 36000, 'deut' => 14000, 'energy' => 9500], 'scale' => 1.70, 'effect' => 'Creates an endfield resonance that boosts empire energy output and shields critical infrastructure.'],
 
         ['key' => 'bc304_navigation', 'name' => 'BC-304 Navigation Matrix', 'domain' => 'Fleet Integration', 'base' => ['nq' => 190000, 'metal' => 12000, 'crystal' => 9500, 'deut' => 6500, 'energy' => 1500], 'scale' => 1.59, 'effect' => 'Fleet transit timing +2.2% per level.'],
         ['key' => 'asgard_beam_sync', 'name' => 'Asgard Beam Sync', 'domain' => 'Fleet Integration', 'base' => ['nq' => 240000, 'metal' => 14000, 'crystal' => 13500, 'deut' => 7500, 'energy' => 1900], 'scale' => 1.61, 'effect' => 'Support beam coordination +2.3% per level.'],
@@ -176,6 +177,9 @@ if (isset($_GET['id']) && $_GET['id'] === 'upgrade') {
         $status = 'Unknown Stargate technology.';
     } else {
         $row = $catalogByKey[$techKey];
+        if ($techKey === 'arkknit_endfield_power') {
+            $status = 'Arkknit Endfield Power is now available: each level raises empire energy output and stabilizes shielded infrastructure.';
+        }
         $lvlQ = $s->query("SELECT level FROM stargate_tech_levels WHERE uid=" . $uid . " AND tech_key='" . $techKey . "' LIMIT 1");
         $cur = 0;
         if ($lvlQ && $lvlQ->num_rows > 0) {

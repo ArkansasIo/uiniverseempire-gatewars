@@ -239,6 +239,7 @@
       <details>
         <summary><span class="menu-summary"><img src="images/ui/community.svg" alt="Legacy Tools" /><span>Legacy Tools</span></span></summary>
         <a href="javascript:void(0)" onclick="sendData('actionLogs','get','mainDisplay'); return false">Action Logs</a>
+        <a href="javascript:void(0)" onclick="sendData('terminal','get','mainDisplay'); return false">Terminal Logs</a>
         <a href="javascript:void(0)" onclick="sendData('progressinfo','get','mainDisplay'); return false">Progress Info</a>
         <a href="javascript:void(0)" onclick="sendData('action','get','mainDisplay'); return false">Actions</a>
       </details>
@@ -266,6 +267,7 @@
     <a href="javascript:void(0)" onclick="sendData('stargatetech','get','mainDisplay'); return false">Stargate Tech</a>
     <a href="javascript:void(0)" onclick="sendData('pages','get','diplomacy','messages'); return false"><span class="footer-icon-link"><img src="images/ui/diplomacy.svg" alt="Messages" /><span>Messages</span></span></a>
     <a href="javascript:void(0)" onclick="sendData('pages','get','operations','logs'); return false">Logs</a>
+    <a href="javascript:void(0)" onclick="sendData('terminal','get','mainDisplay'); return false">Terminal</a>
     <a href="javascript:void(0)" onclick="sendData('pages','get','help','newplayer'); return false"><span class="footer-icon-link"><img src="images/ui/help.svg" alt="Help" /><span>Help</span></span></a>
     <a href="forums/" target="_blank">Forums</a>
   </div>

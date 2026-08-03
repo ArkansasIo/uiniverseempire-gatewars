@@ -43,6 +43,12 @@ if ($state['stability_index'] !== 55 || $state['blackout_risk'] !== 0 || $state[
     exit(1);
 }
 
+$endfield = formalArknitEndfieldPower(3, 100, 40, 20);
+if ($endfield['generation'] !== 124 || $endfield['stability'] !== 47 || $endfield['risk'] !== 16) {
+    fwrite(STDERR, "formalArknitEndfieldPower failed: " . json_encode($endfield) . "\n");
+    exit(1);
+}
+
 $title = formalLeaderboardTitle(1, 500000, 4000000);
 if ($title['title'] !== 'Supreme Sovereign' || $title['band'] !== 'Legendary' || $title['prestige'] < 95) {
     fwrite(STDERR, "formalLeaderboardTitle failed: " . json_encode($title) . "\n");
