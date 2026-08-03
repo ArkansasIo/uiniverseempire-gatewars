@@ -87,6 +87,38 @@ function formalResearchBonus($baseBonus, $researchLevel) {
     return (float)round($baseBonus * (1 + ($researchLevel * 0.06)), 2);
 }
 
+function formalLeaderboardTitle($rank, $armySize, $treasury) {
+    $rank = max(1, (int)$rank);
+    $armySize = max(0, (int)$armySize);
+    $treasury = max(0, (int)$treasury);
+
+    $prestige = min(100, (int)round((1000 / max(1, $rank)) + ($armySize / 40000) + ($treasury / 5000000) * 30));
+    $band = 'Novice';
+    if ($prestige >= 90) {
+        $band = 'Legendary';
+    } elseif ($prestige >= 70) {
+        $band = 'Elite';
+    } elseif ($prestige >= 45) {
+        $band = 'Veteran';
+    } elseif ($prestige >= 20) {
+        $band = 'Rising';
+    }
+
+    $titles = [
+        'Novice' => 'Rookie Commander',
+        'Rising' => 'Frontier Marshal',
+        'Veteran' => 'Sovereign Captain',
+        'Elite' => 'Imperial Warden',
+        'Legendary' => 'Supreme Sovereign',
+    ];
+
+    return [
+        'title' => $titles[$band],
+        'band' => $band,
+        'prestige' => $prestige,
+    ];
+}
+
 function formalPowerNodeOutput($basePower, $level = 0, $integrity = 100, $boost = 0, $nodeType = 'generator') {
     $basePower = max(0, (float)$basePower);
     $level = max(0, (int)$level);

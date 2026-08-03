@@ -43,4 +43,10 @@ if ($state['stability_index'] !== 55 || $state['blackout_risk'] !== 0 || $state[
     exit(1);
 }
 
+$title = formalLeaderboardTitle(1, 500000, 4000000);
+if ($title['title'] !== 'Supreme Sovereign' || $title['band'] !== 'Legendary' || $title['prestige'] < 95) {
+    fwrite(STDERR, "formalLeaderboardTitle failed: " . json_encode($title) . "\n");
+    exit(1);
+}
+
 echo "formal logic checks passed\n";

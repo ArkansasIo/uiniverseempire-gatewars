@@ -55,7 +55,11 @@ $myUntrained = $myPersonnel ? (int)$myPersonnel->uuCount : 0;
       </tr>
       <tr align="left" valign="top">
         <td>Rank</td>
-        <td><?= htmlspecialchars($user->rank, ENT_QUOTES, 'UTF-8'); ?></td>
+        <td><?= htmlspecialchars((string)$user->rank, ENT_QUOTES, 'UTF-8'); ?></td>
+      </tr>
+      <tr align="left" valign="top">
+        <td>Title</td>
+        <td><strong><?= htmlspecialchars((string)($user->title ?? 'Rookie Commander'), ENT_QUOTES, 'UTF-8'); ?></strong> <small>(<?= htmlspecialchars((string)($user->titleBand ?? 'Novice'), ENT_QUOTES, 'UTF-8'); ?>, <?= (int)($user->prestige ?? 0); ?> prestige)</small></td>
       </tr>
       <tr align="left" valign="top">
         <td>Army Size </td>

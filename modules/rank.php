@@ -13,24 +13,28 @@ $page = $_GET['page'] ?? '1';
 $rankings = $s->Rankings($page);
 
 ?>
-<table width="100%" border="0">
-  <tr>
-    <td>Name</td>
-    <td>Rank</td>
-    <td>Army Size </td>
-    <td>Race</td>
-    <td>Treasury</td>
-	<td>Attack</td>
+<table width="100%" border="0" cellspacing="0" cellpadding="4">
+  <tr style="background:#142233;color:#fff;">
+    <td><strong>Name</strong></td>
+    <td><strong>Rank</strong></td>
+    <td><strong>Title</strong></td>
+    <td><strong>Prestige</strong></td>
+    <td><strong>Army Size</strong></td>
+    <td><strong>Race</strong></td>
+    <td><strong>Treasury</strong></td>
+    <td><strong>Action</strong></td>
   </tr>
 <?php
 for($x = 0; $x < count($rankings); $x++)
 {
   if($rankings[$x]['rank'] != 0){
   $allyinfo = $s->getallyinfo($rankings[$x]['allyid']); ?>
-    <tr>
+    <tr style="border-bottom:1px solid #23364d;">
 	
   	  <td><a href='javascript:void(0)' onclick="sendData('user','get','<?= htmlspecialchars($rankings[$x]['uid'], ENT_QUOTES, 'UTF-8'); ?>')"><?= htmlspecialchars($rankings[$x]['name'], ENT_QUOTES, 'UTF-8'); ?></a><?php if ($rankings[$x]['allyid'] != 0){ ?> [<a href="javascript:void(0)" onclick="sendData('ally_mlist','get','<?= htmlspecialchars($rankings[$x]['allyid'], ENT_QUOTES, 'UTF-8'); ?>','attack'); return false;"><?= htmlspecialchars($allyinfo->allyname, ENT_QUOTES, 'UTF-8');?></a>]<?php } ?></td>
     	<td><?= htmlspecialchars($rankings[$x]['rank'], ENT_QUOTES, 'UTF-8'); ?></td>
+    	<td><?= htmlspecialchars($rankings[$x]['title'] ?? 'Rookie Commander', ENT_QUOTES, 'UTF-8'); ?> <small>(<?= htmlspecialchars($rankings[$x]['titleBand'] ?? 'Novice', ENT_QUOTES, 'UTF-8'); ?>)</small></td>
+    	<td><?= (int)($rankings[$x]['prestige'] ?? 0); ?></td>
     	<td><?= htmlspecialchars($rankings[$x]['army'], ENT_QUOTES, 'UTF-8'); ?></td>
     	<td><?= htmlspecialchars($rankings[$x]['race'], ENT_QUOTES, 'UTF-8'); ?></td>
     	<td><?= htmlspecialchars($rankings[$x]['cash'], ENT_QUOTES, 'UTF-8'); ?></td>

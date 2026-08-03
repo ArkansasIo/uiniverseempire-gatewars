@@ -1,6 +1,8 @@
 <?php
 // Base::Game.class.php
 
+include_once(__DIR__ . '/../modules/formal_logic.php');
+
 class Game extends User
 {
 	private const TURN_TICK_MINUTES = 30;
@@ -349,10 +351,14 @@ class Game extends User
 		while ($rank = $q->fetch_object())
 		{
 			$xfact = $rank->mil_cov + $rank->mil_anti; //Covert Defense See if You Can see stats
+			$titleData = formalLeaderboardTitle((int)$rank->overall, (int)$rank->armySize, (int)$rank->onHand);
 			$rankings[$counter]['uid'] = $rank->uid;
 			$rankings[$counter]['allyid'] = $rank->allyid;
 			$rankings[$counter]['name'] = $rank->uname;
 			$rankings[$counter]['rank'] = number_format($rank->overall);
+			$rankings[$counter]['title'] = $titleData['title'];
+			$rankings[$counter]['titleBand'] = $titleData['band'];
+			$rankings[$counter]['prestige'] = $titleData['prestige'];
 			
 			if ($userStats->covact < .2 * $xfact)
 			{
@@ -417,9 +423,13 @@ class Game extends User
 		
 		
 			$xfact = $rank->mil_cov + $rank->mil_anti; //Covert Defense See if You Can see stats
+			$titleData = formalLeaderboardTitle((int)$rank->overall, (int)$rank->armySize, (int)$rank->onHand);
 			$rankings[$counter]['uid'] = $rank->uid;
 			$rankings[$counter]['name'] = $rank->uname;
 			$rankings[$counter]['rank'] = number_format($rank->overall);
+			$rankings[$counter]['title'] = $titleData['title'];
+			$rankings[$counter]['titleBand'] = $titleData['band'];
+			$rankings[$counter]['prestige'] = $titleData['prestige'];
 			$rankings[$counter]['allyid'] = $rank->allyid;
 			
 			if ($userStats->covact < .2 * $xfact)
@@ -475,6 +485,7 @@ class Game extends User
 			users.uname AS userName,
 			IFNULL(rank.overall, 0) as rank,
 			IFNULL(SUM(power.mil_cov+ power.mil_anti), 0) as `covPro`,
+			IFNULL(bank.onHand, 0) as treasury,
 			(SELECT users.uname FROM users,userdata WHERE userdata.uid=? AND users.uid = userdata.cid) AS `cmdrName`,
 			IFNULL(userdata.cid, 0) as `cmdrID`,
 			(SELECT r_name FROM race WHERE rid=(SELECT rid FROM userdata WHERE uid=?)) AS race,
@@ -530,6 +541,11 @@ class Game extends User
 		if (!$userStats->race) {
 			$userStats->race = "Unknown";
 		}
+
+		$titleData = formalLeaderboardTitle((int)$userStats->rank, (int)str_replace([',', ' '], '', (string)$userStats->armySize), (int)$userStats->treasury);
+		$userStats->title = $titleData['title'];
+		$userStats->titleBand = $titleData['band'];
+		$userStats->prestige = $titleData['prestige'];
 		
 		return $userStats;
 	}
