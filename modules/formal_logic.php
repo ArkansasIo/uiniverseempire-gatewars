@@ -119,6 +119,74 @@ function formalLeaderboardTitle($rank, $armySize, $treasury) {
     ];
 }
 
+function formalTitleDisplay($title, $band, $prestige) {
+    $title = trim((string)$title);
+    $band = trim((string)$band);
+    $prestige = max(0, (int)$prestige);
+
+    if ($title === '') {
+        $title = 'Rookie Commander';
+    }
+    if ($band === '') {
+        $band = 'Novice';
+    }
+
+    return $title . ' (' . $band . ') - ' . $prestige . ' prestige';
+}
+
+function formalArcBossProfile($bossLevel = 1, $threatLevel = 0, $storyAct = 1) {
+    $bossLevel = max(1, (int)$bossLevel);
+    $threatLevel = max(0, (int)$threatLevel);
+    $storyAct = max(1, (int)$storyAct);
+
+    $bossNames = [
+        1 => 'The Hollow Sovereign',
+        2 => 'The Ember Warden',
+        3 => 'The Gatebreaker Colossus',
+        4 => 'The Null Crown',
+    ];
+    $phases = [
+        1 => 'Phase 1',
+        2 => 'Phase 2',
+        3 => 'Phase 3',
+        4 => 'Phase 4',
+    ];
+    $phaseIndex = min(4, max(1, (int)ceil($bossLevel / 2)));
+    $phaseLabel = $phases[$phaseIndex];
+    $baseHp = formalBossHp($bossLevel, $threatLevel);
+    $hp = (int)round($baseHp * (1 + ($storyAct * 0.08)));
+    $reward = 180000 + ($bossLevel * 55000) + ($threatLevel * 2200);
+    $name = $bossNames[$phaseIndex] . ' of Act ' . $storyAct;
+
+    return [
+        'name' => $name,
+        'phase' => $phaseLabel,
+        'level' => $bossLevel,
+        'hp' => $hp,
+        'reward' => $reward,
+        'threat' => $threatLevel,
+    ];
+}
+
+function formalGalaxyRaidProfile($galaxy = 1, $system = 1, $threat = 0) {
+    $galaxy = max(1, (int)$galaxy);
+    $system = max(1, (int)$system);
+    $threat = max(0, (int)$threat);
+
+    $target = 'G' . $galaxy . '-S' . $system;
+    $risk = min(100, 10 + ($galaxy * 4) + ($system * 2) + ($threat * 1));
+    $reward = 54000 + ($galaxy * 7000) + ($system * 1500) + ($threat * 900);
+    $turns = max(2, min(8, 3 + (int)ceil($galaxy / 3) + (int)floor($system / 2)));
+
+    return [
+        'target' => $target,
+        'risk' => $risk,
+        'reward' => $reward,
+        'turns' => $turns,
+        'threat' => $threat,
+    ];
+}
+
 function formalPowerNodeOutput($basePower, $level = 0, $integrity = 100, $boost = 0, $nodeType = 'generator') {
     $basePower = max(0, (float)$basePower);
     $level = max(0, (int)$level);

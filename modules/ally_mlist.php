@@ -30,6 +30,8 @@ if ($allyId > 0) {
   <tr>
     <td>Name</td>
     <td>Rank</td>
+    <td>Title</td>
+    <td>Prestige</td>
     <td>Army Size </td>
     <td>Race</td>
     <td>Treasury</td>
@@ -39,11 +41,13 @@ for($x = 0; $x < count($rankings); $x++)
 {
 	if(isset($rankings[$x]['rank']) && $rankings[$x]['rank'] != 0){?>
     <tr>
-  	  <td><a href='javascript:void(0)' onclick="sendData('user','get','<?= $rankings[$x]['uid']; ?>')"><?= $rankings[$x]['name']; ?></a>[<?= $allyinfo->allyname;?>]</a></td>
-    	<td><?= $rankings[$x]['rank']; ?></td>
-    	<td><?= $rankings[$x]['army']; ?></td>
-    	<td><?= $rankings[$x]['race']; ?></td>
-    	<td><?= $rankings[$x]['cash']; ?></td>
+  	  <td><a href='javascript:void(0)' onclick="sendData('user','get','<?= $rankings[$x]['uid']; ?>')"><?= htmlspecialchars($rankings[$x]['name'], ENT_QUOTES, 'UTF-8'); ?></a>[<?= htmlspecialchars($allyinfo->allyname, ENT_QUOTES, 'UTF-8'); ?>]</a></td>
+    	<td><?= htmlspecialchars($rankings[$x]['rank'], ENT_QUOTES, 'UTF-8'); ?></td>
+    	<td><?= htmlspecialchars(formalTitleDisplay($rankings[$x]['title'] ?? 'Rookie Commander', $rankings[$x]['titleBand'] ?? 'Novice', (int)($rankings[$x]['prestige'] ?? 0)), ENT_QUOTES, 'UTF-8'); ?></td>
+    	<td><?= (int)($rankings[$x]['prestige'] ?? 0); ?></td>
+    	<td><?= htmlspecialchars($rankings[$x]['army'], ENT_QUOTES, 'UTF-8'); ?></td>
+    	<td><?= htmlspecialchars($rankings[$x]['race'], ENT_QUOTES, 'UTF-8'); ?></td>
+    	<td><?= htmlspecialchars($rankings[$x]['cash'], ENT_QUOTES, 'UTF-8'); ?></td>
   		</tr>
 	
 <?php

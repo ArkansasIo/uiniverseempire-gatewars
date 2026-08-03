@@ -56,6 +56,10 @@ echo "</table>";
         <td align="left" valign="top" bordercolor="#000000"><a href="javascript:void(0)" onclick="sendData('user','get','<?= $base->cid; ?>'); return false"><?= $base->cname; ?></a></td>
       </tr>
       <tr>
+        <td align="left" valign="top" bordercolor="#000000">Commander Title</td>
+        <td align="left" valign="top" bordercolor="#000000"><?= htmlspecialchars(formalTitleDisplay((string)($base->title ?? 'Rookie Commander'), (string)($base->titleBand ?? 'Novice'), (int)($base->prestige ?? 0)), ENT_QUOTES, 'UTF-8'); ?></td>
+      </tr>
+      <tr>
         <td align="left" valign="top" bordercolor="#000000">HomePlanet Name </td>
         <td align="left" valign="top" bordercolor="#000000"><?= $base->plnt_name; ?></td>
       </tr>
@@ -106,6 +110,8 @@ echo "</table>";
   <td align="left">Mercenaries</td>
   <td align="left">Race</td>
   <td align="left">Rank</td>
+  <td align="left">Title</td>
+  <td align="left">Prestige</td>
   </tr>
   <?php
   $offi = $s->getOfficers($_SESSION['userid']);
@@ -113,10 +119,9 @@ echo "</table>";
   {
   	echo "<tr><td><a href=\"javascript:void(0)\" onclick=\"sendData('user','get','".$offi[$x]["uid"]."'); return false\">".$offi[$x]["name"]."</a>
 		  </td><td>".number_format($offi[$x]["size"])."</td><td>".number_format($offi[$x]["mercs"])."</td><td>"
-		  .$offi[$x]["race"]."</td><td>".$offi[$x]["rank"]."</td></tr>";
-		  
+		  .$offi[$x]["race"]."</td><td>".$offi[$x]["rank"]."</td><td>".htmlspecialchars($offi[$x]["title"] ?? 'Rookie Commander', ENT_QUOTES, 'UTF-8')."</td><td>".(int)($offi[$x]["prestige"] ?? 0)."</td></tr>";
   }
-      echo "<tr> <td colspan='5'>Number of Officers: ".count($offi)."</td> </tr>"
+      echo "<tr> <td colspan='7'>Number of Officers: ".count($offi)."</td> </tr>";
   ?>
 </table></td>
     <td width="42%" align="center" valign="top"><?php include_once('mil_rank.php'); ?><br />

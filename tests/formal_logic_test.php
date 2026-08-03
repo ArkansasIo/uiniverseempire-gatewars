@@ -49,4 +49,22 @@ if ($title['title'] !== 'Supreme Sovereign' || $title['band'] !== 'Legendary' ||
     exit(1);
 }
 
+$titleDisplay = formalTitleDisplay('Imperial Warden', 'Elite', 87);
+if ($titleDisplay !== 'Imperial Warden (Elite) - 87 prestige') {
+    fwrite(STDERR, "formalTitleDisplay failed: {$titleDisplay}\n");
+    exit(1);
+}
+
+$arcBoss = formalArcBossProfile(3, 40, 7);
+if ($arcBoss['phase'] !== 'Phase 2' || $arcBoss['reward'] !== 180000 + (3 * 55000) + (40 * 2200) || $arcBoss['name'] === '') {
+    fwrite(STDERR, "formalArcBossProfile failed: " . json_encode($arcBoss) . "\n");
+    exit(1);
+}
+
+$raidProfile = formalGalaxyRaidProfile(2, 5, 12);
+if ($raidProfile['reward'] !== 54000 + (2 * 7000) + (5 * 1500) + (12 * 900) || $raidProfile['target'] !== 'G2-S5') {
+    fwrite(STDERR, "formalGalaxyRaidProfile failed: " . json_encode($raidProfile) . "\n");
+    exit(1);
+}
+
 echo "formal logic checks passed\n";

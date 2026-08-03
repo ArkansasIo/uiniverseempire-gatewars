@@ -59,7 +59,7 @@ $myUntrained = $myPersonnel ? (int)$myPersonnel->uuCount : 0;
       </tr>
       <tr align="left" valign="top">
         <td>Title</td>
-        <td><strong><?= htmlspecialchars((string)($user->title ?? 'Rookie Commander'), ENT_QUOTES, 'UTF-8'); ?></strong> <small>(<?= htmlspecialchars((string)($user->titleBand ?? 'Novice'), ENT_QUOTES, 'UTF-8'); ?>, <?= (int)($user->prestige ?? 0); ?> prestige)</small></td>
+        <td><strong><?= htmlspecialchars(formalTitleDisplay((string)($user->title ?? 'Rookie Commander'), (string)($user->titleBand ?? 'Novice'), (int)($user->prestige ?? 0)), ENT_QUOTES, 'UTF-8'); ?></strong></td>
       </tr>
       <tr align="left" valign="top">
         <td>Army Size </td>
@@ -111,13 +111,15 @@ $myUntrained = $myPersonnel ? (int)$myPersonnel->uuCount : 0;
           <td>Name</td>
           <td>Race</td>
           <td>Rank</td>
+          <td>Title</td>
+          <td>Prestige</td>
         </tr>
           <?php
   $offi = $s->getOfficers($uid);
   for($x = 0; $x < count($offi); $x++) {
-  	echo "<tr><td><a href=\"javascript:void(0)\" onclick=\"sendData('user','get','".htmlspecialchars($offi[$x]["uid"], ENT_QUOTES, 'UTF-8')."'); return false\">".htmlspecialchars($offi[$x]["name"], ENT_QUOTES, 'UTF-8')."</a> </td><td>" .htmlspecialchars($offi[$x]["race"], ENT_QUOTES, 'UTF-8')."</td><td>".htmlspecialchars($offi[$x]["rank"], ENT_QUOTES, 'UTF-8')."</td></tr>";
+  	echo "<tr><td><a href=\"javascript:void(0)\" onclick=\"sendData('user','get','".htmlspecialchars($offi[$x]["uid"], ENT_QUOTES, 'UTF-8')."'); return false\">".htmlspecialchars($offi[$x]["name"], ENT_QUOTES, 'UTF-8')."</a> </td><td>" .htmlspecialchars($offi[$x]["race"], ENT_QUOTES, 'UTF-8')."</td><td>".htmlspecialchars($offi[$x]["rank"], ENT_QUOTES, 'UTF-8')."</td><td>".htmlspecialchars($offi[$x]["title"] ?? 'Rookie Commander', ENT_QUOTES, 'UTF-8')."</td><td>".(int)($offi[$x]["prestige"] ?? 0)."</td></tr>";
   }
-    echo "<tr> <td colspan='3'>Number of Officers: ".count($offi)."</td> </tr>";
+    echo "<tr> <td colspan='5'>Number of Officers: ".count($offi)."</td> </tr>";
   ?>
       </table></td>
   </tr>

@@ -291,12 +291,15 @@ class Game extends User
 	public function getOfficers(int $uid): array
 	{
 		Debug::printMsg(__CLASS__, __FUNCTION__, "Retrieving Officers");
-		$query = "SELECT userdata.uid, userdata.uname , race.r_name , rank.overall, (SELECT SUM( units.attack+ units.superAttack+ units.attackMercs+ units.defense+ units.superDefense+ units.defenseMercs+ units.untrained+ units.miners+ units.lifers+ units.covert+ units.superCovert+ units.anticovert+ units.superAnticovert) FROM `units` WHERE uid=?) AS ttlarmy, (SELECT SUM( units.attackMercs+ units.defenseMercs) FROM `units` WHERE uid=?) AS mercs
-				  FROM `userdata` , `users` , `race` , `rank`
+		$query = "SELECT userdata.uid, userdata.uname, race.r_name, rank.overall, bank.onHand,
+				  (SELECT SUM( units.attack+ units.superAttack+ units.attackMercs+ units.defense+ units.superDefense+ units.defenseMercs+ units.untrained+ units.miners+ units.lifers+ units.covert+ units.superCovert+ units.anticovert+ units.superAnticovert) FROM `units` WHERE uid=?) AS ttlarmy,
+				  (SELECT SUM( units.attackMercs+ units.defenseMercs) FROM `units` WHERE uid=?) AS mercs
+				  FROM `userdata`, `users`, `race`, `rank`, `bank`
 				  WHERE userdata.cid =?
 				  AND users.uid = userdata.uid
 				  AND userdata.rid = race.rid
 				  AND userdata.uid = rank.uid
+				  AND userdata.uid = bank.uid
 				  ORDER BY `overall` ASC
 				  LIMIT 100 ";
 		$stmt = $this->db_link->prepare($query);
@@ -308,12 +311,16 @@ class Game extends User
 		while($offlist = $q->fetch_assoc())
 		{
 			$officers[$num] = [];
+			$titleData = formalLeaderboardTitle((int)$offlist["overall"], (int)$offlist["ttlarmy"], (int)$offlist["onHand"]);
 			$officers[$num]["uid"]   = $offlist["uid"];
 			$officers[$num]["name"]  = $offlist["uname"];
 			$officers[$num]["rank"]  = $offlist["overall"];
 			$officers[$num]["race"]  = $offlist["r_name"];
 			$officers[$num]["size"]  = $offlist["ttlarmy"];
 			$officers[$num]["mercs"] = $offlist["mercs"];
+			$officers[$num]["title"] = $titleData['title'];
+			$officers[$num]["titleBand"] = $titleData['band'];
+			$officers[$num]["prestige"] = $titleData['prestige'];
 			$num++; 
 		}
 		return $officers;

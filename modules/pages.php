@@ -3505,6 +3505,27 @@ if ($main === 'universe' || strpos($cmd, 'uni_') === 0) {
             }
         }
 
+        if ($cmd === 'uni_galaxy_raid_trial') {
+            $galaxyNo = max(1, (int)($_GET['g'] ?? 1));
+            $systemNo = max(1, (int)($_GET['s'] ?? 1));
+            $raidProfile = formalGalaxyRaidProfile($galaxyNo, $systemNo, max(0, min(15, (int)($evt->threat_level ?? 0))));
+            $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+            $turns = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
+            $resQ = $s->query("SELECT deuterium FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+            $res = $resQ ? $resQ->fetch_object() : (object)['deuterium' => 0];
+            if ($turns < (int)$raidProfile['turns']) {
+                $pageActionStatus = 'Galaxy raid trial failed: insufficient action turns.';
+            } elseif ((int)$res->deuterium < 3200) {
+                $pageActionStatus = 'Galaxy raid trial failed: insufficient deuterium.';
+            } else {
+                $s->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . (int)$raidProfile['turns'] . ") WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE player_resources SET deuterium=deuterium-3200 WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE bank SET onHand=onHand+" . (int)$raidProfile['reward'] . " WHERE uid=" . $uid . " LIMIT 1");
+                $s->query("UPDATE universe_event_state SET event_points=event_points+" . (int)$raidProfile['reward'] . " WHERE uid=" . $uid . " LIMIT 1");
+                $pageActionStatus = 'Galaxy raid trial launched against ' . h((string)$raidProfile['target']) . ' with risk ' . fnum((int)$raidProfile['risk']) . '% and reward ' . fnum((int)$raidProfile['reward']) . '.';
+            }
+        }
+
         if ($cmd === 'uni_event_resolve') {
             $eventQ = $s->query("SELECT event_id,event_name,reward_points FROM universe_event_log
                 WHERE uid=" . $uid . " AND resolution_status='open'
@@ -4350,6 +4371,7 @@ if ($main === 'empire' && $sub === 'planets') {
 if ($main === 'empire' && $sub === 'command') {
     echo '<div class="card"><h4>Command Chain</h4>';
     echo '<p><strong>Commander:</strong> ' . h($userStats->cmdrName ?? 'None') . '</p>';
+    echo '<p><strong>Title:</strong> ' . h(formalTitleDisplay((string)($userStats->title ?? 'Rookie Commander'), (string)($userStats->titleBand ?? 'Novice'), (int)($userStats->prestige ?? 0))) . '</p>';
     echo '<p><strong>Race:</strong> ' . h($userStats->race ?? '') . '</p>';
     echo '<p><strong>Rank:</strong> ' . h($userStats->rank ?? '') . '</p>';
     echo '</div>';
@@ -4916,7 +4938,7 @@ if ($main === 'universe') {
         echo '</div>';
 
         echo '<div class="card full"><h4>Galaxy Cluster Matrix</h4>';
-        echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">Galaxy</th><th align="left">Systems</th><th align="left">Positions/System</th><th align="left">Worlds</th><th align="left">Avg Habitability</th><th align="left">Moon Count</th></tr>';
+        echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">Galaxy</th><th align="left">Systems</th><th align="left">Positions/System</th><th align="left">Worlds</th><th align="left">Avg Habitability</th><th align="left">Moon Count</th><th align="left">Raid Trial</th></tr>';
         $galSampleMax = min(12, (int)$uCfg['galaxies']);
         for ($g = 1; $g <= $galSampleMax; $g++) {
             $systemsPerGalaxy = (int)($uCfg['systemsPerGalaxy'] ?? $uCfg['sectorsPerGalaxy']);
@@ -4925,7 +4947,8 @@ if ($main === 'universe') {
             $gSeed = (($uid + $g) * 31337) & 0x7fffffff;
             $avgHab = universeRand($gSeed, 44, 69);
             $moonCount = universeRand($gSeed, (int)floor($worldsPerGalaxy * 0.6), (int)floor($worldsPerGalaxy * 1.4));
-            echo '<tr><td>G' . fnum($g) . '</td><td>' . fnum($systemsPerGalaxy) . '</td><td>' . fnum($positionsPerSystem) . '</td><td>' . fnum($worldsPerGalaxy) . '</td><td>' . fnum($avgHab) . '%</td><td>' . fnum($moonCount) . '</td></tr>';
+            $raidProfile = formalGalaxyRaidProfile($g, max(1, min($systemsPerGalaxy, 3 + ($g % 4))), 4 + ($g % 3));
+            echo '<tr><td>G' . fnum($g) . '</td><td>' . fnum($systemsPerGalaxy) . '</td><td>' . fnum($positionsPerSystem) . '</td><td>' . fnum($worldsPerGalaxy) . '</td><td>' . fnum($avgHab) . '%</td><td>' . fnum($moonCount) . '</td><td><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'galaxies&cmd=uni_galaxy_raid_trial&g=' . $g . '&s=' . max(1, min($systemsPerGalaxy, 3 + ($g % 4))) . '\'); return false">' . h($raidProfile['target']) . '</a></td></tr>';
         }
         echo '</table></div>';
 
@@ -5353,15 +5376,18 @@ if ($main === 'universe') {
     if ($sub === 'worldboss') {
         $boss = $universeBossState ?: (object)['boss_name' => 'Dormant Leviathan', 'boss_level' => 1, 'boss_hp' => 0, 'boss_hp_max' => 0, 'status' => 'idle', 'last_spawn_ts' => 0, 'last_defeat_ts' => 0];
         $evt = $universeEventState ?: (object)['event_points' => 0, 'threat_level' => 20];
+        $storyAct = max(1, min(12, (int)($universeStoryState->current_act ?? 1)));
+        $arcBoss = formalArcBossProfile((int)$boss->boss_level, (int)$evt->threat_level, $storyAct);
         $hpPct = ((int)$boss->boss_hp_max > 0) ? (int)round(((int)$boss->boss_hp / (int)$boss->boss_hp_max) * 100) : 0;
         $lastSpawnText = ((int)$boss->last_spawn_ts > 0) ? date('Y-m-d H:i:s', (int)$boss->last_spawn_ts) : 'Never';
         $lastDefeatText = ((int)$boss->last_defeat_ts > 0) ? date('Y-m-d H:i:s', (int)$boss->last_defeat_ts) : 'Never';
-        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="World boss" /><div><h4>Galaxy World Boss Command</h4><p>Coordinate the assault, monitor the boss health bar, and stabilize the frontier.</p></div></div>';
-        echo '<p><strong>Boss:</strong> ' . h((string)$boss->boss_name) . ' | <strong>Level:</strong> ' . fnum((int)$boss->boss_level) . ' | <strong>Status:</strong> ' . h((string)$boss->status) . '</p>';
-        echo '<p><strong>HP:</strong> ' . fnum((int)$boss->boss_hp) . ' / ' . fnum((int)$boss->boss_hp_max) . ' (' . fnum($hpPct) . '%)</p>';
+        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="World boss" /><div><h4>Arc Boss Command</h4><p>Deploy your strike wings against the current act boss and turn galactic threat into campaign momentum.</p></div></div>';
+        echo '<p><strong>Arc Boss:</strong> ' . h((string)$arcBoss['name']) . ' | <strong>Phase:</strong> ' . h((string)$arcBoss['phase']) . ' | <strong>Level:</strong> ' . fnum((int)$arcBoss['level']) . '</p>';
+        echo '<p><strong>Current Encounter:</strong> ' . h((string)$boss->boss_name) . ' | <strong>HP:</strong> ' . fnum((int)$boss->boss_hp) . ' / ' . fnum((int)$boss->boss_hp_max) . ' (' . fnum($hpPct) . '%)</p>';
+        echo '<p><strong>Forecast:</strong> ' . fnum((int)$arcBoss['hp']) . ' projected arc HP | <strong>Reward:</strong> ' . fnum((int)$arcBoss['reward']) . ' Naquadah</p>';
         echo '<p><strong>Event Points:</strong> ' . fnum((int)$evt->event_points) . ' | <strong>Threat Level:</strong> ' . fnum((int)$evt->threat_level) . '</p>';
         echo '<p><strong>Last Spawn:</strong> ' . h($lastSpawnText) . ' | <strong>Last Defeat:</strong> ' . h($lastDefeatText) . '</p>';
-        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'worldboss&cmd=uni_boss_spawn\'); return false">Spawn World Boss</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'worldboss&cmd=uni_boss_attack\'); return false">Attack World Boss</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'events&cmd=uni_event_resolve\'); return false">Stabilize Event Front</a></p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'worldboss&cmd=uni_boss_spawn\'); return false">Spawn Arc Boss</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'worldboss&cmd=uni_boss_attack\'); return false">Attack Arc Boss</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'events&cmd=uni_event_resolve\'); return false">Stabilize Event Front</a></p>';
         echo '</div>';
     }
 

@@ -44,17 +44,30 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 
   <section class="public-hero">
     <div class="public-hero-left">
-      <a href="javascript:void(0)" onClick="mainUpdate('login','Login'); return false" onMouseOver="rollUpDate('Login'); return false" onMouseOut="autoclear(); return false">
-        <img src="images/galaxy1.jpg" name="Image12" border="0" id="Image12" onMouseOver="MM_swapImage('Image12','','images/galaxy1-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
-      </a>
+      <div class="public-hero-card public-hero-card-main">
+        <a href="javascript:void(0)" onClick="mainUpdate('login','Login'); return false" onMouseOver="rollUpDate('Login'); return false" onMouseOut="autoclear(); return false">
+          <img src="images/galaxy1.jpg" name="Image12" border="0" id="Image12" onMouseOver="MM_swapImage('Image12','','images/galaxy1-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
+        </a>
+        <div class="hero-overlay">
+          <span class="hero-pill">Live Command</span>
+          <h2>Command the Final Frontier</h2>
+          <p>Build fleets, seize systems, and wage turn-based war across the stars.</p>
+        </div>
+      </div>
     </div>
     <div class="public-hero-right">
-      <a href="javascript:void(0)" onClick="mainUpdate('register','Register To Play'); return false" onMouseOver="rollUpDate('Register To Play'); return false" onMouseOut="autoclear(); return false">
-        <img src="images/galaxy2.jpg" name="Image11" border="0" id="Image11" onMouseOver="MM_swapImage('Image11','','images/galaxy2-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
-      </a>
-      <a href="javascript:void(0)" onClick="mainUpdate('updates','Updates'); return false" onMouseOver="rollUpDate('Updates'); return false" onMouseOut="autoclear(); return false">
-        <img src="images/galaxy3.JPG" name="Image13" border="0" id="Image13" onMouseOver="MM_swapImage('Image13','','images/galaxy3-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
-      </a>
+      <div class="public-hero-card">
+        <a href="javascript:void(0)" onClick="mainUpdate('register','Register To Play'); return false" onMouseOver="rollUpDate('Register To Play'); return false" onMouseOut="autoclear(); return false">
+          <img src="images/galaxy2.jpg" name="Image11" border="0" id="Image11" onMouseOver="MM_swapImage('Image11','','images/galaxy2-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
+        </a>
+        <div class="hero-caption">Forge a warfleet</div>
+      </div>
+      <div class="public-hero-card">
+        <a href="javascript:void(0)" onClick="mainUpdate('updates','Updates'); return false" onMouseOver="rollUpDate('Updates'); return false" onMouseOut="autoclear(); return false">
+          <img src="images/galaxy3.JPG" name="Image13" border="0" id="Image13" onMouseOver="MM_swapImage('Image13','','images/galaxy3-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
+        </a>
+        <div class="hero-caption">Watch the frontier evolve</div>
+      </div>
     </div>
   </section>
 
@@ -82,7 +95,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 ?>
       <div id="mainDisplay"></div>
       <div class="public-footnote">
-        <span>Graphics by Fraehr</span>
+        <span>Graphics by Stephen</span>
         <a href="http://www.icra.org/sitelabel/" target="_blank"><img src="images/icra.gif" alt="ICRA" /></a>
       </div>
     </main>
