@@ -133,8 +133,7 @@ if(isset($_SERVER['HTTP_REFERER']) && $_SERVER['HTTP_REFERER'] !== '') {
  function error($code, $desc) {
   header($_SERVER['SERVER_PROTOCOL'] . ' ' . $code);
   if(strtoupper($_SERVER['REQUEST_METHOD']) != 'HEAD') {
-   echo '<?xml version="1.0" encoding="UTF-8"?>'."\n";
-   echo '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'."\n";
+    echo '<!DOCTYPE html>'."\n";
    echo '<html xml:lang="en" lang="en">';
    echo '<head><title>' . $code . '</title></head><body><h1>' . $code . '</h1><p>' . $desc . '</p></body></html>';
   }
