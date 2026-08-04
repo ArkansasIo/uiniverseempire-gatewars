@@ -81,11 +81,11 @@ class Chive
         mysqli_report(MYSQLI_REPORT_OFF);
 
         try {
-            $this->db_link = new mysqli($this->db_server, $this->db_username, $this->db_password, $this->db_name);
+            $this->db_link = @new mysqli($this->db_server, $this->db_username, $this->db_password, $this->db_name);
 
             // If localhost socket resolution fails in container/dev envs, retry over TCP.
             if ($this->db_link->connect_error && $this->db_server === "localhost") {
-                $this->db_link = new mysqli("127.0.0.1", $this->db_username, $this->db_password, $this->db_name);
+                $this->db_link = @new mysqli("127.0.0.1", $this->db_username, $this->db_password, $this->db_name);
             }
         } catch (Throwable $e) {
             $this->db_link = null;

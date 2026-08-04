@@ -8,6 +8,18 @@ class Game extends User
 	private const TURN_TICK_MINUTES = 30;
 	private const TURNS_PER_MINUTE = 6;
 
+	public function __construct(string $userName = "", string $password = "DoodleCakes and Rofl Sundae4278vsid")
+	{
+		parent::__construct($userName, $password);
+		if ($this->connected()) {
+			$this->ensureRaceCatalog();
+			$this->ensureMessagesTable();
+			$this->ensureUnitMetadataTables();
+			$this->ensureActionLogTable();
+			$this->ensureUnitCatalogTable();
+		}
+	}
+
 	/*Vars*/
 	public int $gameTime; 		//Time In Game
 	public int $isRank; 		//Players Rank out of all active users
@@ -100,6 +112,175 @@ class Game extends User
 				ON DUPLICATE KEY UPDATE `r_name`=VALUES(`r_name`), `r_group`='npc'");
 		}
 	}
+
+	private function ensureMessagesTable(): void
+	{
+		$this->query("CREATE TABLE IF NOT EXISTS `messages` (
+			`mid` int(11) NOT NULL AUTO_INCREMENT,
+			`fromUID` int(11) NOT NULL,
+			`toUID` int(11) NOT NULL,
+			`subject` varchar(255) NOT NULL DEFAULT '(no subject)',
+			`message` text NOT NULL,
+			`timeSent` varchar(32) NOT NULL,
+			`isRead` tinyint(1) NOT NULL DEFAULT 0,
+			`isDeleted` tinyint(1) NOT NULL DEFAULT 0,
+			`replyToMid` int(11) NOT NULL DEFAULT 0,
+			PRIMARY KEY (`mid`),
+			KEY `idx_messages_toUID` (`toUID`),
+			KEY `idx_messages_fromUID` (`fromUID`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+	}
+
+	private function ensureUnitMetadataTables(): void
+	{
+		$this->query("CREATE TABLE IF NOT EXISTS `unitcost` (
+			`rid` int(11) NOT NULL,
+			`attack` int(11) NOT NULL,
+			`superAttack` int(11) NOT NULL,
+			`defense` int(11) NOT NULL,
+			`superDefense` int(11) NOT NULL,
+			`covert` int(11) NOT NULL,
+			`superCovert` int(11) NOT NULL,
+			`anticovert` int(11) NOT NULL,
+			`superAnticovert` int(11) NOT NULL,
+			PRIMARY KEY (`rid`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+
+		$this->query("CREATE TABLE IF NOT EXISTS `unitnames` (
+			`rid` int(11) NOT NULL,
+			`attack` varchar(64) NOT NULL,
+			`superAttack` varchar(64) NOT NULL,
+			`attackMercs` varchar(64) NOT NULL,
+			`defense` varchar(64) NOT NULL,
+			`superDefense` varchar(64) NOT NULL,
+			`defenseMercs` varchar(64) NOT NULL,
+			`covert` varchar(64) NOT NULL,
+			`superCovert` varchar(64) NOT NULL,
+			`anticovert` varchar(64) NOT NULL,
+			`superAnticovert` varchar(64) NOT NULL,
+			PRIMARY KEY (`rid`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+
+		$raceQuery = $this->query("SELECT rid, r_name FROM race ORDER BY rid ASC");
+		if (!$raceQuery) {
+			return;
+		}
+
+		while ($race = $raceQuery->fetch_object()) {
+			$rid = (int)($race->rid ?? 0);
+			if ($rid <= 0) {
+				continue;
+			}
+
+			$raceName = trim((string)($race->r_name ?? 'Empire'));
+			$attackName = $this->db_link->real_escape_string($raceName . ' Infantry');
+			$superAttackName = $this->db_link->real_escape_string($raceName . ' Strike Guard');
+			$attackMercName = $this->db_link->real_escape_string($raceName . ' Raiders');
+			$defenseName = $this->db_link->real_escape_string($raceName . ' Defenders');
+			$superDefenseName = $this->db_link->real_escape_string($raceName . ' Shield Guard');
+			$defenseMercName = $this->db_link->real_escape_string($raceName . ' Sentinels');
+			$covertName = $this->db_link->real_escape_string($raceName . ' Scouts');
+			$superCovertName = $this->db_link->real_escape_string($raceName . ' Shadow Ops');
+			$anticovertName = $this->db_link->real_escape_string($raceName . ' Wardens');
+			$superAnticovertName = $this->db_link->real_escape_string($raceName . ' Watchers');
+
+			$this->query("INSERT INTO `unitnames` (`rid`,`attack`,`superAttack`,`attackMercs`,`defense`,`superDefense`,`defenseMercs`,`covert`,`superCovert`,`anticovert`,`superAnticovert`) VALUES ("
+				. $rid . ", '" . $attackName . "', '" . $superAttackName . "', '" . $attackMercName . "', '" . $defenseName . "', '" . $superDefenseName . "', '" . $defenseMercName . "', '" . $covertName . "', '" . $superCovertName . "', '" . $anticovertName . "', '" . $superAnticovertName . "')
+				ON DUPLICATE KEY UPDATE
+				`attack`=VALUES(`attack`),
+				`superAttack`=VALUES(`superAttack`),
+				`attackMercs`=VALUES(`attackMercs`),
+				`defense`=VALUES(`defense`),
+				`superDefense`=VALUES(`superDefense`),
+				`defenseMercs`=VALUES(`defenseMercs`),
+				`covert`=VALUES(`covert`),
+				`superCovert`=VALUES(`superCovert`),
+				`anticovert`=VALUES(`anticovert`),
+				`superAnticovert`=VALUES(`superAnticovert`)");
+
+			$this->query("INSERT INTO `unitcost` (`rid`,`attack`,`superAttack`,`defense`,`superDefense`,`covert`,`superCovert`,`anticovert`,`superAnticovert`) VALUES ("
+				. $rid . ", 100, 250, 100, 250, 150, 300, 150, 300)
+				ON DUPLICATE KEY UPDATE
+				`attack`=VALUES(`attack`),
+				`superAttack`=VALUES(`superAttack`),
+				`defense`=VALUES(`defense`),
+				`superDefense`=VALUES(`superDefense`),
+				`covert`=VALUES(`covert`),
+				`superCovert`=VALUES(`superCovert`),
+				`anticovert`=VALUES(`anticovert`),
+				`superAnticovert`=VALUES(`superAnticovert`)");
+		}
+	}
+
+	private function ensureActionLogTable(): void
+	{
+		$this->query("CREATE TABLE IF NOT EXISTS `actionlog` (
+			`actID` int(11) NOT NULL AUTO_INCREMENT,
+			`uid` int(11) NOT NULL,
+			`to_uid` int(11) NOT NULL DEFAULT 0,
+			`type` varchar(16) NOT NULL DEFAULT 'attack',
+			`time` varchar(32) NOT NULL,
+			`success` tinyint(1) NOT NULL DEFAULT 0,
+			`stolen` bigint(20) NOT NULL DEFAULT 0,
+			`thereDead` bigint(20) NOT NULL DEFAULT 0,
+			`myDead` bigint(20) NOT NULL DEFAULT 0,
+			`turnsUsed` int(11) NOT NULL DEFAULT 0,
+			`attackPower` bigint(20) NOT NULL DEFAULT 0,
+			`defensePower` bigint(20) NOT NULL DEFAULT 0,
+			`phrase` varchar(255) NOT NULL DEFAULT '',
+			PRIMARY KEY (`actID`),
+			KEY `idx_actionlog_uid` (`uid`),
+			KEY `idx_actionlog_to_uid` (`to_uid`),
+			KEY `idx_actionlog_type` (`type`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+
+		$this->query("ALTER TABLE `actionlog` ADD COLUMN IF NOT EXISTS `phrase` varchar(255) NOT NULL DEFAULT ''");
+		$this->query("ALTER TABLE `actionlog` ADD COLUMN IF NOT EXISTS `thereDead` bigint(20) NOT NULL DEFAULT 0");
+		$this->query("ALTER TABLE `actionlog` ADD COLUMN IF NOT EXISTS `myDead` bigint(20) NOT NULL DEFAULT 0");
+		$this->query("ALTER TABLE `actionlog` ADD COLUMN IF NOT EXISTS `attackPower` bigint(20) NOT NULL DEFAULT 0");
+		$this->query("ALTER TABLE `actionlog` ADD COLUMN IF NOT EXISTS `defensePower` bigint(20) NOT NULL DEFAULT 0");
+		$this->query("ALTER TABLE `actionlog` ADD COLUMN IF NOT EXISTS `turnsUsed` int(11) NOT NULL DEFAULT 0");
+	}
+
+	private function ensureUnitCatalogTable(): void
+	{
+		$this->query("CREATE TABLE IF NOT EXISTS `unit_catalog` (
+			`unit_id` int(11) NOT NULL AUTO_INCREMENT,
+			`unit_code` varchar(12) NOT NULL,
+			`category` enum('military','civilian','government') NOT NULL,
+			`class_letter` varchar(4) NOT NULL DEFAULT 'A',
+			`class_subclass` varchar(4) NOT NULL DEFAULT 'I',
+			`unit_type` varchar(32) NOT NULL DEFAULT 'Infantry',
+			`unit_subtype` varchar(40) NOT NULL DEFAULT 'Standard',
+			`tier` int(11) NOT NULL DEFAULT 1,
+			`rank_level` int(11) NOT NULL DEFAULT 1,
+			`rank_abbrev` varchar(16) NOT NULL DEFAULT 'Pvt',
+			`rank_title` varchar(64) NOT NULL DEFAULT 'Private',
+			`unit_name` varchar(80) NOT NULL DEFAULT 'Infantry Unit',
+			`full_title` varchar(120) NOT NULL DEFAULT '',
+			`training_cost` int(11) NOT NULL DEFAULT 500,
+			`upkeep_per_turn` int(11) NOT NULL DEFAULT 10,
+			`attack_power` int(11) NOT NULL DEFAULT 0,
+			`defense_power` int(11) NOT NULL DEFAULT 0,
+			`covert_power` int(11) NOT NULL DEFAULT 0,
+			`income_gen` int(11) NOT NULL DEFAULT 0,
+			`special_ability` varchar(160) NOT NULL DEFAULT '',
+			`description` text DEFAULT NULL,
+			PRIMARY KEY (`unit_id`),
+			UNIQUE KEY `unit_code` (`unit_code`),
+			KEY `idx_cat_tier` (`category`,`tier`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+
+		$seed = $this->query("SELECT `unit_id` FROM `unit_catalog` LIMIT 1");
+		if ($seed && $seed->num_rows > 0) {
+			return;
+		}
+
+		$this->query("INSERT INTO `unit_catalog` (`unit_code`,`category`,`class_letter`,`class_subclass`,`unit_type`,`unit_subtype`,`tier`,`rank_level`,`rank_abbrev`,`rank_title`,`unit_name`,`full_title`,`training_cost`,`upkeep_per_turn`,`attack_power`,`defense_power`,`covert_power`,`income_gen`,`special_ability`,`description`) VALUES
+			('MIL-001','military','A','I','Infantry','Frontline',1,1,'Pvt','Private','Infantry Conscript','Tier 1 - Private Frontline',500,5,4,2,0,0,'Line Break','Baseline frontline unit for new empires.'),
+			('CIV-001','civilian','A','I','Labor','Worker',1,1,'WRK','Worker','Colony Worker','Tier 1 - Colony Worker',200,3,0,0,0,80,'Industry Support','Civilian labor unit supporting growth and income.'),
+			('GOV-001','government','A','I','Administration','Clerk',1,1,'CLK','Clerk','Ward Clerk','Tier 1 - Ward Clerk',300,4,0,1,2,100,'Admin Flow','Government support unit for stability and oversight.')");
+	}
 	
 	public function autoLoad(): string
 	{
@@ -108,22 +289,35 @@ class Game extends User
 			return "new Array(\"0\",\"0\",\"0\",\"0\",\"" . $gameTime . "\",\"0\",\"0 minutes\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\")";
 		}
 
+		$messageJoin = "";
+		$messageSelect = "0 AS messageCount";
+		$messageTable = $this->query("SHOW TABLES LIKE 'messages'");
+		if ($messageTable && $messageTable->num_rows > 0) {
+			$messageSelect = "IFNULL(msg.messageCount, 0) AS messageCount";
+			$messageJoin = "LEFT JOIN (
+					SELECT toUID, COUNT(*) AS messageCount
+					FROM messages
+					GROUP BY toUID
+			  ) msg ON msg.toUID = bank.uid";
+		}
+
 		$query = "SELECT rank.overall AS isRank,
 					 bank.onHand,
 					 bank.inBank,
 					 userdata.actionTurns,
-					 IFNULL(msg.messageCount, 0) AS messageCount
+					 " . $messageSelect . "
 				  FROM bank
 				  INNER JOIN userdata ON userdata.uid = bank.uid
 				  INNER JOIN rank ON rank.uid = bank.uid
-				  LEFT JOIN (
-						SELECT toUID, COUNT(*) AS messageCount
-						FROM messages
-						GROUP BY toUID
-				  ) msg ON msg.toUID = bank.uid
+				  " . $messageJoin . "
 				  WHERE bank.uid=?
 				  LIMIT 1";
 		$stmt = $this->db_link->prepare($query);
+		if (!$stmt) {
+			$gameTime = date("F jS H:i:s");
+			Debug::printMsg(__CLASS__, __FUNCTION__, "Could not prepare autoLoad query");
+			return "new Array(\"0\",\"0\",\"0\",\"0\",\"" . $gameTime . "\",\"0\",\"0 minutes\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\",\"0\")";
+		}
 		$stmt->bind_param("i", $_SESSION['userid']);
 		$stmt->execute();
 		$q = $stmt->get_result();
@@ -284,7 +478,40 @@ class Game extends User
 			$person = $q->fetch_object();
 			return $person;
 		} else {
-			return null;
+			return (object) [
+				'attackCount' => 0,
+				'superAttackCount' => 0,
+				'attackMercCount' => 0,
+				'defenseCount' => 0,
+				'superDefenseCount' => 0,
+				'defenseMercCount' => 0,
+				'uuCount' => 0,
+				'minerCount' => 0,
+				'liferCount' => 0,
+				'covertCount' => 0,
+				'superCovertCount' => 0,
+				'anticovertCount' => 0,
+				'superAnticovertCount' => 0,
+				'attackName' => 'Infantry',
+				'superAttackName' => 'Elite Infantry',
+				'attackMercName' => 'Raiders',
+				'defenseName' => 'Defenders',
+				'superDefenseName' => 'Elite Defenders',
+				'defenseMercName' => 'Sentinels',
+				'covertName' => 'Scouts',
+				'superCovertName' => 'Shadow Ops',
+				'anticovertName' => 'Wardens',
+				'superAnticovertName' => 'Watchers',
+				'attackCost' => 100,
+				'superAttackCost' => 250,
+				'defenseCost' => 100,
+				'superDefenseCost' => 250,
+				'covertCost' => 150,
+				'superCovertCost' => 300,
+				'anticovertCost' => 150,
+				'superAnticovertCost' => 300,
+				'ttlarmysize' => 0,
+			];
 		}
 	}
 	

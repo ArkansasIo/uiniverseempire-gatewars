@@ -61,6 +61,27 @@ INSERT INTO `bank` (`uid`, `inbank`, `onHand`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `messages`
+--
+
+CREATE TABLE IF NOT EXISTS `messages` (
+  `mid` int(11) NOT NULL AUTO_INCREMENT,
+  `fromUID` int(11) NOT NULL,
+  `toUID` int(11) NOT NULL,
+  `subject` varchar(255) NOT NULL DEFAULT '(no subject)',
+  `message` text NOT NULL,
+  `timeSent` varchar(32) NOT NULL,
+  `isRead` tinyint(1) NOT NULL DEFAULT '0',
+  `isDeleted` tinyint(1) NOT NULL DEFAULT '0',
+  `replyToMid` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`mid`),
+  KEY `idx_messages_toUID` (`toUID`),
+  KEY `idx_messages_fromUID` (`fromUID`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `planets`
 --
 

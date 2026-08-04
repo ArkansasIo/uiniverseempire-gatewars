@@ -9,7 +9,10 @@ $s = new Game();
 if (!$s->loggedIn || !$_GET['time']){ header("Location: index.php?"); }
 if (!$_POST) { $s->updatePower($_SESSION['userid']); }
 $weapons = $s->getWeapons($_SESSION['userid']);
-if($_REQUEST['atype'] == "repair")
+if (!isset($weapons['atk']) || !is_array($weapons['atk'])) { $weapons['atk'] = []; }
+if (!isset($weapons['def']) || !is_array($weapons['def'])) { $weapons['def'] = []; }
+$atype = $_REQUEST['atype'] ?? "";
+if($atype == "repair")
 {
 	$id = $_REQUEST['id'];
 	$query = "UPDATE `weapons` SET `strength`=(SELECT weaponPower FROM armory WHERE wid =$id) WHERE uid=".$_SESSION['userid']." AND wid=$id";
@@ -17,21 +20,28 @@ if($_REQUEST['atype'] == "repair")
 	echo "Weapon Repaired";
 }
 
-if($_POST['submit']!="Submit")
+$submit = $_POST['submit'] ?? "";
+if($_SERVER['REQUEST_METHOD'] === 'POST')
 {
 	$posted = array();
 	for ($x = 0; $x < count($weapons['atk']); $x++)
 	{
-		$posted[$weapons['atk'][$x]['fieldname']] = $_POST[$weapons['atk'][$x]['fieldname']];
+    $field = $weapons['atk'][$x]['fieldname'];
+    $posted[$field] = $_POST[$field] ?? 0;
 	}
 	for ($x = 0; $x < count($weapons['def']); $x++)
 	{
-		$posted[$weapons['def'][$x]['fieldname']] = $_POST[$weapons['def'][$x]['fieldname']];
+    $field = $weapons['def'][$x]['fieldname'];
+    $posted[$field] = $_POST[$field] ?? 0;
 	}
-	$s->buyWeapons($posted);
+  if (!empty($posted)) {
+    $s->buyWeapons($posted);
+  }
 	$s->updatePower($_SESSION['userid']);
 }
 $inv = $s->getWeaponInventory($_SESSION['userid']);
+if (!isset($inv['atk']) || !is_array($inv['atk'])) { $inv['atk'] = []; }
+if (!isset($inv['def']) || !is_array($inv['def'])) { $inv['def'] = []; }
 ?>
 <table width="100%" border="0">
   <tr>
@@ -166,7 +176,7 @@ $inv = $s->getWeaponInventory($_SESSION['userid']);
 	  ?>
 	  <tr><td>&nbsp;</td></tr>
       <tr>
-        <td colspan="4" align="right" valign="bottom"><input type="submit" name="buyweaps" value="Submit" onclick="this.value='Buying Weapons...'; this.disabled=true; sendData('armory','post','<?= $s->uid;?>')"/></td>
+        <td colspan="4" align="right" valign="bottom"><input type="submit" name="buyweaps" value="Submit" onclick="this.value='Buying Weapons...'; this.disabled=true; sendData('armory','post','<?= (int)($_SESSION['userid'] ?? 0);?>')"/></td>
         </tr>
     </table
 

@@ -9,7 +9,8 @@ $s = new Game();
 if (!$s->loggedIn || !$_GET['time']){ header("Location: index.php"); }
 if (!$_POST) { $s->updatePower($_SESSION['userid']); }
 $weapons = $s->getWeapons($_SESSION['userid']);
-if($_REQUEST['atype'] == "repair")
+$atype = $_REQUEST['atype'] ?? "";
+if($atype == "repair")
 {
 	$id = $_REQUEST['id'];
 	$query = "UPDATE `weapons` SET `strength`=(SELECT weaponPower FROM armory WHERE wid =$id) WHERE uid=".$_SESSION['userid']." AND wid=$id";
@@ -17,7 +18,7 @@ if($_REQUEST['atype'] == "repair")
 	echo "Weapon Repaired";
 }
 
-if($_REQUEST['atype'] == "sellweps")
+if($atype == "sellweps")
 {
 	$id = $_REQUEST['id'];
 	$wid = $_REQUEST['subject'];

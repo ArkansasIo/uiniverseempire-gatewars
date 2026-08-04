@@ -7,18 +7,25 @@ $pagegen->start();
 $s = new Game();
 $s->updatePower($_SESSION['userid']); 
 
-if ($_GET['id'] && $_GET['atype'] != "Send") {
+$id = 0;
+$name = '';
+$atype = $_REQUEST['atype'] ?? '';
+
+if (!empty($_GET['id']) && $atype != "Send") {
     $query = "SELECT `uname` FROM `users` WHERE uid = ? LIMIT 1";
-    $stmt = $s->prepare($query);
-    $stmt->bind_param("i", $_GET['id']);
+  $stmt = $s->db_link->prepare($query);
+  $lookupId = (int)$_GET['id'];
+  $stmt->bind_param("i", $lookupId);
     $stmt->execute();
     $q = $stmt->get_result();
     $data = $q->fetch_object();
+  if ($data) {
     $name = $data->uname;
-    $id = $_GET['id'];
+    $id = $lookupId;
+  }
 }
 
-if ($_REQUEST['atype'] == "Send") {
+if ($atype == "Send") {
     if ($s->create_allliance($_GET['id'], $_REQUEST['subject'], $_REQUEST['message'], $_REQUEST['url'], $_REQUEST['allow'])) {
         echo ",Thank you";
     } else {
