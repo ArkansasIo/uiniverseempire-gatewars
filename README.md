@@ -36,3 +36,12 @@ mysql -u sgw -psgwpass sgw < game.sql
 4. Open:
 
 - http://127.0.0.1:8080/index.php
+
+## Local Test Account
+
+For local development and testing, the default demo account is:
+
+- Username: copilotpilot
+- Password: SGWLogin123!
+
+Use these credentials when logging in to the local game instance.

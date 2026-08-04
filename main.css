@@ -132,6 +132,555 @@ TEXTAREA{font-family:cursive; font-size:small; color:#FFFFFF; background-color:#
     font-size: 12px;
 }
 
+.header-settings-wrap {
+    position: relative;
+}
+
+.header-settings > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border: 1px solid #3fa3a3;
+    border-radius: 4px;
+    background: rgba(3, 19, 19, 0.75);
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.header-settings > summary::-webkit-details-marker {
+    display: none;
+}
+
+.header-settings-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 170px;
+    padding: 10px;
+    border: 1px solid #2b6363;
+    border-radius: 6px;
+    background: #071b1b;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    z-index: 20;
+}
+
+.header-settings-title {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #7ad7d7;
+    margin-bottom: 6px;
+}
+
+.theme-picker {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.theme-option {
+    border: 1px solid #3fa3a3;
+    background: #0d3030;
+    color: #ffffff;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.theme-option.active {
+    background: #2c7e7e;
+    box-shadow: inset 0 0 0 1px #9ef7f7;
+}
+
+body.theme-og {
+    background: #000000;
+    color: #ffffff;
+}
+
+body.theme-og .app-shell {
+    background: rgba(0, 0, 0, 0.72);
+    border-color: #2b6363;
+    box-shadow: 0 0 16px rgba(0, 0, 0, 0.7);
+}
+
+body.theme-og .top-header {
+    background: linear-gradient(90deg, #021414 0%, #0c2f2f 45%, #113f3f 100%);
+    border-color: #2b6363;
+}
+
+body.theme-og .top-sub-header {
+    background: #031d1d;
+    border-color: #2b6363;
+}
+
+body.theme-og .app-shell p,
+body.theme-og .app-shell div,
+body.theme-og .app-shell span,
+body.theme-og .app-shell td,
+body.theme-og .app-shell th,
+body.theme-og .app-shell li,
+body.theme-og .app-shell label,
+body.theme-og .app-shell table,
+body.theme-og .app-shell input,
+body.theme-og .app-shell select,
+body.theme-og .app-shell textarea,
+body.theme-og .app-shell h1,
+body.theme-og .app-shell h2,
+body.theme-og .app-shell h3,
+body.theme-og .app-shell h4,
+body.theme-og .app-shell h5,
+body.theme-og .app-shell h6 {
+    color: #f0ffff;
+}
+
+body.theme-og .left-menu,
+body.theme-og .content-panel,
+body.theme-og .card,
+body.theme-og .page-hub,
+body.theme-og .page-subnav {
+    background: #061c1c;
+    color: #f0ffff;
+    border-color: #2b6363;
+}
+
+body.theme-white {
+    background: #f4f6f8;
+    color: #1f2b3a;
+}
+
+body.theme-white .app-shell {
+    background: #ffffff;
+    border-color: #d7e0e8;
+    box-shadow: 0 0 18px rgba(15, 24, 40, 0.08);
+}
+
+body.theme-white .top-header {
+    background: linear-gradient(90deg, #f7f9fc 0%, #eef3f8 45%, #e6edf4 100%);
+    border-color: #d7e0e8;
+}
+
+body.theme-white .top-brand h1,
+body.theme-white .top-brand p,
+body.theme-white .stat-pill span,
+body.theme-white .stat-pill strong,
+body.theme-white .top-sub-header-right,
+body.theme-white .top-sub-header-right a,
+body.theme-white .top-sub-header-right span {
+    color: #1f2b3a !important;
+}
+
+body.theme-white .top-sub-header {
+    background: #f7f9fc;
+    border-color: #d7e0e8;
+}
+
+body.theme-white .app-shell p,
+body.theme-white .app-shell div,
+body.theme-white .app-shell span,
+body.theme-white .app-shell td,
+body.theme-white .app-shell th,
+body.theme-white .app-shell li,
+body.theme-white .app-shell label,
+body.theme-white .app-shell table,
+body.theme-white .app-shell input,
+body.theme-white .app-shell select,
+body.theme-white .app-shell textarea,
+body.theme-white .app-shell h1,
+body.theme-white .app-shell h2,
+body.theme-white .app-shell h3,
+body.theme-white .app-shell h4,
+body.theme-white .app-shell h5,
+body.theme-white .app-shell h6 {
+    color: #1f2b3a;
+}
+
+body.theme-white .app-shell input,
+body.theme-white .app-shell select,
+body.theme-white .app-shell textarea {
+    background: #ffffff;
+    border-color: #cfd8e3;
+}
+
+body.theme-white .left-menu,
+body.theme-white .content-panel,
+body.theme-white .card,
+body.theme-white .page-hub,
+body.theme-white .page-subnav {
+    background: #ffffff;
+    color: #1f2b3a;
+    border-color: #d7e0e8;
+}
+
+body.theme-white .left-menu a,
+body.theme-white .left-menu summary,
+body.theme-white .left-menu details,
+body.theme-white .left-menu details details,
+body.theme-white .page-subnav a,
+body.theme-white .content-header a,
+body.theme-white .combat-btn {
+    color: #1f2b3a;
+    background: #f7f9fc;
+    border-color: #d7e0e8;
+}
+
+body.theme-white .left-menu a:hover,
+body.theme-white .page-subnav a:hover {
+    background: #ebf2f7;
+}
+
+body.theme-blue {
+    background: #07121e;
+    color: #ebf6ff;
+}
+
+body.theme-blue .app-shell {
+    background: rgba(7, 18, 30, 0.94);
+    border-color: #2f5fb2;
+    box-shadow: 0 0 18px rgba(18, 67, 139, 0.24);
+}
+
+body.theme-blue .top-header {
+    background: linear-gradient(90deg, #071b33 0%, #123d6b 45%, #1d66bf 100%);
+    border-color: #3567b9;
+}
+
+body.theme-blue .top-sub-header {
+    background: #0b2445;
+    border-color: #3567b9;
+}
+
+body.theme-blue .app-shell p,
+body.theme-blue .app-shell div,
+body.theme-blue .app-shell span,
+body.theme-blue .app-shell td,
+body.theme-blue .app-shell th,
+body.theme-blue .app-shell li,
+body.theme-blue .app-shell label,
+body.theme-blue .app-shell table,
+body.theme-blue .app-shell input,
+body.theme-blue .app-shell select,
+body.theme-blue .app-shell textarea,
+body.theme-blue .app-shell h1,
+body.theme-blue .app-shell h2,
+body.theme-blue .app-shell h3,
+body.theme-blue .app-shell h4,
+body.theme-blue .app-shell h5,
+body.theme-blue .app-shell h6 {
+    color: #ebf6ff;
+}
+
+body.theme-blue .left-menu,
+body.theme-blue .content-panel,
+body.theme-blue .card,
+body.theme-blue .page-hub,
+body.theme-blue .page-subnav {
+    background: #0b1e34;
+    color: #ebf6ff;
+    border-color: #315f9f;
+}
+
+body.theme-blue .left-menu a,
+body.theme-blue .left-menu summary,
+body.theme-blue .left-menu details,
+body.theme-blue .left-menu details details,
+body.theme-blue .page-subnav a,
+body.theme-blue .content-header a,
+body.theme-blue .combat-btn {
+    color: #ebf6ff;
+    background: #11355d;
+    border-color: #315f9f;
+}
+
+body.theme-blue .left-menu a:hover,
+body.theme-blue .page-subnav a:hover {
+    background: #174b7b;
+}
+
+body.theme-og {
+    --theme-bg: #000000;
+    --theme-surface: #061c1c;
+    --theme-surface-alt: #052626;
+    --theme-surface-strong: #0b2f2f;
+    --theme-border: #2b6363;
+    --theme-text: #f0ffff;
+    --theme-muted: #bfe7e7;
+    --theme-link: #f0ffff;
+    --theme-input-bg: #061c1c;
+    --theme-input-border: #2b6363;
+    --theme-shadow: rgba(0, 0, 0, 0.7);
+}
+
+body.theme-white {
+    --theme-bg: #f4f6f8;
+    --theme-surface: #ffffff;
+    --theme-surface-alt: #f7f9fc;
+    --theme-surface-strong: #eef3f8;
+    --theme-border: #d7e0e8;
+    --theme-text: #1f2b3a;
+    --theme-muted: #5f6775;
+    --theme-link: #1f2b3a;
+    --theme-input-bg: #ffffff;
+    --theme-input-border: #cfd8e3;
+    --theme-shadow: rgba(15, 24, 40, 0.08);
+}
+
+body.theme-blue {
+    --theme-bg: #07121e;
+    --theme-surface: #0b1e34;
+    --theme-surface-alt: #0b2445;
+    --theme-surface-strong: #11355d;
+    --theme-border: #315f9f;
+    --theme-text: #ebf6ff;
+    --theme-muted: #b7d6f4;
+    --theme-link: #ebf6ff;
+    --theme-input-bg: #0b1e34;
+    --theme-input-border: #315f9f;
+    --theme-shadow: rgba(18, 67, 139, 0.24);
+}
+
+body.theme-og,
+body.theme-white,
+body.theme-blue {
+    background-color: var(--theme-bg) !important;
+    color: var(--theme-text) !important;
+}
+
+body.theme-og .app-shell,
+body.theme-white .app-shell,
+body.theme-blue .app-shell,
+body.theme-og .content-header,
+body.theme-white .content-header,
+body.theme-blue .content-header,
+body.theme-og #mainDisplay,
+body.theme-white #mainDisplay,
+body.theme-blue #mainDisplay,
+body.theme-og .bottom-header,
+body.theme-white .bottom-header,
+body.theme-blue .bottom-header,
+body.theme-og .site-footer,
+body.theme-white .site-footer,
+body.theme-blue .site-footer,
+body.theme-og .left-menu,
+body.theme-white .left-menu,
+body.theme-blue .left-menu,
+body.theme-og .content-panel,
+body.theme-white .content-panel,
+body.theme-blue .content-panel,
+body.theme-og .card,
+body.theme-white .card,
+body.theme-blue .card,
+body.theme-og .page-hub,
+body.theme-white .page-hub,
+body.theme-blue .page-hub,
+body.theme-og .page-subnav,
+body.theme-white .page-subnav,
+body.theme-blue .page-subnav,
+body.theme-og .header-settings-menu,
+body.theme-white .header-settings-menu,
+body.theme-blue .header-settings-menu,
+body.theme-og .combat-btn,
+body.theme-white .combat-btn,
+body.theme-blue .combat-btn,
+body.theme-og .auth-card,
+body.theme-white .auth-card,
+body.theme-blue .auth-card,
+body.theme-og .public-shell,
+body.theme-white .public-shell,
+body.theme-blue .public-shell,
+body.theme-og .public-panel,
+body.theme-white .public-panel,
+body.theme-blue .public-panel,
+body.theme-og .hero-overlay,
+body.theme-white .hero-overlay,
+body.theme-blue .hero-overlay,
+body.theme-og .hero-pill,
+body.theme-white .hero-pill,
+body.theme-blue .hero-pill,
+body.theme-og .public-btn,
+body.theme-white .public-btn,
+body.theme-blue .public-btn,
+body.theme-og .public-btn.secondary,
+body.theme-white .public-btn.secondary,
+body.theme-blue .public-btn.secondary,
+body.theme-og .auth-submit,
+body.theme-white .auth-submit,
+body.theme-blue .auth-submit,
+body.theme-og .calc-btn,
+body.theme-white .calc-btn,
+body.theme-blue .calc-btn {
+    background-color: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text) !important;
+    box-shadow: none;
+}
+
+body.theme-og .top-header,
+body.theme-white .top-header,
+body.theme-blue .top-header,
+body.theme-og .top-sub-header,
+body.theme-white .top-sub-header,
+body.theme-blue .top-sub-header,
+body.theme-og .page-hub-head,
+body.theme-white .page-hub-head,
+body.theme-blue .page-hub-head,
+body.theme-og .tech-hero,
+body.theme-white .tech-hero,
+body.theme-blue .tech-hero,
+body.theme-og .store-grid .card,
+body.theme-white .store-grid .card,
+body.theme-blue .store-grid .card,
+body.theme-og .pass-grid .card,
+body.theme-white .pass-grid .card,
+body.theme-blue .pass-grid .card {
+    background-color: var(--theme-surface-alt) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text) !important;
+}
+
+body.theme-og .left-menu details,
+body.theme-white .left-menu details,
+body.theme-blue .left-menu details,
+body.theme-og .left-menu summary,
+body.theme-white .left-menu summary,
+body.theme-blue .left-menu summary,
+body.theme-og .left-menu a,
+body.theme-white .left-menu a,
+body.theme-blue .left-menu a,
+body.theme-og .page-subnav a,
+body.theme-white .page-subnav a,
+body.theme-blue .page-subnav a,
+body.theme-og .combat-btn,
+body.theme-white .combat-btn,
+body.theme-blue .combat-btn,
+body.theme-og .public-btn,
+body.theme-white .public-btn,
+body.theme-blue .public-btn,
+body.theme-og .auth-submit,
+body.theme-white .auth-submit,
+body.theme-blue .auth-submit,
+body.theme-og input,
+body.theme-white input,
+body.theme-blue input,
+body.theme-og select,
+body.theme-white select,
+body.theme-blue select,
+body.theme-og textarea,
+body.theme-white textarea,
+body.theme-blue textarea {
+    background-color: var(--theme-surface-strong) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text) !important;
+}
+
+body.theme-og p,
+body.theme-white p,
+body.theme-blue p,
+body.theme-og div,
+body.theme-white div,
+body.theme-blue div,
+body.theme-og span,
+body.theme-white span,
+body.theme-blue span,
+body.theme-og td,
+body.theme-white td,
+body.theme-blue td,
+body.theme-og th,
+body.theme-white th,
+body.theme-blue th,
+body.theme-og li,
+body.theme-white li,
+body.theme-blue li,
+body.theme-og label,
+body.theme-white label,
+body.theme-blue label,
+body.theme-og h1,
+body.theme-white h1,
+body.theme-blue h1,
+body.theme-og h2,
+body.theme-white h2,
+body.theme-blue h2,
+body.theme-og h3,
+body.theme-white h3,
+body.theme-blue h3,
+body.theme-og h4,
+body.theme-white h4,
+body.theme-blue h4,
+body.theme-og h5,
+body.theme-white h5,
+body.theme-blue h5,
+body.theme-og h6,
+body.theme-white h6,
+body.theme-blue h6,
+body.theme-og table,
+body.theme-white table,
+body.theme-blue table,
+body.theme-og thead,
+body.theme-white thead,
+body.theme-blue thead,
+body.theme-og tbody,
+body.theme-white tbody,
+body.theme-blue tbody,
+body.theme-og tr,
+body.theme-white tr,
+body.theme-blue tr,
+body.theme-og a,
+body.theme-white a,
+body.theme-blue a,
+body.theme-og a:visited,
+body.theme-white a:visited,
+body.theme-blue a:visited {
+    color: var(--theme-text) !important;
+}
+
+body.theme-og .top-brand p,
+body.theme-white .top-brand p,
+body.theme-blue .top-brand p,
+body.theme-og .content-header p,
+body.theme-white .content-header p,
+body.theme-blue .content-header p,
+body.theme-og .combat-quickbar-label,
+body.theme-white .combat-quickbar-label,
+body.theme-blue .combat-quickbar-label,
+body.theme-og .card p,
+body.theme-white .card p,
+body.theme-blue .card p,
+body.theme-og .card li,
+body.theme-white .card li,
+body.theme-blue .card li,
+body.theme-og .page-hub-head p,
+body.theme-white .page-hub-head p,
+body.theme-blue .page-hub-head p,
+body.theme-og .feature-hero p,
+body.theme-white .feature-hero p,
+body.theme-blue .feature-hero p,
+body.theme-og .auth-card p,
+body.theme-white .auth-card p,
+body.theme-blue .auth-card p,
+body.theme-og .auth-hint,
+body.theme-white .auth-hint,
+body.theme-blue .auth-hint,
+body.theme-og .hero-overlay p,
+body.theme-white .hero-overlay p,
+body.theme-blue .hero-overlay p {
+    color: var(--theme-muted) !important;
+}
+
+body.theme-og .page-subnav a:hover,
+body.theme-white .page-subnav a:hover,
+body.theme-blue .page-subnav a:hover,
+body.theme-og .combat-btn:hover,
+body.theme-white .combat-btn:hover,
+body.theme-blue .combat-btn:hover,
+body.theme-og .public-btn:hover,
+body.theme-white .public-btn:hover,
+body.theme-blue .public-btn:hover,
+body.theme-og .auth-submit:hover,
+body.theme-white .auth-submit:hover,
+body.theme-blue .auth-submit:hover {
+    background-color: var(--theme-surface-alt) !important;
+}
+
 .main-layout {
     display: flex;
     min-height: 620px;
@@ -1658,4 +2207,350 @@ TEXTAREA{font-family:cursive; font-size:small; color:#FFFFFF; background-color:#
     .public-content-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* White and gray theme overrides */
+body {
+    background-color: #eef0f3;
+    color: #1f242c;
+}
+
+font,
+p,
+pre,
+div,
+span,
+a,
+a:visited,
+a:hover,
+h1,
+h2,
+h3,
+table,
+thead,
+tbody,
+tr,
+td {
+    color: #1f242c;
+}
+
+input,
+select,
+option,
+textarea {
+    color: #20242b;
+    background-color: #ffffff;
+    border-color: #b5bcc7;
+}
+
+.app-shell {
+    border: 1px solid #c8ced8;
+    background: #f8f9fb;
+    box-shadow: 0 10px 30px rgba(15, 20, 30, 0.08);
+}
+
+.top-header {
+    border-bottom: 1px solid #d2d7df;
+    background: linear-gradient(90deg, #f6f7f9 0%, #eceff3 50%, #e2e6ec 100%);
+}
+
+.top-brand p {
+    color: #5e6672;
+}
+
+.stat-pill {
+    border: 1px solid #c7cdd8;
+    background: #ffffff;
+}
+
+.stat-pill span {
+    color: #6b7380;
+}
+
+.stat-pill strong,
+.stat-pill a {
+    color: #222831;
+}
+
+.top-sub-header {
+    border-bottom: 1px solid #d2d7df;
+    background: #f1f3f6;
+}
+
+.left-menu {
+    border-right: 1px solid #d2d7df;
+    background: #f4f6f9;
+}
+
+.left-menu h3 {
+    color: #2e3440;
+}
+
+.left-menu details {
+    border: 1px solid #d5dbe4;
+    background: #ffffff;
+}
+
+.left-menu summary {
+    background: #edf1f6;
+}
+
+.menu-summary span {
+    color: #323844;
+}
+
+.left-menu summary::after {
+    color: #5f6876;
+}
+
+.menu-section-title {
+    border: 1px solid #d7dde6;
+    background: #e9edf3;
+    color: #4a5463;
+}
+
+.menu-section-title span {
+    color: #4a5463;
+}
+
+.left-menu a {
+    border-top: 1px dotted #d7dde6;
+    color: #2a313c;
+}
+
+.left-menu a:hover {
+    background: #e8edf4;
+}
+
+.content-header {
+    border: 1px solid #d2d7df;
+    background: #ffffff;
+}
+
+.content-header p {
+    color: #5f6775;
+}
+
+#mainDisplay {
+    border: 1px solid #d2d7df;
+    background: #ffffff;
+}
+
+.bottom-header {
+    border-top: 1px solid #d2d7df;
+    border-bottom: 1px solid #d2d7df;
+    background: #eef1f5;
+}
+
+.site-footer {
+    color: #5a6370;
+    background: #e6eaf0;
+}
+
+.public-shell,
+.public-panel,
+.public-main #mainDisplay,
+.auth-card {
+    background: #ffffff;
+    border-color: #d1d7e0;
+}
+
+.public-top,
+.hero-overlay,
+.hero-caption,
+.public-btn,
+.public-btn.secondary,
+.auth-submit {
+    background: #e8ecf2;
+    border-color: #b7bec9;
+    color: #242a33;
+}
+
+.public-btn:hover,
+.auth-submit:hover {
+    background: #dfe5ee;
+}
+
+.hero-pill {
+    background: #d8dee8;
+    border-color: #b7bec9;
+    color: #364151;
+}
+
+.hero-overlay h2,
+.hero-overlay p,
+.auth-card h3,
+.auth-card p,
+.auth-card label,
+.auth-hint {
+    color: #2d3440;
+}
+
+.combat-quickbar {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #d9dee6;
+}
+
+.combat-quickbar-label {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #586171;
+}
+
+.combat-btn {
+    display: inline-block;
+    padding: 6px 10px;
+    border: 1px solid #b8bfca;
+    background: #f2f4f8;
+    color: #252c36;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.combat-btn:hover {
+    background: #e6ebf3;
+}
+
+/* Theme overrides that win over the older global styles */
+body.theme-og,
+body.theme-og p,
+body.theme-og div,
+body.theme-og span,
+body.theme-og a,
+body.theme-og a:visited,
+body.theme-og a:hover,
+body.theme-og h1,
+body.theme-og h2,
+body.theme-og h3,
+body.theme-og h4,
+body.theme-og h5,
+body.theme-og h6,
+body.theme-og table,
+body.theme-og thead,
+body.theme-og tbody,
+body.theme-og tr,
+body.theme-og td,
+body.theme-og input,
+body.theme-og select,
+body.theme-og textarea,
+body.theme-og label {
+    color: #f0ffff !important;
+}
+
+body.theme-og {
+    background: #000000 !important;
+}
+
+body.theme-og .app-shell,
+body.theme-og .content-header,
+body.theme-og #mainDisplay,
+body.theme-og .bottom-header,
+body.theme-og .site-footer,
+body.theme-og .left-menu,
+body.theme-og .content-panel,
+body.theme-og .card,
+body.theme-og .page-hub,
+body.theme-og .page-subnav,
+body.theme-og .header-settings-menu,
+body.theme-og .combat-btn {
+    background: #061c1c !important;
+    border-color: #2b6363 !important;
+}
+
+body.theme-white,
+body.theme-white p,
+body.theme-white div,
+body.theme-white span,
+body.theme-white a,
+body.theme-white a:visited,
+body.theme-white a:hover,
+body.theme-white h1,
+body.theme-white h2,
+body.theme-white h3,
+body.theme-white h4,
+body.theme-white h5,
+body.theme-white h6,
+body.theme-white table,
+body.theme-white thead,
+body.theme-white tbody,
+body.theme-white tr,
+body.theme-white td,
+body.theme-white input,
+body.theme-white select,
+body.theme-white textarea,
+body.theme-white label {
+    color: #1f2b3a !important;
+}
+
+body.theme-white {
+    background: #f4f6f8 !important;
+}
+
+body.theme-white .app-shell,
+body.theme-white .content-header,
+body.theme-white #mainDisplay,
+body.theme-white .bottom-header,
+body.theme-white .site-footer,
+body.theme-white .left-menu,
+body.theme-white .content-panel,
+body.theme-white .card,
+body.theme-white .page-hub,
+body.theme-white .page-subnav,
+body.theme-white .header-settings-menu,
+body.theme-white .combat-btn {
+    background: #ffffff !important;
+    border-color: #d7e0e8 !important;
+}
+
+body.theme-blue,
+body.theme-blue p,
+body.theme-blue div,
+body.theme-blue span,
+body.theme-blue a,
+body.theme-blue a:visited,
+body.theme-blue a:hover,
+body.theme-blue h1,
+body.theme-blue h2,
+body.theme-blue h3,
+body.theme-blue h4,
+body.theme-blue h5,
+body.theme-blue h6,
+body.theme-blue table,
+body.theme-blue thead,
+body.theme-blue tbody,
+body.theme-blue tr,
+body.theme-blue td,
+body.theme-blue input,
+body.theme-blue select,
+body.theme-blue textarea,
+body.theme-blue label {
+    color: #ebf6ff !important;
+}
+
+body.theme-blue {
+    background: #07121e !important;
+}
+
+body.theme-blue .app-shell,
+body.theme-blue .content-header,
+body.theme-blue #mainDisplay,
+body.theme-blue .bottom-header,
+body.theme-blue .site-footer,
+body.theme-blue .left-menu,
+body.theme-blue .content-panel,
+body.theme-blue .card,
+body.theme-blue .page-hub,
+body.theme-blue .page-subnav,
+body.theme-blue .header-settings-menu,
+body.theme-blue .combat-btn {
+    background: #0b1e34 !important;
+    border-color: #315f9f !important;
 }

@@ -24,7 +24,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 <LINK REL=STYLESHEET TYPE='text/css' HREF='main.css' />
 </head>
 
-<body background="images/stars.jpg" onLoad="mainUpdate('login','Login'); MM_preloadImages('images/galaxy1-2.jpg','images/galaxy2-2.jpg','images/galaxy3-2.jpg'); autoclear(); bb_init('divBody', false);">
+<body class="theme-og" onLoad="mainUpdate('login','Login'); MM_preloadImages('images/galaxy1-2.jpg','images/galaxy2-2.jpg','images/galaxy3-2.jpg'); autoclear(); bb_init('divBody', false); if (typeof setTheme === 'function') { setTheme('og'); }">
 
 <div id="divBody">
 

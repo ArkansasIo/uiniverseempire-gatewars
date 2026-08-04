@@ -39,6 +39,19 @@
     </div>
     <div class="top-sub-header-right">
       <span id="time"></span>
+      <div class="header-settings-wrap">
+        <details class="header-settings">
+          <summary>Options</summary>
+          <div class="header-settings-menu">
+            <div class="header-settings-title">Theme</div>
+            <div class="theme-picker">
+              <button type="button" class="theme-option" data-theme="white" onclick="setTheme('white'); return false;">White</button>
+              <button type="button" class="theme-option" data-theme="og" onclick="setTheme('og'); return false;">OG</button>
+              <button type="button" class="theme-option" data-theme="blue" onclick="setTheme('blue'); return false;">Blue</button>
+            </div>
+          </div>
+        </details>
+      </div>
       <a href="?logout=true">Logout</a>
     </div>
   </div>
@@ -249,6 +262,15 @@
       <div class="content-header">
         <h2>Command Feed</h2>
         <p>Select a page or submenu on the left to load a section and sub page.</p>
+        <div class="combat-quickbar">
+          <span class="combat-quickbar-label">Combat Buttons:</span>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','attack'); return false">Attack</a>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','raid'); return false">Raid</a>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','spy'); return false">Spy</a>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('logs','get','mainDisplay','sab'); return false">Sabotage Logs</a>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('terminal','get','mainDisplay'); return false">War Terminal</a>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('fleetdock','get','mainDisplay'); return false">Fleet Dock</a>
+        </div>
       </div>
       <div id="mainDisplay"></div>
     </section>

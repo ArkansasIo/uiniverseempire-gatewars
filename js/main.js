@@ -1,6 +1,47 @@
 var request;
 var queryString;   //will hold the POSTed data
 var a;
+function getStoredTheme() {
+    try {
+        var storedTheme = window.localStorage.getItem('sgwTheme');
+        if (storedTheme === 'white' || storedTheme === 'og' || storedTheme === 'blue') {
+            return storedTheme;
+        }
+    } catch (e) {
+        // Ignore storage errors and fall back to OG.
+    }
+    return 'og';
+}
+
+function setTheme(themeName) {
+    var normalizedTheme = (themeName || getStoredTheme() || 'og').toLowerCase();
+    if (normalizedTheme !== 'white' && normalizedTheme !== 'og' && normalizedTheme !== 'blue') {
+        normalizedTheme = 'og';
+    }
+
+    if (document.body) {
+        document.body.classList.remove('theme-white', 'theme-og', 'theme-blue');
+        document.body.classList.add('theme-' + normalizedTheme);
+    }
+
+    try {
+        window.localStorage.setItem('sgwTheme', normalizedTheme);
+    } catch (e) {
+        // Ignore storage errors.
+    }
+
+    var buttons = document.querySelectorAll('.theme-option');
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle('active', buttons[i].getAttribute('data-theme') === normalizedTheme);
+    }
+
+    return normalizedTheme;
+}
+
+function initThemePicker() {
+    setTheme(getStoredTheme());
+}
+
 function autocomplete(sender,ev) {
 if (( ev.keyCode >= 48 && ev.keyCode <= 57 ) 
   ||  ( ev.keyCode >= 65 && ev.keyCode <= 90 )) {
