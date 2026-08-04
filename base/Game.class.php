@@ -7,6 +7,7 @@ class Game extends User
 {
 	private const TURN_TICK_MINUTES = 30;
 	private const TURNS_PER_MINUTE = 6;
+	private const UNIT_PROD_BASE_LEVEL = 6;
 
 	public function __construct(string $userName = "", string $password = "DoodleCakes and Rofl Sundae4278vsid")
 	{

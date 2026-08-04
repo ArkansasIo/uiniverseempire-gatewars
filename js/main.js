@@ -4,7 +4,7 @@ var a;
 function getStoredTheme() {
     try {
         var storedTheme = window.localStorage.getItem('sgwTheme');
-        if (storedTheme === 'white' || storedTheme === 'og' || storedTheme === 'blue') {
+        if (storedTheme === 'white' || storedTheme === 'og' || storedTheme === 'blue' || storedTheme === 'stargate') {
             return storedTheme;
         }
     } catch (e) {
@@ -15,12 +15,12 @@ function getStoredTheme() {
 
 function setTheme(themeName) {
     var normalizedTheme = (themeName || getStoredTheme() || 'og').toLowerCase();
-    if (normalizedTheme !== 'white' && normalizedTheme !== 'og' && normalizedTheme !== 'blue') {
+    if (normalizedTheme !== 'white' && normalizedTheme !== 'og' && normalizedTheme !== 'blue' && normalizedTheme !== 'stargate') {
         normalizedTheme = 'og';
     }
 
     if (document.body) {
-        document.body.classList.remove('theme-white', 'theme-og', 'theme-blue');
+        document.body.classList.remove('theme-white', 'theme-og', 'theme-blue', 'theme-stargate');
         document.body.classList.add('theme-' + normalizedTheme);
     }
 

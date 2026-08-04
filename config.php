@@ -9,16 +9,22 @@ function cfg_env($key, $default) {
 }
 
 // General Information
-$subs['{TITLE}'] = cfg_env('SGW_TITLE', "Universe: Empires at War");					# Name of site(header)
-$subs['{SUBTITLE}'] = cfg_env('SGW_SUBTITLE', "The place to get your war on!");	# Second header(subhead)
+$legacyTitle = defined('SGW_LEGACY_TITLE') ? SGW_LEGACY_TITLE : null;
+$legacySubtitle = defined('SGW_LEGACY_SUBTITLE') ? SGW_LEGACY_SUBTITLE : null;
+$subs['{TITLE}'] = cfg_env('SGW_TITLE', $legacyTitle ?: 'Stargate Wars');
+$subs['{SUBTITLE}'] = cfg_env('SGW_SUBTITLE', $legacySubtitle ?: 'Strategic command and empire operations across the Stargate network');
 $subs['{ADMIN_EMAIL}'] = cfg_env('SGW_ADMIN_EMAIL', "test.com");			# Person to email if something goes wrong
 $subs['{HEAD_STUFF}'] = "";								# Stuff to put in <head>(left blank intentionally)
 
 // Database Information
-$conf['db_server'] = cfg_env('SGW_DB_HOST', "localhost");					# IP or hostname of DB server(usually localhost)
-$conf['db_name']  = cfg_env('SGW_DB_NAME', "sgw");					# Name of DB within the server
-$conf['db_username']  = cfg_env('SGW_DB_USER', "sgw");							# Username for DB
-$conf['db_password']  = cfg_env('SGW_DB_PASS', "sgwpass");					# Password for DB
+$legacyDbServer = getenv('SGW_DB_HOST') ?: null;
+$legacyDbName = getenv('SGW_DB_NAME') ?: null;
+$legacyDbUser = getenv('SGW_DB_USER') ?: null;
+$legacyDbPass = getenv('SGW_DB_PASS') ?: null;
+$conf['db_server'] = cfg_env('SGW_DB_HOST', $legacyDbServer ?: 'localhost');
+$conf['db_name']  = cfg_env('SGW_DB_NAME', $legacyDbName ?: 'sgw');
+$conf['db_username']  = cfg_env('SGW_DB_USER', $legacyDbUser ?: 'sgw');
+$conf['db_password']  = cfg_env('SGW_DB_PASS', $legacyDbPass ?: 'sgwpass');
 $conf['db_prefix'] = "";							# Prefix for DB tables
 // Set Error Reporting
 //error_reporting(E_ALL | E_STRICT);
@@ -32,6 +38,7 @@ include(SCRIPT_PATH."Chive.class.php");
 include(SCRIPT_PATH."User.class.php");
 include(SCRIPT_PATH."Debug.class.php");
 include(SCRIPT_PATH."functions.php");
+include(SCRIPT_PATH."Theme.class.php");
 include(SCRIPT_PATH."Game.class.php");
 
 // Optional developer/machine specific overrides.

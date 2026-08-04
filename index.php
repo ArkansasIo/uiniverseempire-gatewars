@@ -19,7 +19,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 		<script type="text/javascript" src="js/train.js"></script>
 		<script type="text/javascript" src="js/images.js"></script>
 		<script type="text/javascript" src="js/bbfix.js"></script>
-    <title>Universe: Empires at War</title>
+    <title>Stargate Wars</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <LINK REL=STYLESHEET TYPE='text/css' HREF='main.css' />
 </head>
@@ -31,8 +31,8 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 <div class="public-shell">
   <header class="public-top">
     <div class="public-brand">
-      <h1>Universe: Empires at War</h1>
-      <p>Turn-based Stargate strategy command network</p>
+      <h1>Stargate Wars</h1>
+      <p>Strategic command and empire operations across the Stargate network</p>
     </div>
     <div class="public-actions">
       <a class="public-btn" href="javascript:void(0)" onClick="mainUpdate('login','Login'); return false" onMouseOver="rollUpDate('Login'); return false" onMouseOut="autoclear(); return false">Pilot Login</a>
@@ -47,9 +47,9 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
           <img src="images/galaxy1.jpg" name="Image12" border="0" id="Image12" onMouseOver="MM_swapImage('Image12','','images/galaxy1-2.jpg',1)" onMouseOut="MM_swapImgRestore()" />
         </a>
         <div class="hero-overlay">
-          <span class="hero-pill">Live Command</span>
+          <span class="hero-pill">Stargate Command</span>
           <h2>Command the Final Frontier</h2>
-          <p>Build fleets, seize systems, and wage turn-based war across the stars.</p>
+          <p>Build fleets, seize systems, and wage turn-based war across the Stargate frontier.</p>
         </div>
       </div>
     </div>

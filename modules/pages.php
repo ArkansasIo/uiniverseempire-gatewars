@@ -1050,7 +1050,10 @@ function renderTreeBoard(array $branches, int $level, string $boardId, string $n
                 $state = 'available';
             }
 
+            $stateBadge = $state === 'unlocked' ? 'Active' : ($state === 'available' ? 'Ready' : 'Queued');
+
             echo '<div class="wows-node ' . h($state) . '">';
+            echo '<div class="wows-node-badge">' . h($stateBadge) . '</div>';
             echo '<div class="wows-node-title">' . h($nodePrefix . ' ' . $tier) . '</div>';
             echo '<div class="wows-node-name">' . h($node['name']) . '</div>';
             echo '<div class="wows-node-meta">' . h($node['focus']) . '</div>';
@@ -4005,7 +4008,7 @@ echo '<div class="page-hub page-hub-shell">';
 echo '<div class="page-hub-head">';
 echo '<div class="page-hub-copy">';
 echo '<h3>' . h($title) . ' - ' . h($subTitle) . '</h3>';
-echo '<p>Page: ' . h($main) . ' / ' . h($sub) . ' | Player: ' . h($_SESSION['username']) . '</p>';
+echo '<p>Stargate Wars command view • Page: ' . h($main) . ' / ' . h($sub) . ' | Player: ' . h($_SESSION['username']) . '</p>';
 echo '</div>';
 echo '<div class="page-hub-badge">' . h(ucfirst($main)) . ' / ' . h(ucfirst($sub)) . '</div>';
 echo '</div>';
@@ -4287,7 +4290,7 @@ if ($main === 'empire' && $sub === 'home') {
     }
 
     echo '<div class="card full">';
-    echo '<h4>Empire Home Alerts</h4>';
+    echo '<h4>Stargate Command Alerts</h4>';
     echo '<table class="mini-table" border="0" width="100%">';
     echo '<tr><th align="left">Operational Posture</th><td>' . h($postureLabel) . '</td></tr>';
     echo '<tr><th align="left">Severity</th><th align="left">Alert</th></tr>';
@@ -4298,7 +4301,7 @@ if ($main === 'empire' && $sub === 'home') {
     echo '</div>';
 
     echo '<div class="card">';
-    echo '<h4>Empire Home Snapshot</h4>';
+    echo '<h4>Empire Command Snapshot</h4>';
     echo '<p><strong>Readiness Index:</strong> ' . fnum($readiness) . '%</p>';
     echo '<p><strong>Treasury On Hand:</strong> ' . fnum($treasury) . ' Naquadah</p>';
     echo '<p><strong>Army Size:</strong> ' . fnum($armySize) . '</p>';
@@ -4326,7 +4329,7 @@ if ($main === 'empire' && $sub === 'home') {
     echo '</div>';
 
     echo '<div class="card full">';
-    echo '<h4>Home Information Board</h4>';
+    echo '<h4>Stargate Home Information Board</h4>';
     echo '<p><strong>Operational Guidance:</strong> Use this home page to validate reserve health, force readiness, and expansion headroom before issuing attack, research, or build commands.</p>';
     echo '<p><strong>Recommended Loop:</strong> Home -> Logistics -> Military/Fleet -> Operations -> Home (re-check readiness).</p>';
     echo '</div>';
@@ -5493,34 +5496,46 @@ if ($main === 'research') {
 
     if ($sub === 'tree') {
         echo '<div class="card full wows-brief">';
-        echo '<div class="feature-hero"><img src="images/ui/empire-portal.svg" alt="Research tree" /><div><h4>Research Fleet Tree</h4><p>Progress each domain left-to-right through six tiers with a high-command research cadence.</p></div></div>';
-        echo '<p>Progress each domain left-to-right through six tiers. Nodes marked <strong>available</strong> are current unlock candidates based on your level state.</p>';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Research Command Deck</div>';
+        echo '<h4>Research Fleet Tree</h4>';
+        echo '<p>Guide each domain from left to right through six tiers, with every lane feeding your empire-wide research tempo and strategic posture.</p>';
         echo '<div class="wows-pill-row">';
         echo '<span class="wows-pill">Command Lv ' . fnum($researchHub['level']['commandLevel']) . '</span>';
         echo '<span class="wows-pill">Research Lv ' . fnum($researchHub['level']['researchLevel']) . '</span>';
         echo '<span class="wows-pill">Ascension ' . fnum($researchHub['level']['ascension']) . '</span>';
         echo '<span class="wows-pill">XP To Next ' . fnum($researchHub['level']['xpToNext']) . '</span>';
         echo '</div>';
+        echo '<div class="wows-pill-row">' . formalResearchTreeActionButtons($sub) . '</div>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Command State</span><strong>' . fnum($researchHub['level']['commandLevel']) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Research Flow</span><strong>' . fnum($infraResearchSpeed) . 'x</strong></div>';
+        echo '<div class="wows-stat-card"><span>Cost Reduction</span><strong>' . fnum($infraCostDiscount) . '%</strong></div>';
+        echo '<div class="wows-stat-card"><span>Unlock Focus</span><strong>Available</strong></div>';
+        echo '</div>';
+        echo '</div>';
         echo '</div>';
 
-        echo '<div class="card full">';
-        echo '<h4>Research Tree Matrix</h4>';
+        echo '<div class="card full wows-tree-shell">';
+        echo '<div class="wows-tree-toolbar"><div class="wows-tree-title">Progression Matrix</div><div class="wows-legend"><span class="wows-legend-item"><span class="wows-legend-swatch unlocked"></span>Unlocked</span><span class="wows-legend-item"><span class="wows-legend-swatch available"></span>Available</span><span class="wows-legend-item"><span class="wows-legend-swatch locked"></span>Locked</span></div></div>';
         renderTreeBoard($researchHub['researchTree'], (int)$researchHub['level']['researchLevel'], 'researchTreeBoard', 'R-Tier');
         echo '</div>';
 
-        echo '<div class="card"><h4>Primary Stats</h4><ul>';
+        echo '<div class="card wows-info-card"><h4>Primary Stats</h4><ul>';
         foreach ($researchHub['stats'] as $statName => $statVal) {
             echo '<li>' . h($statName) . ': ' . fnum($statVal) . '</li>';
         }
         echo '</ul></div>';
 
-        echo '<div class="card"><h4>Sub Stats</h4><ul>';
+        echo '<div class="card wows-info-card"><h4>Sub Stats</h4><ul>';
         foreach ($researchHub['subStats'] as $statName => $statVal) {
             echo '<li>' . h($statName) . ': ' . fnum($statVal) . '</li>';
         }
         echo '</ul></div>';
 
-        echo '<div class="card full"><h4>Research Resource Requirements</h4>';
+        echo '<div class="card full wows-info-card"><h4>Research Resource Requirements</h4>';
         echo '<p>Advanced research phases consume strategic resources from the expanded economy.</p>';
         echo '<p><strong>Metal:</strong> ' . fnum($resourceHub['current']['metal']) . ' | <strong>Crystal:</strong> ' . fnum($resourceHub['current']['crystal']) . ' | <strong>Deuterium:</strong> ' . fnum($resourceHub['current']['deuterium']) . '</p>';
         echo '<p><strong>Food:</strong> ' . fnum($resourceHub['current']['food']) . ' | <strong>Water:</strong> ' . fnum($resourceHub['current']['water']) . ' | <strong>Population:</strong> ' . fnum($resourceHub['current']['population']) . ' | <strong>Energy:</strong> ' . fnum($resourceHub['current']['energy']) . '</p>';
@@ -5530,21 +5545,35 @@ if ($main === 'research') {
     }
 
     if ($sub === 'techlib') {
-        echo '<div class="card full wows-brief"><div class="feature-hero"><img src="images/ui/universe-archive.svg" alt="Technology tree" /><div><h4>Technology Fleet Tree</h4><p>Technology progression follows branch lanes similar to naval class lines, with richer specialization and output power.</p></div></div>';
-        echo '<p>Technology progression follows branch lanes similar to naval class lines, where each tier unlocks deeper specialization and output power.</p>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Technology Command Deck</div>';
+        echo '<h4>Technology Fleet Tree</h4>';
+        echo '<p>Advance through branch lanes that mirror naval doctrine, unlocking sharper specialization, stronger outputs, and broader fleet synergy.</p>';
         echo '<div class="wows-pill-row">';
         echo '<span class="wows-pill">Technology Lv ' . fnum($researchHub['level']['technologyLevel']) . '</span>';
         echo '<span class="wows-pill">Class Entries ' . fnum($researchHub['counts']['classes']) . '</span>';
         echo '<span class="wows-pill">Talent Pool ' . fnum($researchHub['counts']['talents']) . '</span>';
         echo '</div>';
+        echo '<div class="wows-pill-row">' . formalResearchTreeActionButtons($sub) . '</div>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'technology\',\'get\',\'mainDisplay\'); return false">Open Legacy Technology Module</a></p>';
         echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Tech Level</span><strong>' . fnum($researchHub['level']['technologyLevel']) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Research Flow</span><strong>' . fnum($infraResearchSpeed) . 'x</strong></div>';
+        echo '<div class="wows-stat-card"><span>Cost Discount</span><strong>' . fnum($infraCostDiscount) . '%</strong></div>';
+        echo '<div class="wows-stat-card"><span>Branch Readiness</span><strong>Active</strong></div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
 
-        echo '<div class="card full"><h4>Technology Tree Matrix</h4>';
+        echo '<div class="card full wows-tree-shell">';
+        echo '<div class="wows-tree-toolbar"><div class="wows-tree-title">Branch Matrix</div><div class="wows-legend"><span class="wows-legend-item"><span class="wows-legend-swatch unlocked"></span>Unlocked</span><span class="wows-legend-item"><span class="wows-legend-swatch available"></span>Available</span><span class="wows-legend-item"><span class="wows-legend-swatch locked"></span>Locked</span></div></div>';
         renderTreeBoard($researchHub['techTree'], (int)$researchHub['level']['technologyLevel'], 'technologyTreeBoard', 'T-Tier');
         echo '</div>';
 
-        echo '<div class="card full"><h4>Type and Sub-Type Index</h4>';
+        echo '<div class="card full wows-info-card"><h4>Type and Sub-Type Index</h4>';
         echo '<p><strong>Types:</strong> ' . h(implode(', ', $researchHub['types'])) . '</p>';
         echo '<p><strong>Sub Types:</strong> ' . h(implode(', ', $researchHub['subTypes'])) . '</p>';
         echo '<p><strong>Tech Library Cost Reduction:</strong> ' . fnum($infraCostDiscount) . '% | <strong>Research Speed:</strong> ' . fnum($infraResearchSpeed) . 'x</p>';
@@ -5553,26 +5582,46 @@ if ($main === 'research') {
     }
 
     if ($sub === 'infrastructure') {
-        echo '<div class="card full"><h4>Tech Library Buildings</h4>';
-        echo '<p>Infrastructure buildings increase research speed and reduce Stargate technology costs.</p>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Infrastructure Network</div>';
+        echo '<h4>Tech Library Buildings</h4>';
+        echo '<p>Infrastructure buildings increase research throughput and reduce the cost of Stargate-era technology advancement.</p>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Research Speed</span><strong>' . fnum($infraResearchSpeed) . 'x</strong></div>';
+        echo '<div class="wows-stat-card"><span>Cost Discount</span><strong>' . fnum($infraCostDiscount) . '%</strong></div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        echo '<div class="card full wows-info-card"><h4>Facility Status</h4>';
         echo '<p><strong>Research Campus:</strong> ' . fnum($infraLevels['research_campus']) . '</p>';
         echo '<p><strong>Data Vault:</strong> ' . fnum($infraLevels['data_vault']) . '</p>';
         echo '<p><strong>Simulation Core:</strong> ' . fnum($infraLevels['simulation_core']) . '</p>';
         echo '<p><strong>Quantum Archive:</strong> ' . fnum($infraLevels['quantum_archive']) . '</p>';
         echo '<p><strong>AI Research Directorate:</strong> ' . fnum($infraLevels['ai_directorate']) . '</p>';
-        echo '<p><strong>Research Speed:</strong> ' . fnum($infraResearchSpeed) . 'x</p>';
-        echo '<p><strong>Tech Cost Reduction:</strong> ' . fnum($infraCostDiscount) . '%</p>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Open Tech Library Building Console</a></p>';
         echo '</div>';
     }
 
     if ($sub === 'classes') {
-        echo '<div class="card"><h4>Class Doctrine Summary</h4>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Class Doctrine</div>';
+        echo '<h4>Class and Sub-Class Library</h4>';
         echo '<p>90 class entries are generated with matching subclasses, types, and sub-types for deep build planning.</p>';
-        echo '<p><a href="javascript:void(0)" onclick="sendData(\'megaforge\',\'get\',\'mainDisplay\'); return false">Open Mega Forge Construction</a></p>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Catalog Entries</span><strong>90</strong></div>';
+        echo '<div class="wows-stat-card"><span>Forge Link</span><strong>Active</strong></div>';
+        echo '</div>';
+        echo '</div>';
         echo '</div>';
 
-        echo '<div class="card full"><h4>Class and Sub-Class Library (90)</h4>';
+        echo '<div class="card full wows-info-card"><h4>Class and Sub-Class Library (90)</h4>';
         echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">ID</th><th align="left">Class</th><th align="left">Sub Class</th><th align="left">Type</th><th align="left">Sub Type</th></tr>';
         foreach ($researchHub['classes'] as $entry) {
             echo '<tr><td>' . fnum($entry['id']) . '</td><td>' . h($entry['className']) . '</td><td>' . h($entry['subClass']) . '</td><td>' . h($entry['type']) . '</td><td>' . h($entry['subType']) . '</td></tr>';
@@ -5591,18 +5640,21 @@ if ($main === 'research') {
             }
         }
 
-        echo '<div class="card"><h4>Talent Pool Summary</h4>';
-        echo '<p><strong>Total Talents:</strong> ' . fnum($researchHub['counts']['talents']) . '</p>';
-        echo '<p><strong>Research Talents:</strong> ' . fnum($researchTalents) . '</p>';
-        echo '<p><strong>Technology Talents:</strong> ' . fnum($techTalents) . '</p>';
-        echo '</div>';
-
-        echo '<div class="card"><h4>Talent Tier Bands</h4>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Talent Matrix</div>';
+        echo '<h4>Talent Library</h4>';
         echo '<p>Tier bands are grouped every 30 talents to create 8 progression bands across the full library.</p>';
-        echo '<p><a href="javascript:void(0)" onclick="sendData(\'megaforge\',\'get\',\'mainDisplay\'); return false">Use Talents With Mega Forge Builds</a></p>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Total Talents</span><strong>' . fnum($researchHub['counts']['talents']) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Branch Split</span><strong>' . fnum($researchTalents) . '/' . fnum($techTalents) . '</strong></div>';
+        echo '</div>';
+        echo '</div>';
         echo '</div>';
 
-        echo '<div class="card full"><h4>Talent Library (240)</h4>';
+        echo '<div class="card full wows-info-card"><h4>Talent Library (240)</h4>';
         echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">ID</th><th align="left">Branch</th><th align="left">Domain</th><th align="left">Talent</th><th align="left">Focus</th><th align="left">Tier</th><th align="left">Effect</th></tr>';
         foreach ($researchHub['talents'] as $talent) {
             echo '<tr><td>' . fnum($talent['id']) . '</td><td>' . h($talent['branch']) . '</td><td>' . h($talent['domain']) . '</td><td>' . h($talent['name']) . '</td><td>' . h($talent['focus']) . '</td><td>' . fnum($talent['tier']) . '</td><td>' . h($talent['effect']) . '</td></tr>';
@@ -5611,18 +5663,28 @@ if ($main === 'research') {
     }
 
     if ($sub === 'stargate') {
-        echo '<div class="card"><div class="feature-hero"><img src="images/ui/operations-console.svg" alt="Stargate technology" /><div><h4>Stargate Technology Program</h4><p>Research complete Stargate-era technologies including gate science, power matrices, fleet integration, and threat response.</p></div></div>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Stargate Doctrine</div>';
+        echo '<h4>Stargate Technology Program</h4>';
         echo '<p>Research complete Stargate-era technologies including gate science, power matrices, fleet integration, and threat response.</p>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'stargatetech\',\'get\',\'mainDisplay\'); return false">Open Stargate Technology Command</a></p>';
         echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Priority</span><strong>High</strong></div>';
+        echo '<div class="wows-stat-card"><span>Threat Response</span><strong>Active</strong></div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
 
-        echo '<div class="card"><h4>Cross-System Links</h4>';
+        echo '<div class="card wows-info-card"><h4>Cross-System Links</h4>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'technology\',\'get\',\'mainDisplay\'); return false">Legacy Technology Module</a></p>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'hyperspace\',\'get\',\'mainDisplay\'); return false">Hyperspace Transit Command</a></p>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'stations\',\'get\',\'mainDisplay\'); return false">Stations and Bases Command</a></p>';
         echo '</div>';
 
-        echo '<div class="card full"><h4>Stargate Doctrine Priorities</h4>';
+        echo '<div class="card full wows-info-card"><h4>Stargate Doctrine Priorities</h4>';
         echo '<table class="mini-table" border="0" width="100%">';
         echo '<tr><th align="left">Phase</th><th align="left">Primary Focus</th><th align="left">Expected Outcome</th></tr>';
         echo '<tr><td>Early</td><td>Naquadah Physics, Gate Dialing Protocols, Capacitor Lattices</td><td>Reliable gate operation and base power continuity</td></tr>';
@@ -5632,11 +5694,35 @@ if ($main === 'research') {
     }
 
     if ($sub === 'projects') {
-        echo '<div class="card full"><div class="feature-hero"><img src="images/ui/empire-portal.svg" alt="Research projects" /><div><h4>Research Projects</h4><p>Track active projects by branch and priority band.</p></div></div><ul><li>Military Optimization Project</li><li>Economic Throughput Project</li><li>Gate Stability Project</li></ul></div>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Project Queue</div>';
+        echo '<h4>Research Projects</h4>';
+        echo '<p>Track active projects by branch and priority band.</p>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Live Projects</span><strong>3</strong></div>';
+        echo '<div class="wows-stat-card"><span>Priority</span><strong>High</strong></div>';
+        echo '</div>';
+        echo '</div>';
+        echo '<ul><li>Military Optimization Project</li><li>Economic Throughput Project</li><li>Gate Stability Project</li></ul></div>';
     }
 
     if ($sub === 'labs') {
-        echo '<div class="card"><h4>Lab Network</h4><p>Coordinate infrastructure levels across research campuses and archives.</p><p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Open Tech Library Buildings</a></p></div>';
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Lab Network</div>';
+        echo '<h4>Lab Network</h4>';
+        echo '<p>Coordinate infrastructure levels across research campuses and archives.</p>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Network</span><strong>Active</strong></div>';
+        echo '<div class="wows-stat-card"><span>Facilities</span><strong>Online</strong></div>';
+        echo '</div>';
+        echo '</div>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Open Tech Library Buildings</a></p></div>';
     }
 }
 

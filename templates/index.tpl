@@ -2,10 +2,10 @@
 <div class="app-shell">
   <div class="top-header">
     <div class="top-brand">
-      <img src="images/logo.gif" alt="Universe: Empires at War" />
+      <img src="images/logo.gif" alt="Stargate Wars" />
       <div>
-        <h1>Universe: Empires at War</h1>
-        <p>Strategic war console and empire operations</p>
+        <h1>Stargate Wars</h1>
+        <p>Strategic command and empire operations across the Stargate network</p>
       </div>
     </div>
     <div class="top-stats">
@@ -48,6 +48,7 @@
               <button type="button" class="theme-option" data-theme="white" onclick="setTheme('white'); return false;">White</button>
               <button type="button" class="theme-option" data-theme="og" onclick="setTheme('og'); return false;">OG</button>
               <button type="button" class="theme-option" data-theme="blue" onclick="setTheme('blue'); return false;">Blue</button>
+              <button type="button" class="theme-option" data-theme="stargate" onclick="setTheme('stargate'); return false;">Stargate</button>
             </div>
           </div>
         </details>
@@ -296,7 +297,7 @@
 
   <footer class="site-footer">
     <div>
-      <strong>Universe: Empires at War</strong> tactical operations network
+      <strong>Stargate Wars</strong> tactical operations network
     </div>
     <div>
       &quot;Because it is so clear it takes a long time to realise it.&quot;

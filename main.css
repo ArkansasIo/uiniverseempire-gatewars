@@ -439,9 +439,24 @@ body.theme-blue {
     --theme-shadow: rgba(18, 67, 139, 0.24);
 }
 
+body.theme-stargate {
+    --theme-bg: #030b16;
+    --theme-surface: #09172a;
+    --theme-surface-alt: #10263f;
+    --theme-surface-strong: #163a5c;
+    --theme-border: #3b7db6;
+    --theme-text: #f2f7ff;
+    --theme-muted: #9dc2ff;
+    --theme-link: #f2f7ff;
+    --theme-input-bg: #09172a;
+    --theme-input-border: #3b7db6;
+    --theme-shadow: rgba(5, 16, 31, 0.4);
+}
+
 body.theme-og,
 body.theme-white,
-body.theme-blue {
+body.theme-blue,
+body.theme-stargate {
     background-color: var(--theme-bg) !important;
     color: var(--theme-text) !important;
 }
@@ -669,16 +684,56 @@ body.theme-blue .hero-overlay p {
 body.theme-og .page-subnav a:hover,
 body.theme-white .page-subnav a:hover,
 body.theme-blue .page-subnav a:hover,
+body.theme-stargate .page-subnav a:hover,
 body.theme-og .combat-btn:hover,
 body.theme-white .combat-btn:hover,
 body.theme-blue .combat-btn:hover,
+body.theme-stargate .combat-btn:hover,
 body.theme-og .public-btn:hover,
 body.theme-white .public-btn:hover,
 body.theme-blue .public-btn:hover,
+body.theme-stargate .public-btn:hover,
 body.theme-og .auth-submit:hover,
 body.theme-white .auth-submit:hover,
-body.theme-blue .auth-submit:hover {
+body.theme-blue .auth-submit:hover,
+body.theme-stargate .auth-submit:hover {
     background-color: var(--theme-surface-alt) !important;
+}
+
+body.theme-stargate .top-header {
+    background: linear-gradient(90deg, #07111f 0%, #10263f 45%, #1a4b79 100%);
+    border-color: #3b7db6;
+}
+
+body.theme-stargate .top-sub-header {
+    background: #09172a;
+    border-color: #3b7db6;
+}
+
+body.theme-stargate .left-menu,
+body.theme-stargate .content-panel,
+body.theme-stargate .card,
+body.theme-stargate .page-hub,
+body.theme-stargate .page-subnav,
+body.theme-stargate .header-settings-menu,
+body.theme-stargate .auth-card,
+body.theme-stargate .public-shell,
+body.theme-stargate .public-panel {
+    background-color: #09172a;
+    border-color: #3b7db6;
+    color: #f2f7ff;
+}
+
+body.theme-stargate .left-menu a,
+body.theme-stargate .left-menu summary,
+body.theme-stargate .left-menu details,
+body.theme-stargate .left-menu details details,
+body.theme-stargate .public-btn,
+body.theme-stargate .auth-submit,
+body.theme-stargate .combat-btn {
+    background-color: #163a5c;
+    border-color: #3b7db6;
+    color: #f2f7ff;
 }
 
 .main-layout {
@@ -1804,29 +1859,147 @@ body.theme-blue .auth-submit:hover {
 }
 
 .wows-brief {
-    background: linear-gradient(180deg, rgba(11, 35, 35, 0.88) 0%, rgba(6, 22, 22, 0.82) 100%);
+    background: linear-gradient(135deg, rgba(8, 31, 33, 0.96) 0%, rgba(4, 17, 17, 0.95) 100%);
+    border: 1px solid rgba(98, 187, 178, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 18px 40px rgba(0, 0, 0, 0.26);
+}
+
+.wows-hero-shell {
+    display: grid;
+    grid-template-columns: 1.4fr 0.9fr;
+    gap: 16px;
+    align-items: start;
+}
+
+.wows-kicker {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 10px;
+    color: #86e9de;
+    margin-bottom: 6px;
+}
+
+.wows-hero-copy h4 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+    color: #f6ffff;
+}
+
+.wows-hero-copy p {
+    margin: 0;
+    color: #bfeaed;
+    line-height: 1.55;
+}
+
+.wows-hero-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.wows-stat-card {
+    border: 1px solid rgba(92, 163, 159, 0.28);
+    background: rgba(7, 23, 24, 0.84);
+    border-radius: 12px;
+    padding: 10px;
+    min-height: 74px;
+}
+
+.wows-stat-card span {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #7fcfd0;
+}
+
+.wows-stat-card strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 16px;
+    color: #f8ffff;
 }
 
 .wows-pill-row {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 8px;
+    margin-top: 10px;
 }
 
 .wows-pill {
-    border: 1px solid #3b7a7a;
-    background: rgba(8, 28, 28, 0.85);
-    padding: 4px 8px;
+    border: 1px solid rgba(91, 174, 178, 0.38);
+    background: rgba(8, 28, 28, 0.9);
+    padding: 5px 10px;
     font-size: 11px;
     color: #d9ffff;
+    border-radius: 999px;
+}
+
+.wows-tree-shell {
+    background: linear-gradient(180deg, rgba(6, 24, 24, 0.92) 0%, rgba(3, 12, 12, 0.94) 100%);
+    border: 1px solid rgba(98, 187, 178, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.wows-tree-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.wows-tree-title {
+    font-size: 13px;
+    font-weight: bold;
+    color: #ebffff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.wows-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wows-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #b8e8e9;
+}
+
+.wows-legend-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.35);
+}
+
+.wows-legend-swatch.unlocked {
+    background: #50b36d;
+}
+
+.wows-legend-swatch.available {
+    background: #67cde9;
+}
+
+.wows-legend-swatch.locked {
+    background: #5d7272;
 }
 
 .wows-tree {
-    border: 1px solid #255c5c;
-    background: linear-gradient(180deg, rgba(2, 14, 14, 0.92) 0%, rgba(2, 8, 8, 0.92) 100%);
-    padding: 8px;
+    border: 1px solid rgba(93, 154, 154, 0.28);
+    background: linear-gradient(180deg, rgba(2, 14, 14, 0.95) 0%, rgba(2, 8, 8, 0.95) 100%);
+    padding: 10px;
     overflow-x: auto;
+    border-radius: 14px;
 }
 
 .wows-tier-head,
@@ -1843,9 +2016,10 @@ body.theme-blue .auth-submit:hover {
 }
 
 .wows-tier-head {
-    background: rgba(12, 33, 33, 0.8);
-    border: 1px solid #2b6363;
-    padding: 6px;
+    background: linear-gradient(90deg, rgba(12, 33, 33, 0.88) 0%, rgba(9, 24, 24, 0.9) 100%);
+    border: 1px solid rgba(61, 119, 112, 0.34);
+    padding: 7px;
+    border-radius: 10px;
 }
 
 .wows-tier-head > span:first-child {
@@ -1863,12 +2037,13 @@ body.theme-blue .auth-submit:hover {
 }
 
 .wows-domain {
-    border: 1px solid #2b6363;
-    background: rgba(9, 32, 32, 0.86);
+    border: 1px solid rgba(72, 125, 125, 0.36);
+    background: linear-gradient(135deg, rgba(10, 36, 36, 0.92) 0%, rgba(5, 20, 20, 0.92) 100%);
     padding: 10px;
     font-size: 12px;
     font-weight: bold;
     color: #d6ffff;
+    border-radius: 12px;
 }
 
 .wows-node-lane {
@@ -1891,11 +2066,30 @@ body.theme-blue .auth-submit:hover {
 
 .wows-node {
     position: relative;
-    border: 1px solid #2f6666;
-    background: rgba(6, 20, 20, 0.92);
+    border: 1px solid rgba(70, 120, 120, 0.34);
+    background: linear-gradient(180deg, rgba(7, 22, 22, 0.94) 0%, rgba(4, 12, 12, 0.96) 100%);
     padding: 8px;
-    min-height: 96px;
+    min-height: 104px;
     z-index: 1;
+    border-radius: 12px;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.wows-node:hover {
+    transform: translateY(-2px);
+}
+
+.wows-node-badge {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #a8f0eb;
+    background: rgba(23, 68, 72, 0.76);
+    padding: 2px 6px;
+    border-radius: 999px;
 }
 
 .wows-node-title {
@@ -1903,6 +2097,7 @@ body.theme-blue .auth-submit:hover {
     color: #9ccfcf;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+    padding-right: 48px;
 }
 
 .wows-node-name {
@@ -1918,19 +2113,25 @@ body.theme-blue .auth-submit:hover {
 }
 
 .wows-node.unlocked {
-    border-color: #5ea47e;
-    box-shadow: inset 0 0 0 1px rgba(94, 164, 126, 0.45);
+    border-color: rgba(95, 183, 118, 0.7);
+    box-shadow: inset 0 0 0 1px rgba(94, 164, 126, 0.35), 0 0 14px rgba(94, 164, 126, 0.16);
 }
 
 .wows-node.available {
-    border-color: #7ac3d9;
-    box-shadow: 0 0 0 1px rgba(122, 195, 217, 0.55), 0 0 12px rgba(122, 195, 217, 0.25);
-    background: rgba(8, 29, 35, 0.92);
+    border-color: rgba(110, 201, 236, 0.72);
+    box-shadow: 0 0 0 1px rgba(122, 195, 217, 0.45), 0 0 16px rgba(122, 195, 217, 0.22);
+    background: linear-gradient(180deg, rgba(8, 29, 35, 0.95) 0%, rgba(5, 18, 22, 0.95) 100%);
 }
 
 .wows-node.locked {
-    border-color: #3c5050;
-    opacity: 0.8;
+    border-color: rgba(68, 92, 92, 0.6);
+    opacity: 0.86;
+}
+
+.wows-info-card {
+    background: linear-gradient(135deg, rgba(7, 24, 24, 0.95) 0%, rgba(5, 15, 15, 0.95) 100%);
+    border: 1px solid rgba(88, 154, 154, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .wows-tree-row + .wows-tree-row {
@@ -1944,6 +2145,14 @@ body.theme-blue .auth-submit:hover {
 
     .calc-grid {
         grid-template-columns: 1fr;
+    }
+
+    .wows-hero-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .wows-hero-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .wows-tier-head,

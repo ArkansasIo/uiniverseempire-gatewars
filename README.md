@@ -1,15 +1,22 @@
 # Stargate Wars
 
-Open-source PHP/MySQL browser strategy game inspired by classic turn-based empire games and the Stargate universe.
+Stargate Wars is an open-source PHP/MySQL browser strategy game with a Stargate-inspired command experience, deep empire management, research and technology trees, and a custom theme system.
 
 ## Project Guide
 
-This repository now includes a full folder-level documentation layout.
+This repository now includes a full folder-level documentation layout for the game, the backend, and the UI layers.
 
 - Start here: [docs/README.md](docs/README.md)
 - Full layout map: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 - Backend setup: [BACKEND_SETUP.md](BACKEND_SETUP.md)
 - Legacy readme retained: [README](README)
+
+## Current Experience
+
+- Stargate Wars branding across the public landing page and main game shell
+- Theme picker with White, OG, Blue, and Stargate themes
+- Research and technology tree pages with richer navigation and styling
+- Compatibility bootstrap files for local development and legacy config imports
 
 ## Quick Start
 
@@ -45,3 +52,7 @@ For local development and testing, the default demo account is:
 - Password: SGWLogin123!
 
 Use these credentials when logging in to the local game instance.
+
+## Notes
+
+The local server is intended to run from the repository root with the PHP built-in server. For a full experience, make sure the database is initialized and the backend healthcheck passes before launching the game.

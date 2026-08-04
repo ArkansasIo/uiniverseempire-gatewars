@@ -87,6 +87,18 @@ function formalResearchBonus($baseBonus, $researchLevel) {
     return (float)round($baseBonus * (1 + ($researchLevel * 0.06)), 2);
 }
 
+function formalResearchTreeActionButtons(string $currentView): string {
+    if ($currentView === 'tree') {
+        return '<a class="public-btn secondary" href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'techlib\'); return false">Open Technology Tree</a>';
+    }
+
+    if ($currentView === 'techlib') {
+        return '<a class="public-btn secondary" href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'tree\'); return false">Open Research Tree</a>';
+    }
+
+    return '';
+}
+
 function formalLeaderboardTitle($rank, $armySize, $treasury) {
     $rank = max(1, (int)$rank);
     $armySize = max(0, (int)$armySize);
