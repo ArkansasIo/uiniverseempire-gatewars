@@ -379,6 +379,57 @@ class Game extends User
 		$auto = null;
 
 		if ($this->connected() && $this->db_link) {
+			$this->query("CREATE TABLE IF NOT EXISTS `bank` (
+				`uid` int(11) NOT NULL,
+				`onHand` bigint(20) NOT NULL DEFAULT 0,
+				`inBank` bigint(20) NOT NULL DEFAULT 0,
+				PRIMARY KEY (`uid`)
+			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+			$this->query("ALTER TABLE `bank` ADD COLUMN IF NOT EXISTS `onHand` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `bank` ADD COLUMN IF NOT EXISTS `inBank` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("INSERT IGNORE INTO `bank` (`uid`,`onHand`,`inBank`) VALUES (" . (int)$_SESSION['userid'] . ", 250000, 0)");
+
+			$this->query("CREATE TABLE IF NOT EXISTS `rank` (
+				`uid` int(11) NOT NULL,
+				`overall` int(11) NOT NULL DEFAULT 0,
+				PRIMARY KEY (`uid`)
+			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+			$this->query("INSERT IGNORE INTO `rank` (`uid`,`overall`) VALUES (" . (int)$_SESSION['userid'] . ", 0)");
+
+			$this->query("CREATE TABLE IF NOT EXISTS `userdata` (
+				`uid` int(11) NOT NULL,
+				`uname` varchar(64) NOT NULL DEFAULT '',
+				`actionTurns` int(11) NOT NULL DEFAULT 250,
+				`rid` int(11) NOT NULL DEFAULT 1,
+				`cid` int(11) NOT NULL DEFAULT 0,
+				`progress` int(11) NOT NULL DEFAULT 0,
+				`alevel` int(11) NOT NULL DEFAULT 1,
+				PRIMARY KEY (`uid`)
+			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+			$this->query("INSERT IGNORE INTO `userdata` (`uid`,`uname`,`actionTurns`,`rid`,`cid`,`progress`,`alevel`) VALUES (" . (int)$_SESSION['userid'] . ", '" . addslashes((string)($_SESSION['username'] ?? '')) . "', 250, 1, 0, 0, 1)");
+
+			$this->query("CREATE TABLE IF NOT EXISTS `player_resources` (
+				`uid` int(11) NOT NULL,
+				`metal` bigint(20) NOT NULL DEFAULT 0,
+				`crystal` bigint(20) NOT NULL DEFAULT 0,
+				`deuterium` bigint(20) NOT NULL DEFAULT 0,
+				`food` bigint(20) NOT NULL DEFAULT 0,
+				`water` bigint(20) NOT NULL DEFAULT 0,
+				`population` bigint(20) NOT NULL DEFAULT 0,
+				`energy` bigint(20) NOT NULL DEFAULT 50000,
+				`last_tick_at` int(11) NOT NULL DEFAULT 0,
+				PRIMARY KEY (`uid`)
+			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `metal` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `crystal` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `deuterium` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `food` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `water` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `population` bigint(20) NOT NULL DEFAULT 0");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `energy` bigint(20) NOT NULL DEFAULT 50000");
+			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `last_tick_at` int(11) NOT NULL DEFAULT 0");
+			$this->query("INSERT IGNORE INTO `player_resources` (`uid`,`metal`,`crystal`,`deuterium`,`food`,`water`,`population`,`energy`,`last_tick_at`) VALUES (" . (int)$_SESSION['userid'] . ", 1200, 900, 600, 80000, 70000, 150000, 15000, UNIX_TIMESTAMP())");
+
 			$messageJoin = "";
 			$messageSelect = "0 AS messageCount";
 			$messageTable = $this->query("SHOW TABLES LIKE 'messages'");
@@ -419,13 +470,13 @@ class Game extends User
 			$messageCount = (int)($auto->messageCount ?? 0);
 		}
 
-		$metal = 0;
-		$crystal = 0;
-		$deuterium = 0;
-		$food = 0;
-		$water = 0;
-		$population = 0;
-		$energy = 0;
+		$metal = 1200;
+		$crystal = 900;
+		$deuterium = 600;
+		$food = 80000;
+		$water = 70000;
+		$population = 150000;
+		$energy = 15000;
 		if ($this->connected() && $this->db_link) {
 			$resTable = $this->query("SHOW TABLES LIKE 'player_resources'");
 			if ($resTable && $resTable->num_rows > 0) {
