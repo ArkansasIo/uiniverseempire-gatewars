@@ -23,9 +23,15 @@ are loaded into `#mainDisplay` via `mainUpdate()`.
 |-------|---------|
 | `.app-shell` | Fixed viewport shell: header, sidebar, main content |
 | `.top-header` | Top stat bar (rank, turns, Naquadah, bank, resources, time) |
-| `.stat-pills` | Individual top-bar stat chips |
-| `.side-nav` | Left navigation suites (details/summary accordion) |
+| `.stat-pill` | Individual top-bar stat chips |
+| `.top-sub-header` | Secondary header row (search + quick links) |
+| `.left-menu` | Left navigation suites (details/summary accordion) |
+| `.menu-section-title` | Left-nav section header (pill in v1.5) |
+| `.content-panel` | Main content column next to the left menu |
+| `.page-hub-shell` | Page hub: `.page-hub-head`, `.page-hub-copy`, `.page-hub-badge` |
+| `.page-subnav-title` / `.page-subnav` | Sub-page title + pill tab row (`.active` = current) |
 | `.page-hub` | Newer content layouts (grid cards for rich sub-pages) |
+| `.mini-table`, `.market-tbl`, `.msg-list` | Data grids (styled globally since v1.5) |
 | `.main-display` | The `#mainDisplay` region that AJAX fragments fill |
 | `.public-header` | Public landing header with brand + GitHub button |
 | `.public-github` | GitHub "Game Source" button (top-left on public header) |
@@ -70,6 +76,37 @@ content.
 2. Add a `body.theme-<name>` variable block + any overrides in `main.css`.
 3. Add the option to the theme `<select>`.
 4. Re-run `tests/theme_support_test.php`.
+
+### 3.4 v1.5 UI polish layer
+
+Since v1.5.0 a modern component layer is appended at the **end** of `main.css`
+(behind the `/* v1.5 UI polish */` banner) so it consistently wins over legacy
+and per-theme rules. It is CSS-only — no markup or JS changes.
+
+- **Accent variables.** Each `body.theme-*` block defines `--accent`,
+  `--accent-strong`, `--accent-soft`, `--accent-faint`. New rules reference
+  these instead of hard-coded colors, so a component restyle stays theme-aware.
+- **Typography.** `.app-shell`/`.public-shell` use `Segoe UI` + system sans
+  (cursive legacy font removed); `.terminal-shell` keeps monospace; heading
+  underlines removed; `:focus-visible` accent outlines added.
+- **Buttons/forms.** Unified radius/padding/transitions for `combat-btn`,
+  `calc-btn`, `tech-action`, `public-btn`, `auth-submit`, `gov-option`,
+  `gov-preset`, `theme-option`, `gov-system-actions a`, and `page-subnav a`.
+  Form controls get solid borders, rounded corners, and an accent focus ring;
+  `input[type=button]`/`input[type=submit]` render as accent-solid buttons.
+- **Page/sub-page headers.** `.page-hub-head` and `.content-header` get an
+  accent top border + radius; `.page-hub-badge` is a pill; `.page-subnav-title`
+  gets an accent dot marker; sub-nav links become pill tabs with an
+  `.active` = accent-strong state.
+- **Tables.** `table.mini-table`, `table.market-tbl`, `table.msg-list` are
+  collapsed with uppercase accent-tinted headers, zebra striping, and hover;
+  `#mainDisplay table` (legacy plain tables) gets light padding-only polish.
+- **Left navigation.** `.left-menu` is sticky/rounded with `summary` chevron
+  markers and hover slide; `.menu-section-title` renders as an accent pill.
+- **Cards/spacing.** Cards get 8px radius; `.content-panel` breathing room.
+
+Keep new UI CSS inside this appended layer (or later) and always reference the
+accent variables so all four themes stay consistent.
 
 ## 4. Icons
 

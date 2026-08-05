@@ -3233,3 +3233,284 @@ body.theme-stargate .mini-table tr:hover td { background: rgba(33, 116, 165, 0.1
     body.theme-og .left-menu, body.theme-blue .left-menu, body.theme-stargate .left-menu { width: 260px; flex-basis: 260px; }
     body.theme-og .content-panel, body.theme-blue .content-panel, body.theme-stargate .content-panel { padding: 10px; }
 }
+
+/* ============================================================
+   v1.5 UI polish — unified modern component system.
+   Appended last so it consistently wins over legacy and theme
+   rules across all four themes.
+   ============================================================ */
+
+/* Accent tones per theme */
+body.theme-og       { --accent: #5ad0d0; --accent-strong: #1f8a8a; --accent-soft: rgba(90, 208, 208, 0.16); --accent-faint: rgba(90, 208, 208, 0.06); }
+body.theme-white    { --accent: #1788b3; --accent-strong: #0f6f96; --accent-soft: rgba(23, 136, 179, 0.14); --accent-faint: rgba(23, 136, 179, 0.06); }
+body.theme-blue     { --accent: #4da3ff; --accent-strong: #1d66bf; --accent-soft: rgba(77, 163, 255, 0.16); --accent-faint: rgba(77, 163, 255, 0.06); }
+body.theme-stargate { --accent: #6fb8ff; --accent-strong: #2f6fae; --accent-soft: rgba(111, 184, 255, 0.16); --accent-faint: rgba(111, 184, 255, 0.06); }
+
+/* 1. Typography — modern sans base inside the shells, no dated underlines */
+.app-shell, .public-shell {
+    font-family: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+.app-shell a, .app-shell span, .app-shell div, .app-shell p, .app-shell li, .app-shell label,
+.app-shell table, .app-shell tr, .app-shell td, .app-shell th,
+.app-shell input, .app-shell select, .app-shell textarea, .app-shell button,
+.app-shell h1, .app-shell h2, .app-shell h3, .app-shell h4, .app-shell h5, .app-shell h6 {
+    font-family: inherit !important;
+}
+
+.app-shell .terminal-shell,
+.app-shell .terminal-shell * {
+    font-family: "Courier New", Courier, monospace !important;
+}
+
+.app-shell h1, .app-shell h2, .app-shell h3, .app-shell h4, .app-shell h5, .app-shell h6 {
+    text-decoration: none !important;
+}
+
+.app-shell :focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px;
+}
+
+.app-shell ::-webkit-scrollbar { width: 10px; height: 10px; }
+.app-shell ::-webkit-scrollbar-track { background: var(--theme-surface); }
+.app-shell ::-webkit-scrollbar-thumb { background: var(--theme-surface-strong); border: 2px solid var(--theme-surface); border-radius: 999px; }
+
+/* 2. Buttons + forms */
+:is(.app-shell, .public-shell) .combat-btn,
+:is(.app-shell, .public-shell) .calc-btn,
+:is(.app-shell, .public-shell) .tech-action,
+:is(.app-shell, .public-shell) .public-btn,
+:is(.app-shell, .public-shell) .auth-submit,
+:is(.app-shell, .public-shell) .gov-option,
+:is(.app-shell, .public-shell) .gov-preset,
+:is(.app-shell, .public-shell) .theme-option,
+:is(.app-shell, .public-shell) .gov-system-actions a,
+:is(.app-shell, .public-shell) .page-subnav a {
+    border-radius: 6px !important;
+    padding: 7px 12px !important;
+    min-height: 30px;
+    line-height: 1.25 !important;
+    border-width: 1px !important;
+    border-style: solid !important;
+    box-sizing: border-box;
+    transition: transform 0.12s ease, box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+:is(.app-shell, .public-shell) .combat-btn:hover,
+:is(.app-shell, .public-shell) .calc-btn:hover,
+:is(.app-shell, .public-shell) .tech-action:hover,
+:is(.app-shell, .public-shell) .public-btn:hover,
+:is(.app-shell, .public-shell) .auth-submit:hover,
+:is(.app-shell, .public-shell) .gov-option:hover,
+:is(.app-shell, .public-shell) .gov-preset:hover,
+:is(.app-shell, .public-shell) .theme-option:hover,
+:is(.app-shell, .public-shell) .gov-system-actions a:hover,
+:is(.app-shell, .public-shell) .page-subnav a:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
+}
+
+:is(.app-shell, .public-shell) .combat-btn:active,
+:is(.app-shell, .public-shell) .calc-btn:active,
+:is(.app-shell, .public-shell) .tech-action:active,
+:is(.app-shell, .public-shell) .gov-system-actions a:active,
+:is(.app-shell, .public-shell) .page-subnav a:active {
+    transform: translateY(0);
+}
+
+/* Sub-page navigation: pill tabs with a distinct active state */
+.app-shell .page-subnav { gap: 7px; margin: 2px 0 8px; }
+.app-shell .page-subnav a {
+    border-color: var(--theme-border) !important;
+    background: var(--theme-surface-strong) !important;
+    color: var(--theme-text) !important;
+}
+.app-shell .page-subnav a.active {
+    background: var(--accent-strong) !important;
+    border-color: var(--accent) !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Form controls: solid borders, rounded corners, visible focus */
+.app-shell input[type="text"], .app-shell input[type="password"], .app-shell input[type="number"],
+.app-shell input[type="email"], .app-shell select, .app-shell textarea {
+    border-radius: 5px !important;
+    border-style: solid !important;
+    border-width: 1px !important;
+    padding: 6px 9px !important;
+    background-clip: padding-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-shell input[type="text"]:focus, .app-shell input[type="password"]:focus,
+.app-shell input[type="number"]:focus, .app-shell input[type="email"]:focus,
+.app-shell select:focus, .app-shell textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.app-shell input[type="button"], .app-shell input[type="submit"] {
+    border-radius: 6px !important;
+    border-style: solid !important;
+    border-width: 1px !important;
+    padding: 6px 12px !important;
+    cursor: pointer;
+    background: var(--accent-strong) !important;
+    border-color: var(--accent) !important;
+    color: #ffffff !important;
+}
+
+.app-shell input[type="button"]:hover, .app-shell input[type="submit"]:hover { filter: brightness(1.15); }
+
+/* 3. Page + sub-page headers */
+.app-shell .page-hub-shell { gap: 10px; }
+.app-shell .page-hub-head {
+    border-top: 2px solid var(--accent) !important;
+    border-radius: 8px !important;
+    padding: 14px 16px !important;
+    box-shadow: inset 0 0 0 1px var(--accent-soft);
+}
+.app-shell .page-hub-badge {
+    border-radius: 999px !important;
+    padding: 6px 12px !important;
+    background: var(--accent-soft) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.app-shell .page-subnav-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 6px;
+    color: var(--theme-muted) !important;
+    letter-spacing: 0.09em;
+}
+.app-shell .page-subnav-title::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    flex: 0 0 auto;
+}
+.app-shell .page-status { border-radius: 6px !important; }
+.app-shell .content-header {
+    border-top: 2px solid var(--accent) !important;
+    border-radius: 8px !important;
+    padding: 22px 24px !important;
+}
+.app-shell .content-header h2 { letter-spacing: 0.05em; }
+
+/* 4. Data tables */
+.app-shell table.mini-table,
+.app-shell table.market-tbl,
+.app-shell table.msg-list {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.app-shell .mini-table th, .app-shell .mini-table td,
+.app-shell .market-tbl th, .app-shell .market-tbl td,
+.app-shell .msg-list th, .app-shell .msg-list td {
+    padding: 7px 10px !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--theme-border) !important;
+    text-align: left;
+    vertical-align: top;
+}
+.app-shell .mini-table th, .app-shell .market-tbl th, .app-shell .msg-list th {
+    background: var(--accent-soft) !important;
+    color: var(--theme-text) !important;
+    font-size: 10px !important;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+.app-shell .mini-table tr:nth-child(even) td,
+.app-shell .market-tbl tr:nth-child(even) td,
+.app-shell .msg-list tbody tr:nth-child(even) td { background: var(--accent-faint); }
+.app-shell .mini-table tr:hover td,
+.app-shell .market-tbl tr:hover td,
+.app-shell .msg-list tr:hover td { background: var(--accent-soft) !important; }
+.app-shell .msg-list tr.unread td { font-weight: bold; background: var(--accent-faint); }
+.app-shell .msg-list th { color: var(--theme-text) !important; }
+
+/* Plain legacy tables (bank, armory, training...) get light polish only */
+.app-shell #mainDisplay table {
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.app-shell #mainDisplay table th,
+.app-shell #mainDisplay table td {
+    padding: 6px 9px;
+}
+
+/* 5. Left navigation */
+.app-shell .left-menu {
+    position: sticky;
+    top: 12px;
+    align-self: flex-start;
+    max-height: calc(100vh - 24px);
+    border-radius: 8px;
+}
+.app-shell .left-menu h3 { margin-bottom: 14px; }
+.app-shell .menu-section-title {
+    border-radius: 999px !important;
+    margin-top: 14px !important;
+    border-color: var(--theme-border) !important;
+    background: var(--accent-soft) !important;
+    letter-spacing: 0.08em;
+}
+.app-shell .menu-section-title span { color: var(--theme-text) !important; }
+.app-shell .left-menu summary {
+    position: relative;
+    border-radius: 5px !important;
+    padding-right: 26px !important;
+}
+.app-shell .left-menu summary::after {
+    content: "";
+    position: absolute;
+    right: 11px;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--accent);
+    border-bottom: 2px solid var(--accent);
+    transform: translateY(-68%) rotate(45deg);
+    transition: transform 0.16s ease;
+}
+.app-shell .left-menu details[open] > summary::after {
+    transform: translateY(-26%) rotate(-135deg);
+}
+.app-shell .left-menu a {
+    border-top: 0 !important;
+    border-radius: 4px;
+    margin: 1px 3px;
+    transition: background-color 0.14s ease, padding-left 0.14s ease;
+}
+.app-shell .left-menu a:hover { padding-left: 13px; }
+
+/* 6. Cards and shells */
+.app-shell .card, .app-shell .tech-card, .app-shell .tech-item,
+.app-shell .gov-system-card, .app-shell .store-grid .card, .app-shell .pass-grid .card {
+    border-radius: 8px;
+}
+
+/* 7. Stat pills + panel spacing */
+.app-shell .stat-pill {
+    border-radius: 8px !important;
+    border-left: 3px solid var(--accent) !important;
+}
+.app-shell .stat-pill span { letter-spacing: 0.04em; }
+.app-shell .content-panel { padding: 16px 18px; }
+.app-shell .card { box-shadow: inset 0 0 0 1px var(--accent-faint); }
+
+/* 8. Responsive */
+@media (max-width: 900px) {
+    .app-shell .left-menu { position: static; max-height: 360px; }
+    .app-shell .content-panel { padding: 12px; }
+}
