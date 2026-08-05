@@ -261,10 +261,11 @@
 
     <section class="content-panel">
       <div class="content-header">
+        <div class="command-kicker"><span></span>Empire Operations Console</div>
         <h2>Command Feed</h2>
-        <p>Select a page or submenu on the left to load a section and sub page.</p>
+        <p>Coordinate worlds, fleets, research, and diplomacy from a single strategic command network.</p>
         <div class="combat-quickbar">
-          <span class="combat-quickbar-label">Combat Buttons:</span>
+          <span class="combat-quickbar-label">Quick Operations</span>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','attack'); return false">Attack</a>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','raid'); return false">Raid</a>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','spy'); return false">Spy</a>
@@ -304,4 +305,3 @@
     </div>
   </footer>
 </div>
-

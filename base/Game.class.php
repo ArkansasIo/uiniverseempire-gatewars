@@ -8,6 +8,13 @@ class Game extends User
 	private const TURN_TICK_MINUTES = 30;
 	private const TURNS_PER_MINUTE = 6;
 	private const UNIT_PROD_BASE_LEVEL = 6;
+	private const PLAYER_RACES = [
+		1 => 'Ancient',
+		2 => 'Nox',
+		3 => 'Tau\'ri',
+		4 => 'Asgard',
+		5 => 'Tok\'ra',
+	];
 
 	public function __construct(string $userName = "", string $password = "DoodleCakes and Rofl Sundae4278vsid")
 	{
@@ -53,11 +60,11 @@ class Game extends User
 	{
 		$this->ensureRaceCatalog();
 		$query = "SELECT `r_name`,`rid` FROM `race` WHERE `r_group`='player' ORDER BY `rid` ASC LIMIT 30";
-		$q = $this->query($query);		
+		$q = $this->query($query);
 		if(!$q) {
 			$q = $this->query("SELECT `r_name`,`rid` FROM `race` ORDER BY `rid` ASC LIMIT 30");
 			if(!$q) {
-				return [];
+				return $this->getDefaultPlayerRaces();
 			}
 		}
 		$list = [];
@@ -67,6 +74,18 @@ class Game extends User
 			$list[$counter]["name"] 	= $obj->r_name;
 			$list[$counter]["id"] 		= $obj->rid;
 			$counter++;
+		}
+		return $list ?: $this->getDefaultPlayerRaces();
+	}
+
+	private function getDefaultPlayerRaces(): array
+	{
+		$list = [];
+		foreach (self::PLAYER_RACES as $rid => $name) {
+			$list[] = [
+				'id' => $rid,
+				'name' => $name,
+			];
 		}
 		return $list;
 	}
@@ -83,13 +102,7 @@ class Game extends User
 		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
 		$this->query("ALTER TABLE `race` ADD COLUMN IF NOT EXISTS `r_group` varchar(16) NOT NULL DEFAULT 'player'");
 
-		$playerRaces = [
-			1 => 'Ancient',
-			2 => 'Nox',
-			3 => 'Tau\'ri',
-			4 => 'Asgard',
-			5 => 'Tok\'ra',
-		];
+		$playerRaces = self::PLAYER_RACES;
 		$npcRaces = [
 			6 => 'Goa\'uld',
 			7 => 'Replicator',

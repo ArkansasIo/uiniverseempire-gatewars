@@ -26,12 +26,16 @@ if (!$s->loggedIn)
   <select name="rid" id="race" required>
     <?php
 		$list = $s->getRaces();
-		for ($x = 0; $x < count($list); $x++)
-		{
-			echo "<option value='".$list[$x]["id"]."'>".$list[$x]["name"]."</option>\r\n";
+		foreach ($list as $race) {
+			$raceId = (int)($race['id'] ?? 0);
+			$raceName = htmlspecialchars((string)($race['name'] ?? 'Unknown'), ENT_QUOTES, 'UTF-8');
+			if ($raceId > 0) {
+				echo "<option value=\"{$raceId}\">{$raceName}</option>\r\n";
+			}
 		}
 	?>
   </select>
+  <p class="auth-hint">Choose your empire lineage. This sets your starting unit doctrine.</p>
 
   <p class="auth-hint">Type the validation text shown in the image.</p>
   <input name="number" type="text" id="number" required />

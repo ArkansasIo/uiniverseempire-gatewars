@@ -933,6 +933,41 @@ body.theme-stargate .combat-btn {
     max-width: 100%;
 }
 
+/* Original Empire-at-Wars concept art is deliberately kept behind opaque UI
+   layers so command data remains readable at every viewport size. */
+body.theme-og,
+body.theme-blue,
+body.theme-stargate {
+    background-image: linear-gradient(rgba(3, 9, 22, 0.60), rgba(3, 9, 22, 0.78)), url('images/empire-command-backdrop.png');
+    background-attachment: fixed;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+body.theme-og .app-shell,
+body.theme-blue .app-shell,
+body.theme-stargate .app-shell {
+    background: linear-gradient(90deg, rgba(3, 10, 20, 0.94), rgba(5, 16, 31, 0.86));
+    backdrop-filter: blur(3px);
+}
+
+body.theme-og .content-header,
+body.theme-blue .content-header,
+body.theme-stargate .content-header {
+    background-image: linear-gradient(90deg, rgba(3, 15, 29, 0.93), rgba(8, 32, 56, 0.82)), url('images/empire-command-backdrop.png');
+    background-position: 72% 42%;
+    background-size: cover;
+}
+
+body.theme-og #mainDisplay,
+body.theme-blue #mainDisplay,
+body.theme-stargate #mainDisplay {
+    background-image: linear-gradient(rgba(2, 9, 19, 0.88), rgba(2, 9, 19, 0.92)), url('images/empire-command-backdrop.png');
+    background-position: center;
+    background-size: cover;
+}
+
 .content-header {
     border: 1px solid #2b6363;
     background: #052626;
@@ -2223,6 +2258,27 @@ body.theme-stargate .combat-btn {
     background: linear-gradient(90deg, #092525 0%, #0f3434 45%, #114949 100%);
 }
 
+.public-github {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border: 1px solid #4ab1b1;
+    border-radius: 4px;
+    background: #0a2b2b;
+    color: #dffdfd;
+    font-size: 11px;
+    font-weight: bold;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.public-github:hover {
+    background: #176262;
+    color: #ffffff;
+}
+
 .public-brand h1 {
     margin: 0;
     font-size: 34px;
@@ -2233,6 +2289,14 @@ body.theme-stargate .combat-btn {
     margin: 3px 0 0 0;
     color: #c8f7f7;
     font-size: 12px;
+}
+
+.public-brand .public-tagline {
+    max-width: 640px;
+    margin: 6px 0 0 0;
+    color: #9fd8d8;
+    font-size: 11px;
+    line-height: 1.5;
 }
 
 .public-actions {
@@ -2664,6 +2728,32 @@ textarea {
     background: #e6ebf3;
 }
 
+/* Public title/login screen: show the Empire portal art behind the login flow. */
+body.theme-og .public-shell,
+body.theme-blue .public-shell,
+body.theme-stargate .public-shell {
+    background-image: linear-gradient(90deg, rgba(1, 7, 15, 0.54), rgba(1, 8, 18, 0.76)), url('images/empire-command-backdrop.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+body.theme-og .public-panel,
+body.theme-blue .public-panel,
+body.theme-stargate .public-panel,
+body.theme-og .public-main #mainDisplay,
+body.theme-blue .public-main #mainDisplay,
+body.theme-stargate .public-main #mainDisplay {
+    background-color: rgba(2, 11, 23, 0.72);
+}
+
+body.theme-og .auth-card,
+body.theme-blue .auth-card,
+body.theme-stargate .auth-card {
+    background: linear-gradient(145deg, rgba(3, 15, 31, 0.96), rgba(3, 10, 22, 0.88));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.6), 0 0 26px rgba(54, 154, 255, 0.18);
+}
+
 /* Theme overrides that win over the older global styles */
 body.theme-og,
 body.theme-og p,
@@ -2798,4 +2888,348 @@ body.theme-blue .header-settings-menu,
 body.theme-blue .combat-btn {
     background: #0b1e34 !important;
     border-color: #315f9f !important;
+}
+
+/* Title screen command-console login.  Keep this at the end so theme
+   compatibility rules above cannot flatten the portal backdrop. */
+body.theme-og .public-shell,
+body.theme-blue .public-shell,
+body.theme-stargate .public-shell {
+    max-width: 1240px;
+    min-height: calc(100vh - 28px);
+    border-color: rgba(100, 189, 255, 0.48);
+    background: linear-gradient(90deg, rgba(1, 6, 14, 0.32), rgba(1, 8, 19, 0.66)), url('images/empire-command-backdrop.png') center / cover no-repeat !important;
+    box-shadow: 0 22px 56px rgba(0, 0, 0, 0.7), inset 0 0 80px rgba(33, 142, 255, 0.1);
+}
+
+body.theme-og .public-content-grid,
+body.theme-blue .public-content-grid,
+body.theme-stargate .public-content-grid {
+    display: block;
+    max-width: 560px;
+    margin: 44px auto 62px;
+    padding: 0 18px;
+}
+
+body.theme-og .public-news,
+body.theme-blue .public-news,
+body.theme-stargate .public-news,
+body.theme-og .public-hero,
+body.theme-blue .public-hero,
+body.theme-stargate .public-hero {
+    display: none;
+}
+
+body.theme-og .public-main,
+body.theme-blue .public-main,
+body.theme-stargate .public-main,
+body.theme-og .public-main #mainDisplay,
+body.theme-blue .public-main #mainDisplay,
+body.theme-stargate .public-main #mainDisplay {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent !important;
+}
+
+body.theme-og .auth-card,
+body.theme-blue .auth-card,
+body.theme-stargate .auth-card {
+    width: 100%;
+    margin: 0;
+    padding: 32px;
+    border: 1px solid rgba(108, 198, 255, 0.68);
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(3, 15, 31, 0.95), rgba(3, 10, 23, 0.89)) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.66), 0 0 38px rgba(44, 157, 255, 0.2), inset 0 1px rgba(215, 245, 255, 0.16);
+    backdrop-filter: blur(8px);
+}
+
+.auth-eyebrow,
+.auth-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #8bd7ff !important;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.auth-eyebrow { margin-bottom: 14px; }
+.auth-status { margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(116, 200, 255, 0.2); }
+
+.auth-signal {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #62e5ff;
+    box-shadow: 0 0 10px #62e5ff;
+}
+
+.auth-card h3 {
+    margin: 0;
+    color: #f4fbff !important;
+    font-family: Arial, sans-serif;
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.auth-card .auth-intro {
+    max-width: 390px;
+    margin: 8px 0 28px;
+    color: #bad4e8 !important;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.auth-card .auth-details {
+    max-width: 390px;
+    margin: -14px 0 22px;
+    padding: 12px 14px 12px 30px;
+    border: 1px solid rgba(109, 192, 242, 0.25);
+    border-radius: 6px;
+    background: rgba(4, 60, 105, 0.18);
+    color: #bad4e8 !important;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.auth-card .auth-details li {
+    margin: 0 0 5px 0;
+}
+
+.auth-card label {
+    margin: 16px 0 7px;
+    color: #a8d9f6 !important;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.auth-card input[type="text"],
+.auth-card input[type="password"] {
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid rgba(109, 192, 242, 0.46);
+    border-radius: 6px;
+    background: rgba(0, 8, 20, 0.72) !important;
+    color: #f2f9ff !important;
+    font-family: Arial, sans-serif;
+    outline: none;
+}
+
+.auth-card input[type="text"]:focus,
+.auth-card input[type="password"]:focus {
+    border-color: #72d9ff;
+    box-shadow: 0 0 0 3px rgba(68, 185, 255, 0.15), 0 0 18px rgba(68, 185, 255, 0.18);
+}
+
+.auth-card .auth-submit {
+    height: 48px;
+    margin-top: 26px;
+    border: 1px solid #79dcff;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #0b5c91, #1685be) !important;
+    box-shadow: 0 8px 20px rgba(4, 80, 145, 0.35);
+    color: #f5fdff !important;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.auth-card .auth-submit:hover { background: linear-gradient(90deg, #1074ad, #29a4d7) !important; }
+.auth-card .auth-hint { margin: 16px 0 0; color: #94b8d2 !important; font-family: Arial, sans-serif; line-height: 1.45; }
+
+@media (max-width: 640px) {
+    body.theme-og .public-content-grid,
+    body.theme-blue .public-content-grid,
+    body.theme-stargate .public-content-grid { margin-top: 26px; padding: 0 12px; }
+    body.theme-og .auth-card,
+    body.theme-blue .auth-card,
+    body.theme-stargate .auth-card { padding: 24px 20px; }
+}
+
+/* Empire Operations theme: a consistent in-game system shell for the data-heavy
+   command pages. Kept last to take precedence over the legacy theme rules. */
+body.theme-og .app-shell,
+body.theme-blue .app-shell,
+body.theme-stargate .app-shell {
+    width: min(1540px, 98vw);
+    border: 1px solid rgba(84, 177, 242, 0.48) !important;
+    background: linear-gradient(135deg, rgba(2, 9, 19, 0.96), rgba(5, 20, 37, 0.91)) !important;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.64), inset 0 1px rgba(159, 220, 255, 0.13);
+}
+
+body.theme-og .top-header,
+body.theme-blue .top-header,
+body.theme-stargate .top-header {
+    padding: 16px 18px;
+    border-color: rgba(102, 193, 255, 0.42) !important;
+    background: linear-gradient(105deg, rgba(4, 19, 37, 0.97), rgba(11, 48, 78, 0.9), rgba(5, 22, 45, 0.98)) !important;
+}
+
+body.theme-og .top-brand h1,
+body.theme-blue .top-brand h1,
+body.theme-stargate .top-brand h1 {
+    font-family: Arial, sans-serif;
+    font-size: clamp(20px, 2.2vw, 30px);
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+body.theme-og .top-brand p,
+body.theme-blue .top-brand p,
+body.theme-stargate .top-brand p { color: #a8cde9 !important; letter-spacing: 0.04em; }
+
+body.theme-og .stat-pill,
+body.theme-blue .stat-pill,
+body.theme-stargate .stat-pill {
+    min-height: 43px;
+    border: 1px solid rgba(94, 182, 241, 0.38);
+    border-radius: 5px;
+    background: linear-gradient(145deg, rgba(4, 17, 34, 0.92), rgba(8, 38, 63, 0.74));
+    box-shadow: inset 0 1px rgba(194, 235, 255, 0.08);
+}
+
+body.theme-og .main-layout,
+body.theme-blue .main-layout,
+body.theme-stargate .main-layout { min-height: 720px; }
+
+body.theme-og .left-menu,
+body.theme-blue .left-menu,
+body.theme-stargate .left-menu {
+    width: 310px;
+    flex-basis: 310px;
+    padding: 14px;
+    border-color: rgba(92, 178, 236, 0.34) !important;
+    background: linear-gradient(180deg, rgba(4, 16, 33, 0.98), rgba(3, 10, 22, 0.98)) !important;
+}
+
+body.theme-og .left-menu h3,
+body.theme-blue .left-menu h3,
+body.theme-stargate .left-menu h3 {
+    padding: 0 4px 10px;
+    border-bottom: 1px solid rgba(102, 193, 255, 0.28);
+    color: #e9f8ff !important;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+body.theme-og .menu-section-title,
+body.theme-blue .menu-section-title,
+body.theme-stargate .menu-section-title {
+    margin-top: 16px;
+    border-color: rgba(77, 166, 225, 0.26);
+    border-radius: 4px;
+    background: rgba(13, 49, 78, 0.42);
+}
+
+body.theme-og .left-menu details,
+body.theme-blue .left-menu details,
+body.theme-stargate .left-menu details {
+    margin-bottom: 7px;
+    border-color: rgba(79, 164, 219, 0.26);
+    border-radius: 5px;
+    background: rgba(5, 21, 39, 0.76);
+    overflow: hidden;
+}
+
+body.theme-og .left-menu summary,
+body.theme-blue .left-menu summary,
+body.theme-stargate .left-menu summary { background: linear-gradient(90deg, rgba(12, 48, 78, 0.84), rgba(7, 29, 51, 0.78)); }
+body.theme-og .left-menu a:hover,
+body.theme-blue .left-menu a:hover,
+body.theme-stargate .left-menu a:hover { background: linear-gradient(90deg, rgba(15, 86, 130, 0.75), rgba(7, 40, 70, 0.6)); }
+
+body.theme-og .content-panel,
+body.theme-blue .content-panel,
+body.theme-stargate .content-panel { padding: 18px; background: transparent !important; }
+
+body.theme-og .content-header,
+body.theme-blue .content-header,
+body.theme-stargate .content-header {
+    position: relative;
+    overflow: hidden;
+    padding: 24px;
+    border: 1px solid rgba(98, 192, 255, 0.46) !important;
+    border-radius: 8px;
+    background: linear-gradient(90deg, rgba(3, 16, 33, 0.95), rgba(4, 24, 47, 0.73)), url('images/game-art/fleet-taskforce.png') right center / cover no-repeat !important;
+    box-shadow: inset 0 1px rgba(205, 243, 255, 0.12);
+}
+
+.command-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+    color: #8edaff !important;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.17em;
+    text-transform: uppercase;
+}
+.command-kicker span { width: 8px; height: 8px; border-radius: 50%; background: #62ddff; box-shadow: 0 0 14px #62ddff; }
+
+body.theme-og .content-header h2,
+body.theme-blue .content-header h2,
+body.theme-stargate .content-header h2 { font-family: Arial, sans-serif; font-size: clamp(22px, 3vw, 34px); letter-spacing: 0.03em; text-transform: uppercase; }
+body.theme-og .content-header p,
+body.theme-blue .content-header p,
+body.theme-stargate .content-header p { max-width: 600px; color: #b6d5e9 !important; font-size: 13px; line-height: 1.55; }
+
+body.theme-og .combat-quickbar,
+body.theme-blue .combat-quickbar,
+body.theme-stargate .combat-quickbar { margin-top: 18px; border-color: rgba(107, 197, 255, 0.25); }
+body.theme-og .combat-btn,
+body.theme-blue .combat-btn,
+body.theme-stargate .combat-btn { border: 1px solid rgba(115, 211, 255, 0.55) !important; border-radius: 4px; background: linear-gradient(180deg, rgba(20, 102, 151, 0.88), rgba(7, 56, 95, 0.92)) !important; box-shadow: inset 0 1px rgba(224, 249, 255, 0.14); }
+
+body.theme-og #mainDisplay,
+body.theme-blue #mainDisplay,
+body.theme-stargate #mainDisplay {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid rgba(85, 175, 232, 0.35) !important;
+    border-radius: 8px;
+    background: linear-gradient(rgba(2, 10, 22, 0.93), rgba(2, 12, 27, 0.95)), url('images/game-art/colony-world.png') center / cover no-repeat !important;
+}
+
+body.theme-og .page-hub-head,
+body.theme-blue .page-hub-head,
+body.theme-stargate .page-hub-head,
+body.theme-og .tech-hero,
+body.theme-blue .tech-hero,
+body.theme-stargate .tech-hero { border-color: rgba(106, 204, 255, 0.46); border-radius: 7px; background: linear-gradient(100deg, rgba(4, 22, 42, 0.96), rgba(7, 47, 77, 0.82)), url('images/game-art/orbital-research.png') right center / cover no-repeat; }
+
+body.theme-og .card,
+body.theme-blue .card,
+body.theme-stargate .card { border-color: rgba(81, 170, 226, 0.34) !important; border-radius: 7px; background: linear-gradient(145deg, rgba(6, 25, 45, 0.93), rgba(4, 15, 30, 0.91)) !important; box-shadow: inset 0 1px rgba(185, 231, 255, 0.05); }
+body.theme-og .card:hover,
+body.theme-blue .card:hover,
+body.theme-stargate .card:hover { border-color: rgba(119, 210, 255, 0.58) !important; }
+
+body.theme-og .mini-table th,
+body.theme-blue .mini-table th,
+body.theme-stargate .mini-table th { color: #cceeff !important; background: rgba(12, 62, 98, 0.52); font-family: Arial, sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+body.theme-og .mini-table tr:hover td,
+body.theme-blue .mini-table tr:hover td,
+body.theme-stargate .mini-table tr:hover td { background: rgba(33, 116, 165, 0.18); }
+
+@media (max-width: 900px) {
+    body.theme-og .left-menu, body.theme-blue .left-menu, body.theme-stargate .left-menu { width: 260px; flex-basis: 260px; }
+    body.theme-og .content-panel, body.theme-blue .content-panel, body.theme-stargate .content-panel { padding: 10px; }
 }
