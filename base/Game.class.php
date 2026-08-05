@@ -2607,7 +2607,7 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 		$uids = $this->query($uidq);
 		$rankings = $this->query($rankQ);
 		$users = [];
-		while($data = $q->fetch_object())
+		if ($q) while($data = $q->fetch_object())
 		{
 			/*Gives Naq*/
 			$query = "UPDATE `bank` SET `onHand` =(`onHand`+?) WHERE `uid` =? LIMIT 1 ";
@@ -2627,7 +2627,7 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 			$stmt->execute();
 		}
 		$counter = 1;
-		while ($data = $atk->fetch_object())
+		if ($atk) while ($data = $atk->fetch_object())
 		{
 			$users[$data->uid]["atk"] = $counter;
 			echo "$data->uid Atk Rank is $counter <br>";
@@ -2635,49 +2635,49 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 			
 		}
 		$counter = 1;
-		while ($data = $def->fetch_object())
+		if ($def) while ($data = $def->fetch_object())
 		{
 			$users[$data->uid]["def"] = $counter;
 			echo "$data->uid Def Rank is $counter <br>";
 			$counter++;
 		}
 		$counter = 1;
-		while ($data = $cov->fetch_object())
+		if ($cov) while ($data = $cov->fetch_object())
 		{
 			$users[$data->uid]["cov"] = $counter;
 			echo "$data->uid Cov Rank is $counter <br>";
 			$counter++;
 		}
 		$counter = 1;
-		while ($data = $anti->fetch_object())
+		if ($anti) while ($data = $anti->fetch_object())
 		{
 			$users[$data->uid]["anti"] = $counter;
 			echo "$data->uid Anti Rank is $counter <br>";
 			$counter++;
 		}
 		$counter = 1;
-		while ($data = $upS->fetch_object())
+		if ($upS) while ($data = $upS->fetch_object())
 		{
 			$users[$data->uid]["up"] = $counter;
 			echo "$data->uid Unit Production Rank is $counter <br>";
 			$counter++;
 		}
 		$counter = 1;
-		while ($data = $incS->fetch_object())
+		if ($incS) while ($data = $incS->fetch_object())
 		{
 			$users[$data->uid]["inc"] = $counter;
 			echo "$data->uid Inc Rank is $counter <br>";
 			$counter++;
 		}
 		$counter = 1;
-		while ($data = $rankings->fetch_object())
+		if ($rankings) while ($data = $rankings->fetch_object())
 		{
 			$users[$data->uid]["overall"] = $counter;
 			echo "$data->uname overall Rank is $counter <br>";
 			$counter++; 
 		}
 		$counter = 1;
-		while ($data = $uids->fetch_object())
+		if ($uids) while ($data = $uids->fetch_object())
 		{
 			$query = "UPDATE rank SET `mil_atk`=?, `mil_def`=?, `mil_cov`=?, `mil_anti`=?, `up`= ?, `income`=?, `mil_total`=?, `overall`=? WHERE uid=? LIMIT 1";
 			$stmt = $this->db_link->prepare($query);
@@ -2698,7 +2698,7 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 		
 		$query  = "SELECT users.lastLogin,users.uid FROM users";
 		$q = $this->query($query);
-		while($data = $q->fetch_object())
+		if ($q) while($data = $q->fetch_object())
 		{
 		if ($data->lastLogin == $old)
 			{

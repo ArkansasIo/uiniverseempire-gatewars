@@ -2,6 +2,7 @@
 include_once("../config.php");
 include_once(__DIR__ . '/entity_name_helpers.php');
 include_once(__DIR__ . '/formal_logic.php');
+include_once(__DIR__ . '/ogame_research_logic.php');
 
 $pagegen = new page_gen();
 $pagegen->round_to = 4;
@@ -1066,6 +1067,108 @@ function renderTreeBoard(array $branches, int $level, string $boardId, string $n
     }
 
     echo '</div>';
+}
+
+function ogameTechEnsureTables(Game $s, int $uid, array $catalog): array {
+    $s->query("CREATE TABLE IF NOT EXISTS player_tech_levels (
+        uid INT NOT NULL,
+        tech_key VARCHAR(48) NOT NULL,
+        level INT NOT NULL DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (uid, tech_key)
+    )");
+    $levels = [];
+    foreach ($catalog as $def) {
+        $key = $def['key'];
+        $s->query("INSERT IGNORE INTO player_tech_levels (uid, tech_key, level) VALUES (" . (int)$uid . ", '" . $key . "', 0)");
+        $levels[$key] = 0;
+    }
+    $q = $s->query("SELECT tech_key, level FROM player_tech_levels WHERE uid=" . (int)$uid);
+    if ($q) {
+        while ($r = $q->fetch_assoc()) {
+            $levels[(string)$r['tech_key']] = (int)$r['level'];
+        }
+    }
+    return $levels;
+}
+
+function ogameResearchAction(Game $s, int $uid, string $key, array $catalogByKey, array $levels, array $resCurrent, $bankObj, float $discountPct = 0): string {
+    if (!isset($catalogByKey[$key])) {
+        return 'Research failed: unknown research program.';
+    }
+    $def = $catalogByKey[$key];
+    $cur = (int)($levels[$key] ?? 0);
+    if ($cur >= (int)$def['max_level']) {
+        return $def['name'] . ' is already at maximum level ' . $cur . '.';
+    }
+    if (!ogameTechPrereqMet($levels, $def)) {
+        return 'Research failed: ' . $def['name'] . ' prerequisites not met (' . ogameTechPrereqText($levels, $def) . ').';
+    }
+    $costs = ogameTechNextCosts($def, $cur, $discountPct);
+    $have = [
+        'nq' => (int)($bankObj->onHand ?? 0),
+        'metal' => (int)($resCurrent['metal'] ?? 0),
+        'crystal' => (int)($resCurrent['crystal'] ?? 0),
+        'deut' => (int)($resCurrent['deuterium'] ?? 0),
+        'energy' => (int)($resCurrent['energy'] ?? 0),
+    ];
+    $labels = ['nq' => 'Naquadah', 'metal' => 'Metal', 'crystal' => 'Crystal', 'deut' => 'Deuterium', 'energy' => 'Energy'];
+    foreach (['nq', 'metal', 'crystal', 'deut', 'energy'] as $k) {
+        if ($have[$k] < $costs[$k]) {
+            return 'Research failed: insufficient ' . $labels[$k] . ' for ' . $def['name'] . ' level ' . ($cur + 1) . '.';
+        }
+    }
+    $s->query("UPDATE bank SET onHand = GREATEST(0, onHand - " . $costs['nq'] . ") WHERE uid=" . (int)$uid . " LIMIT 1");
+    $s->query("UPDATE player_resources SET metal = GREATEST(0, metal - " . $costs['metal'] . "), crystal = GREATEST(0, crystal - " . $costs['crystal'] . "), deuterium = GREATEST(0, deuterium - " . $costs['deut'] . "), energy = GREATEST(0, energy - " . $costs['energy'] . ") WHERE uid=" . (int)$uid . " LIMIT 1");
+    $s->query("INSERT INTO player_tech_levels (uid, tech_key, level) VALUES (" . (int)$uid . ", '" . $key . "', 1) ON DUPLICATE KEY UPDATE level = level + 1");
+    return $def['name'] . ' advanced to level ' . ($cur + 1) . '.';
+}
+
+function renderOgameTreeBoard(array $branches, array $resCurrent, int $bankOnHand, string $linkSub): void {
+    echo '<div class="wows-tree compact" id="ogameTreeBoard">';
+    echo '<div class="wows-tier-head"><span>Domain</span><span>Program A</span><span>Program B</span></div>';
+
+    foreach ($branches as $branch) {
+        echo '<div class="wows-tree-row">';
+        echo '<div class="wows-domain">' . h($branch['domain']) . '</div>';
+        echo '<div class="wows-node-lane">';
+
+        foreach ($branch['nodes'] as $node) {
+            $state = $node['level'] > 0 ? 'unlocked' : ($node['prereqMet'] ? 'available' : 'locked');
+            echo '<div class="wows-node ' . h($state) . '">';
+            echo '<div class="wows-node-badge">T' . h($node['tier']) . ' · Lv ' . fnum($node['level']) . '</div>';
+            echo '<div class="wows-node-title">' . h($node['name']) . '</div>';
+            echo '<div class="wows-node-name">' . h($node['focus']) . '</div>';
+            echo '<div class="wows-node-meta">' . h($node['effect']) . '</div>';
+            echo '<div class="wows-node-meta">Next: ' . fnum($node['cost']['nq']) . ' Nq / ' . fnum($node['cost']['metal']) . ' M / ' . fnum($node['cost']['crystal']) . ' C / ' . fnum($node['cost']['deut']) . ' D / ' . fnum($node['cost']['energy']) . ' E / ' . fnum($node['cost']['turns']) . ' turns</div>';
+            if (!$node['prereqMet']) {
+                echo '<div class="wows-node-meta">Prereq: ' . h($node['prereqText']) . '</div>';
+            }
+            echo '<div class="wows-node-action">';
+            if ($node['level'] >= $node['max_level']) {
+                echo '<button class="public-btn secondary" disabled>Maxed</button>';
+            } elseif (!$node['prereqMet']) {
+                echo '<button class="public-btn secondary" disabled>Locked</button>';
+            } else {
+                echo '<button class="public-btn" onclick="sendData(\'pages\',\'get\',\'research\',\'' . h($linkSub) . '&cmd=ogame_research&key=' . h($node['key']) . '\'); return false">Research L' . fnum($node['level'] + 1) . '</button>';
+            }
+            echo '</div>';
+            echo '</div>';
+        }
+
+        echo '</div>';
+        echo '</div>';
+    }
+
+    echo '</div>';
+}
+
+function ogameReserveLine(array $resCurrent, int $bankOnHand): string {
+    return '<strong>Naquadah:</strong> ' . fnum($bankOnHand)
+        . ' | <strong>Metal:</strong> ' . fnum((int)($resCurrent['metal'] ?? 0))
+        . ' | <strong>Crystal:</strong> ' . fnum((int)($resCurrent['crystal'] ?? 0))
+        . ' | <strong>Deuterium:</strong> ' . fnum((int)($resCurrent['deuterium'] ?? 0))
+        . ' | <strong>Energy:</strong> ' . fnum((int)($resCurrent['energy'] ?? 0));
 }
 
 function renderInfoBlock(array $detail): void {
@@ -3876,6 +3979,43 @@ if ($main === 'universe' || strpos($cmd, 'uni_') === 0) {
     }
 }
 
+if ($main === 'research') {
+    $ogameCatalog = ogameTechCatalog();
+    $ogameCatalogByKey = [];
+    foreach ($ogameCatalog as $og) {
+        $ogameCatalogByKey[$og['key']] = $og;
+    }
+    $ogameLevels = ogameTechEnsureTables($s, $uid, $ogameCatalog);
+
+    $infraLevels = [
+        'research_campus' => 0,
+        'data_vault' => 0,
+        'simulation_core' => 0,
+        'quantum_archive' => 0,
+        'ai_directorate' => 0,
+    ];
+    $infraHas = $s->query("SHOW TABLES LIKE 'research_infrastructure'");
+    if ($infraHas && $infraHas->num_rows > 0) {
+        $infraQ = $s->query("SELECT research_campus, data_vault, simulation_core, quantum_archive, ai_directorate FROM research_infrastructure WHERE uid=" . (int)$uid . " LIMIT 1");
+        if ($infraQ && $infraQ->num_rows > 0) {
+            $i = $infraQ->fetch_object();
+            foreach (array_keys($infraLevels) as $infraKey) {
+                $infraLevels[$infraKey] = (int)($i->$infraKey ?? 0);
+            }
+        }
+    }
+    $infraCostDiscount = min(45.0, ($infraLevels['data_vault'] * 1.5) + ($infraLevels['quantum_archive'] * 1.0) + ($infraLevels['ai_directorate'] * 0.5));
+    $infraResearchSpeed = 1 + (($infraLevels['research_campus'] * 0.03) + ($infraLevels['simulation_core'] * 0.015) + ($infraLevels['ai_directorate'] * 0.02));
+
+    if ($cmd === 'ogame_research') {
+        $researchKey = isset($_GET['key']) ? preg_replace('/[^a-z0-9_]/', '', strtolower((string)$_GET['key'])) : '';
+        $pageActionStatus = ogameResearchAction($s, $uid, $researchKey, $ogameCatalogByKey, $ogameLevels, $resourceHub['current'] ?? [], $bank, $infraCostDiscount);
+        $ogameLevels = ogameTechEnsureTables($s, $uid, $ogameCatalog);
+        $resourceHub = resourceEnsureAndTick($s, $uid, $baseData, $planets, $techView);
+        $bank = $s->bank();
+    }
+}
+
 if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && $sub === 'seeds') || strpos($cmd, 'bp_') === 0 || $cmd === 'seed_bookmark') {
     blueprintEnsureTables($s, $blueprintCatalog);
     $s->query("CREATE TABLE IF NOT EXISTS universe_seed_bookmarks (
@@ -5472,110 +5612,92 @@ if ($main === 'universe') {
 }
 
 if ($main === 'research') {
-    $infraLevels = [
-        'research_campus' => 0,
-        'data_vault' => 0,
-        'simulation_core' => 0,
-        'quantum_archive' => 0,
-        'ai_directorate' => 0,
-    ];
-    $infraHas = $s->query("SHOW TABLES LIKE 'research_infrastructure'");
-    if ($infraHas && $infraHas->num_rows > 0) {
-        $infraQ = $s->query("SELECT research_campus, data_vault, simulation_core, quantum_archive, ai_directorate FROM research_infrastructure WHERE uid=" . (int)$uid . " LIMIT 1");
-        if ($infraQ && $infraQ->num_rows > 0) {
-            $i = $infraQ->fetch_object();
-            $infraLevels['research_campus'] = (int)($i->research_campus ?? 0);
-            $infraLevels['data_vault'] = (int)($i->data_vault ?? 0);
-            $infraLevels['simulation_core'] = (int)($i->simulation_core ?? 0);
-            $infraLevels['quantum_archive'] = (int)($i->quantum_archive ?? 0);
-            $infraLevels['ai_directorate'] = (int)($i->ai_directorate ?? 0);
+    $ogameResearchCount = 0;
+    $ogameTechCount = 0;
+    $ogameResearchedCount = 0;
+    foreach ($ogameCatalog as $og) {
+        if (($og['branch'] ?? '') === 'research') {
+            $ogameResearchCount++;
+        } else {
+            $ogameTechCount++;
+        }
+        if ((int)($ogameLevels[$og['key']] ?? 0) > 0) {
+            $ogameResearchedCount++;
         }
     }
-    $infraCostDiscount = min(45.0, ($infraLevels['data_vault'] * 1.5) + ($infraLevels['quantum_archive'] * 1.0) + ($infraLevels['ai_directorate'] * 0.5));
-    $infraResearchSpeed = 1 + (($infraLevels['research_campus'] * 0.03) + ($infraLevels['simulation_core'] * 0.015) + ($infraLevels['ai_directorate'] * 0.02));
+    $ogameBankOnHand = (int)($bank->onHand ?? 0);
+    $ogameCurrentRes = $resourceHub['current'] ?? [];
 
     if ($sub === 'tree') {
+        $ogameBranches = ogameTreeBranches($ogameCatalog, 'research', $ogameLevels, $infraCostDiscount);
         echo '<div class="card full wows-brief">';
         echo '<div class="wows-hero-shell">';
         echo '<div class="wows-hero-copy">';
         echo '<div class="wows-kicker">Research Command Deck</div>';
-        echo '<h4>Research Fleet Tree</h4>';
-        echo '<p>Guide each domain from left to right through six tiers, with every lane feeding your empire-wide research tempo and strategic posture.</p>';
+        echo '<h4>OGame-Style Research Fleet</h4>';
+        echo '<p>Persistent per-commander research programs across ten domains. Levels never reset, next-level costs escalate, and high-tier programs unlock behind prerequisites.</p>';
         echo '<div class="wows-pill-row">';
-        echo '<span class="wows-pill">Command Lv ' . fnum($researchHub['level']['commandLevel']) . '</span>';
-        echo '<span class="wows-pill">Research Lv ' . fnum($researchHub['level']['researchLevel']) . '</span>';
-        echo '<span class="wows-pill">Ascension ' . fnum($researchHub['level']['ascension']) . '</span>';
-        echo '<span class="wows-pill">XP To Next ' . fnum($researchHub['level']['xpToNext']) . '</span>';
+        echo '<span class="wows-pill">Programs ' . fnum($ogameResearchCount) . '</span>';
+        echo '<span class="wows-pill">Active ' . fnum($ogameResearchedCount) . '</span>';
+        echo '<span class="wows-pill">Research Flow ' . fnum($infraResearchSpeed) . 'x</span>';
+        echo '<span class="wows-pill">Cost Cut ' . fnum($infraCostDiscount) . '%</span>';
         echo '</div>';
         echo '<div class="wows-pill-row">' . formalResearchTreeActionButtons($sub) . '</div>';
         echo '</div>';
         echo '<div class="wows-hero-stats">';
-        echo '<div class="wows-stat-card"><span>Command State</span><strong>' . fnum($researchHub['level']['commandLevel']) . '</strong></div>';
         echo '<div class="wows-stat-card"><span>Research Flow</span><strong>' . fnum($infraResearchSpeed) . 'x</strong></div>';
         echo '<div class="wows-stat-card"><span>Cost Reduction</span><strong>' . fnum($infraCostDiscount) . '%</strong></div>';
-        echo '<div class="wows-stat-card"><span>Unlock Focus</span><strong>Available</strong></div>';
+        echo '<div class="wows-stat-card"><span>Programs Active</span><strong>' . fnum($ogameResearchedCount) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Max Level</span><strong>25</strong></div>';
         echo '</div>';
         echo '</div>';
         echo '</div>';
 
         echo '<div class="card full wows-tree-shell">';
-        echo '<div class="wows-tree-toolbar"><div class="wows-tree-title">Progression Matrix</div><div class="wows-legend"><span class="wows-legend-item"><span class="wows-legend-swatch unlocked"></span>Unlocked</span><span class="wows-legend-item"><span class="wows-legend-swatch available"></span>Available</span><span class="wows-legend-item"><span class="wows-legend-swatch locked"></span>Locked</span></div></div>';
-        renderTreeBoard($researchHub['researchTree'], (int)$researchHub['level']['researchLevel'], 'researchTreeBoard', 'R-Tier');
+        echo '<div class="wows-tree-toolbar"><div class="wows-tree-title">Research Progression Matrix</div><div class="wows-legend"><span class="wows-legend-item"><span class="wows-legend-swatch unlocked"></span>Unlocked</span><span class="wows-legend-item"><span class="wows-legend-swatch available"></span>Available</span><span class="wows-legend-item"><span class="wows-legend-swatch locked"></span>Locked</span></div></div>';
+        renderOgameTreeBoard($ogameBranches, $ogameCurrentRes, $ogameBankOnHand, 'tree');
         echo '</div>';
 
-        echo '<div class="card wows-info-card"><h4>Primary Stats</h4><ul>';
-        foreach ($researchHub['stats'] as $statName => $statVal) {
-            echo '<li>' . h($statName) . ': ' . fnum($statVal) . '</li>';
-        }
-        echo '</ul></div>';
-
-        echo '<div class="card wows-info-card"><h4>Sub Stats</h4><ul>';
-        foreach ($researchHub['subStats'] as $statName => $statVal) {
-            echo '<li>' . h($statName) . ': ' . fnum($statVal) . '</li>';
-        }
-        echo '</ul></div>';
-
-        echo '<div class="card full wows-info-card"><h4>Research Resource Requirements</h4>';
-        echo '<p>Advanced research phases consume strategic resources from the expanded economy.</p>';
-        echo '<p><strong>Metal:</strong> ' . fnum($resourceHub['current']['metal']) . ' | <strong>Crystal:</strong> ' . fnum($resourceHub['current']['crystal']) . ' | <strong>Deuterium:</strong> ' . fnum($resourceHub['current']['deuterium']) . '</p>';
-        echo '<p><strong>Food:</strong> ' . fnum($resourceHub['current']['food']) . ' | <strong>Water:</strong> ' . fnum($resourceHub['current']['water']) . ' | <strong>Population:</strong> ' . fnum($resourceHub['current']['population']) . ' | <strong>Energy:</strong> ' . fnum($resourceHub['current']['energy']) . '</p>';
-        echo '<p><strong>Infrastructure Research Speed:</strong> ' . fnum($infraResearchSpeed) . 'x | <strong>Infrastructure Tech Cost Reduction:</strong> ' . fnum($infraCostDiscount) . '%</p>';
-        echo '<p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Open Tech Library Buildings</a></p>';
+        echo '<div class="card full wows-info-card"><h4>Research Reserves</h4>';
+        echo '<p>' . ogameReserveLine($ogameCurrentRes, $ogameBankOnHand) . '</p>';
+        echo '<p>Costs scale with each program level. Infrastructure buildings raise research speed and lower next-level costs.</p>';
+        echo '<p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Open Tech Library Buildings</a> · <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'talents\'); return false">Open Talent Library</a></p>';
         echo '</div>';
     }
 
     if ($sub === 'techlib') {
+        $ogameBranches = ogameTreeBranches($ogameCatalog, 'technology', $ogameLevels, $infraCostDiscount);
         echo '<div class="card full wows-brief">';
         echo '<div class="wows-hero-shell">';
         echo '<div class="wows-hero-copy">';
         echo '<div class="wows-kicker">Technology Command Deck</div>';
-        echo '<h4>Technology Fleet Tree</h4>';
-        echo '<p>Advance through branch lanes that mirror naval doctrine, unlocking sharper specialization, stronger outputs, and broader fleet synergy.</p>';
+        echo '<h4>OGame-Style Technology Fleet</h4>';
+        echo '<p>Persistent technology programs that mirror naval doctrine. Levels persist per commander, next-level costs escalate, and branch readiness gates the deep tier.</p>';
         echo '<div class="wows-pill-row">';
-        echo '<span class="wows-pill">Technology Lv ' . fnum($researchHub['level']['technologyLevel']) . '</span>';
-        echo '<span class="wows-pill">Class Entries ' . fnum($researchHub['counts']['classes']) . '</span>';
-        echo '<span class="wows-pill">Talent Pool ' . fnum($researchHub['counts']['talents']) . '</span>';
+        echo '<span class="wows-pill">Programs ' . fnum($ogameTechCount) . '</span>';
+        echo '<span class="wows-pill">Active ' . fnum($ogameResearchedCount) . '</span>';
+        echo '<span class="wows-pill">Research Flow ' . fnum($infraResearchSpeed) . 'x</span>';
+        echo '<span class="wows-pill">Cost Cut ' . fnum($infraCostDiscount) . '%</span>';
         echo '</div>';
         echo '<div class="wows-pill-row">' . formalResearchTreeActionButtons($sub) . '</div>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'technology\',\'get\',\'mainDisplay\'); return false">Open Legacy Technology Module</a></p>';
         echo '</div>';
         echo '<div class="wows-hero-stats">';
-        echo '<div class="wows-stat-card"><span>Tech Level</span><strong>' . fnum($researchHub['level']['technologyLevel']) . '</strong></div>';
         echo '<div class="wows-stat-card"><span>Research Flow</span><strong>' . fnum($infraResearchSpeed) . 'x</strong></div>';
-        echo '<div class="wows-stat-card"><span>Cost Discount</span><strong>' . fnum($infraCostDiscount) . '%</strong></div>';
-        echo '<div class="wows-stat-card"><span>Branch Readiness</span><strong>Active</strong></div>';
+        echo '<div class="wows-stat-card"><span>Cost Reduction</span><strong>' . fnum($infraCostDiscount) . '%</strong></div>';
+        echo '<div class="wows-stat-card"><span>Programs Active</span><strong>' . fnum($ogameResearchedCount) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Max Level</span><strong>25</strong></div>';
         echo '</div>';
         echo '</div>';
         echo '</div>';
 
         echo '<div class="card full wows-tree-shell">';
-        echo '<div class="wows-tree-toolbar"><div class="wows-tree-title">Branch Matrix</div><div class="wows-legend"><span class="wows-legend-item"><span class="wows-legend-swatch unlocked"></span>Unlocked</span><span class="wows-legend-item"><span class="wows-legend-swatch available"></span>Available</span><span class="wows-legend-item"><span class="wows-legend-swatch locked"></span>Locked</span></div></div>';
-        renderTreeBoard($researchHub['techTree'], (int)$researchHub['level']['technologyLevel'], 'technologyTreeBoard', 'T-Tier');
+        echo '<div class="wows-tree-toolbar"><div class="wows-tree-title">Technology Branch Matrix</div><div class="wows-legend"><span class="wows-legend-item"><span class="wows-legend-swatch unlocked"></span>Unlocked</span><span class="wows-legend-item"><span class="wows-legend-swatch available"></span>Available</span><span class="wows-legend-item"><span class="wows-legend-swatch locked"></span>Locked</span></div></div>';
+        renderOgameTreeBoard($ogameBranches, $ogameCurrentRes, $ogameBankOnHand, 'techlib');
         echo '</div>';
 
-        echo '<div class="card full wows-info-card"><h4>Type and Sub-Type Index</h4>';
-        echo '<p><strong>Types:</strong> ' . h(implode(', ', $researchHub['types'])) . '</p>';
-        echo '<p><strong>Sub Types:</strong> ' . h(implode(', ', $researchHub['subTypes'])) . '</p>';
+        echo '<div class="card full wows-info-card"><h4>Technology Reserves</h4>';
+        echo '<p>' . ogameReserveLine($ogameCurrentRes, $ogameBankOnHand) . '</p>';
         echo '<p><strong>Tech Library Cost Reduction:</strong> ' . fnum($infraCostDiscount) . '% | <strong>Research Speed:</strong> ' . fnum($infraResearchSpeed) . 'x</p>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Manage Tech Library Buildings</a></p>';
         echo '</div>';
@@ -5630,34 +5752,56 @@ if ($main === 'research') {
     }
 
     if ($sub === 'talents') {
-        $researchTalents = 0;
-        $techTalents = 0;
-        foreach ($researchHub['talents'] as $talent) {
-            if ($talent['branch'] === 'Research') {
-                $researchTalents++;
-            } else {
-                $techTalents++;
-            }
-        }
-
         echo '<div class="card full wows-brief">';
         echo '<div class="wows-hero-shell">';
         echo '<div class="wows-hero-copy">';
         echo '<div class="wows-kicker">Talent Matrix</div>';
         echo '<h4>Talent Library</h4>';
-        echo '<p>Tier bands are grouped every 30 talents to create 8 progression bands across the full library.</p>';
+        echo '<p>The complete research and technology program library. Every talent is persistent per commander, with escalating costs and prerequisite gating.</p>';
+        echo '<div class="wows-pill-row">';
+        echo '<span class="wows-pill">Research ' . fnum($ogameResearchCount) . '</span>';
+        echo '<span class="wows-pill">Technology ' . fnum($ogameTechCount) . '</span>';
+        echo '<span class="wows-pill">Active ' . fnum($ogameResearchedCount) . '</span>';
+        echo '</div>';
         echo '</div>';
         echo '<div class="wows-hero-stats">';
-        echo '<div class="wows-stat-card"><span>Total Talents</span><strong>' . fnum($researchHub['counts']['talents']) . '</strong></div>';
-        echo '<div class="wows-stat-card"><span>Branch Split</span><strong>' . fnum($researchTalents) . '/' . fnum($techTalents) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Total Programs</span><strong>' . fnum($ogameResearchCount + $ogameTechCount) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Branch Split</span><strong>' . fnum($ogameResearchCount) . '/' . fnum($ogameTechCount) . '</strong></div>';
         echo '</div>';
         echo '</div>';
         echo '</div>';
 
-        echo '<div class="card full wows-info-card"><h4>Talent Library (240)</h4>';
-        echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">ID</th><th align="left">Branch</th><th align="left">Domain</th><th align="left">Talent</th><th align="left">Focus</th><th align="left">Tier</th><th align="left">Effect</th></tr>';
-        foreach ($researchHub['talents'] as $talent) {
-            echo '<tr><td>' . fnum($talent['id']) . '</td><td>' . h($talent['branch']) . '</td><td>' . h($talent['domain']) . '</td><td>' . h($talent['name']) . '</td><td>' . h($talent['focus']) . '</td><td>' . fnum($talent['tier']) . '</td><td>' . h($talent['effect']) . '</td></tr>';
+        echo '<div class="card full wows-info-card"><h4>Research Reserves</h4>';
+        echo '<p>' . ogameReserveLine($ogameCurrentRes, $ogameBankOnHand) . '</p>';
+        echo '</div>';
+
+        echo '<div class="card full wows-info-card"><h4>Talent Library (' . fnum($ogameResearchCount + $ogameTechCount) . ')</h4>';
+        echo '<table class="mini-table" border="0" width="100%"><tr><th align="left">Branch</th><th align="left">Domain</th><th align="left">Program</th><th align="left">Focus</th><th align="left">Tier</th><th align="left">Level</th><th align="left">Effect</th><th align="left">Next Cost</th><th align="left">Prerequisite</th><th align="left">Action</th></tr>';
+        foreach ($ogameCatalog as $og) {
+            $ogKey = $og['key'];
+            $ogLvl = (int)($ogameLevels[$ogKey] ?? 0);
+            $ogCosts = ogameTechNextCosts($og, $ogLvl, $infraCostDiscount);
+            $ogReady = ogameTechPrereqMet($ogameLevels, $og);
+            echo '<tr>';
+            echo '<td>' . h(ucfirst((string)$og['branch'])) . '</td>';
+            echo '<td>' . h((string)$og['domain']) . '</td>';
+            echo '<td>' . h((string)$og['name']) . '</td>';
+            echo '<td>' . h((string)$og['focus']) . '</td>';
+            echo '<td>T' . h($og['tier']) . '</td>';
+            echo '<td>' . fnum($ogLvl) . ' / ' . fnum((int)$og['max_level']) . '</td>';
+            echo '<td>' . h((string)$og['effect']) . '</td>';
+            echo '<td>' . fnum($ogCosts['nq']) . ' Nq / ' . fnum($ogCosts['metal']) . ' M / ' . fnum($ogCosts['crystal']) . ' C / ' . fnum($ogCosts['deut']) . ' D / ' . fnum($ogCosts['energy']) . ' E / ' . fnum($ogCosts['turns']) . ' t</td>';
+            echo '<td>' . ($ogReady ? '<span style="color:#67cde9;">Met</span>' : h(ogameTechPrereqText($ogameLevels, $og))) . '</td>';
+            echo '<td>';
+            if ($ogLvl >= (int)$og['max_level']) {
+                echo '<button class="public-btn secondary" disabled>Maxed</button>';
+            } elseif (!$ogReady) {
+                echo '<button class="public-btn secondary" disabled>Locked</button>';
+            } else {
+                echo '<button class="public-btn" onclick="sendData(\'pages\',\'get\',\'research\',\'talents&cmd=ogame_research&key=' . h($ogKey) . '\'); return false">Research L' . fnum($ogLvl + 1) . '</button>';
+            }
+            echo '</td>';
+            echo '</tr>';
         }
         echo '</table></div>';
     }

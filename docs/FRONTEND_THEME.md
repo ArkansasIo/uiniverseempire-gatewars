@@ -147,11 +147,50 @@ Use existing SVG icons rather than adding icon-font dependencies.
 - `count.php` is an iframe "onload counter" used by the BBCode fix page; keep it
   side-effect-free beyond incrementing a visit counter.
 
-## 6. Theme & Copy Tests
+## 6. OGame-Style Research / Tech System
+
+Since v1.6 the `research` page (`modules/pages.php`) has an OGame-style research
+tree with persistent per-player levels and real upgrade costs:
+
+- **Two branches** — `research` and `technology` — each with 20 programs across
+  10 domains (Quantum, Void, Psionic, Nano, Graviton, Xeno, Bioforge, Temporal,
+  Stellar, Aegis). Programs have tiers 1–6 and a max level of 25.
+- **Persistent levels** live in the `player_tech_levels` table
+  (`uid`, `tech_key`, `level`); `ogameTechEnsureTables()` creates it on demand
+  and seeds zero-level rows.
+- **Costs** escalate with `formalCostValue(base, level, scale, 0.12)` for the
+  five resources (Naquadah from `bank.onHand`; Metal/Crystal/Deuterium/Energy
+  from `player_resources`) plus `formalTimeValue(base_turns, level, 1.08)`
+  research turns. An infrastructure cost reduction (`data_vault`,
+  `quantum_archive`, `ai_directorate`) discounts the resource cost up to 45%.
+- **Prerequisites** gate programs; each `prereq` entry is a
+  `{key, level, name}` tuple and unmet gates show the shortfall in the UI.
+- **Upgrade action** is routed via `cmd=ogame_research&key=<key>` embedded in
+  the sub-page link; `ogameResearchAction()` validates level cap, prereqs and
+  resources, then levels up with an atomic upsert.
+- **Pure logic** (catalog, cost, prereq, tree grouping) lives in
+  `modules/ogame_research_logic.php` — no DB or session — so it is directly
+  unit-testable (`tests/ogame_research_test.php`). The DB/render wrappers stay
+  in `modules/pages.php`.
+
+### Views (`research/<sub>`)
+
+| Sub | Content |
+|-----|---------|
+| `tree` | Research branch tree board (`.wows-tree compact`), stat cards, Research Reserves |
+| `techlib` | Technology branch tree board, Technology Reserves card |
+| `talents` | Full catalog table (Branch/Domain/Program/Focus/Tier/Level/Effect/Next Cost/Prereq) with Research buttons |
+
+The `.wows-tree`, `.wows-node*`, `.wows-domain` board CSS (main.css) drives the
+node state visuals: unlocked (researched), available (prereqs met), locked.
+
+## 7. Theme & Copy Tests
 
 - `tests/theme_support_test.php` — theme normalization + CSS class mapping.
 - `tests/theme_and_copy_test.php` — required copy tokens and icon presence.
 - `tests/formel_logic_test.php` — module handler paren/logic sanity.
+- `tests/ogame_research_test.php` — OGame catalog integrity, cost escalation,
+  discount clamping, prereq gating, tree grouping.
 
 Run with:
 

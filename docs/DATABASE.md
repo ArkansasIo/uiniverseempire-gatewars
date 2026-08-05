@@ -176,6 +176,7 @@ erDiagram
 | `mega_building_catalog` / `mega_owned_assets` / `mega_starship_catalog` / `mega_unit_catalog` | `megaforge.php` | Mega Forge assets |
 | `commander_settings` / `governance_system_levels` | `commandergov.php` | Commander governance |
 | `stargate_tech_levels` | `stargatetech.php`, `game_tick.php` | Stargate tech levels (feed production bonuses) |
+| `player_tech_levels` | `pages.php` (`ogameTechEnsureTables`) | OGame-style research/tech levels: `uid`, `tech_key`, `level`, `updated_at`, PK `(uid, tech_key)` |
 | `market_listings` | `market.php` | Player resource listings |
 | `research_infrastructure` | `techlib.php` | Lab network / infrastructure |
 | `blueprint_catalog` / `blueprint_hangar` / `player_blueprints` | `pages.php` | Blueprint systems |

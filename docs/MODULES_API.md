@@ -56,7 +56,7 @@ From `modules/pages.php` `$mainTitles` / `$subLabels`:
 | `community` | Community & Updates | forums, updates, contact, faq, events, academy |
 | `help` | Guides & Help Desk | newplayer, mechanics, glossary, support, troubleshooting, hotkeys |
 | `universe` | Universe Observatory | galaxies, planets, objects, expedition, bases, travel, lanes, anomalies, seeds, events, worldboss, story |
-| `research` | Research Directorate | tree, techlib, infrastructure, classes, talents, stargate, projects, labs, blueprints |
+| `research` | Research Directorate | tree (research tree), techlib (technology tree), infrastructure, classes, talents (catalog), stargate, projects, labs, blueprints |
 
 ## 4. Module Inventory (`modules/*.php`)
 
