@@ -1,0 +1,12 @@
+config.php
+config.local.php
+.env
+backups/
+exports/*
+!exports/README.md
+!exports/excel/
+exports/excel/*
+!exports/excel/README.md
+!exports/sql/
+exports/sql/*
+!exports/sql/README.md

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Universe archive">
+  <rect width="240" height="240" rx="28" fill="#0d1319"/>
+  <rect x="44" y="58" width="152" height="124" rx="20" fill="#16333a" stroke="#4cbdbd" stroke-width="4"/>
+  <path d="M68 86h104M68 114h64M68 142h88" stroke="#8df1f1" stroke-width="8" stroke-linecap="round"/>
+  <path d="M94 58v-18h52v18" stroke="#7ac7ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="176" cy="152" r="18" fill="#ffcf70"/>
+</svg>

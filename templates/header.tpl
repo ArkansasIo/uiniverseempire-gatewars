@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+	<head>
+			<script type="text/javascript" src="js/search.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+		<script type="text/javascript" src="js/auto.js"></script>
+		<script type="text/javascript" src="js/train.js"></script>
+		<script type="text/javascript" src="js/images.js"></script>
+		<script type="text/javascript" src="js/bbfix.js"></script>
+
+					<title>{TITLE}</title>
+		
+
+
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<style type='text/css'>td img {display: block;}</style>
+		{HEAD_STUFF}
+	</head>
+	<LINK REL=STYLESHEET TYPE='text/css' HREF='main.css'>
+	
+	<body class="theme-og" onload=" bb_init('divBody', false);sendData('pages','get','empire','overview');autoLoad(); suggestTHIS();setTheme('og');return false;">
+    <center>
+	<div id="divBBDebug"></div>
+	<div id="divBody">

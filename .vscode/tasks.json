@@ -1,0 +1,25 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "sync-upstream-repo",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/sync_upstream_repo.py"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "sync-upstream-repo",
+			"type": "shell",
+			"command": "\"C:\\Users\\Shadow\\AppData\\Local\\Programs\\Python\\Python311\\python.exe\"",
+			"args": [
+				"scripts/sync_upstream_repo.py"
+			],
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
