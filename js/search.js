@@ -110,7 +110,7 @@ function Suggest(inObjectName, inQueryField, inAutoCompleteDivName, inQueryUrl) 
                 else {
                     showAutocompleteDiv();
                     try {
-                        resultsObj = eval('(' + req.responseText + ')');
+                        resultsObj = JSON.parse(req.responseText);
                         htmlFormat();
                     }
                     catch(e) {

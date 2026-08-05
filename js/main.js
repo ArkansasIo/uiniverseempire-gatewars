@@ -43,50 +43,38 @@ function initThemePicker() {
 }
 
 function autocomplete(sender,ev) {
-if (( ev.keyCode >= 48 && ev.keyCode <= 57 ) 
+if (( ev.keyCode >= 48 && ev.keyCode <= 57 )
   ||  ( ev.keyCode >= 65 && ev.keyCode <= 90 )) {
 	var sent = sender.value;
     // Prepare a server request:
-      if(window.XMLHttpRequest){
-        httpreq = new XMLHttpRequest();
-    } else if (window.ActiveXObject){
-        httpreq=new ActiveXObject("Msxml2.XMLHTTP");
-        if (! httpreq){
-            httpreq=new ActiveXObject("Microsoft.XMLHTTP");
-        }
-     }
-    var url = "userlist.php?val="+sent;
+    var httpreq = createXhr();
+    if (!httpreq) { return; }
+    var url = "userlist.php?val="+encodeURIComponent(sent);
     httpreq.open("GET", url, true);
 
     var original_text = sender.value;
 
     // Response function:
     httpreq.onreadystatechange = function () {
-      if (httpreq.readyState == 4) {
-		var resp = httpreq.responseText;
-	  	var obj = eval(resp);
-        var suggestion = obj[0];
-		var userID = document.getElementById ('userID2');         
-		userID.value = obj[1];
+      if (httpreq.readyState == 4 && httpreq.status == 200) {
+		var obj;
+		try {
+			obj = JSON.parse(httpreq.responseText);
+		} catch (e) {
+			obj = null;
+		}
+		if (!obj || !obj.result || !obj.result.length) { return; }
+        var suggestion = obj.result[0][0];
+		var userID = document.getElementById ('userID2');
+		if (userID) { userID.value = obj.result[0][3]; }
         var toUser = document.getElementById ('toUser1');         
 
-        if ((suggestion) && (toUser.value == original_text)) {
-	   // Firefox and Opera
-           if(window.XMLHttpRequest) {
-              var initial_len = toUser.value.length;
-              toUser.value = suggestion;
-              toUser.selectionStart = initial_len;
-              toUser.selectionEnd   = toUser.value.length;            
-           }
-           // Internet Explorer
-           else if (window.ActiveXObject) {
-	   		  var leg =  suggestion.replace(original_text,"");
-              var sel = document.selection.createRange ();
-			  sel.text = leg;
-    		  sel.move ("character", -suggestion.length); 
-              sel.findText (leg);
-              sel.select ();
-           }
+        if (suggestion && toUser && toUser.value == original_text) {
+			toUser.value = suggestion;
+			if (toUser.setSelectionRange) {
+				toUser.selectionStart = original_text.length;
+				toUser.selectionEnd   = suggestion.length;
+			}
         }
       }
     }
@@ -145,47 +133,67 @@ function autoclear()
 	stylizeDiv(a,document.getElementById("rollover"));
 }
 
-//event handler for XMLHttpRequest
-function handleResponse(){
-    if(request.readyState == 4){
-        if(request.status == 200){
-           var doc = request.responseText;
-            stylizeDiv(doc,document.getElementById("mainDisplay"));
-			 queryString="";
-        } else {
-            alert("A problem occurred with communicating between the XMLHttpRequest object and the server program.");
+//shared factory for the XMLHttpRequest object
+function createXhr() {
+    if (window.XMLHttpRequest) {
+        return new XMLHttpRequest();
+    }
+    if (window.ActiveXObject) {
+        try {
+            return new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (e) {
+            try {
+                return new ActiveXObject("Microsoft.XMLHTTP");
+            } catch (e2) {
+                return null;
+            }
         }
-    }//end outer if
-	
-	
-}
-
-function initReq(reqType,url,bool){
-    request.onreadystatechange=handleResponse;
-    request.open(reqType,url,bool);
-    request.setRequestHeader("Content-Type",
-            "application/x-www-form-urlencoded; charset=UTF-8");
-    request.send(queryString);
-	queryString=null;
+    }
+    return null;
 }
 
 function httpRequest(reqType,url,asynch){
-    //Mozilla-based browsers
-    if(window.XMLHttpRequest){
-        request = new XMLHttpRequest();
-    } else if (window.ActiveXObject){
-        request=new ActiveXObject("Msxml2.XMLHTTP");
-        if (! request){
-            request=new ActiveXObject("Microsoft.XMLHTTP");
-        }
-     }
+    var request = createXhr();
     //the request could still be null if neither ActiveXObject
     //initializations succeeded
-    if(request){
-       initReq(reqType,url,asynch);
-    }  else {
+    if(!request){
         alert("Your browser does not permit the use of all "+
-        "of this application's features!");}
+        "of this application's features!");
+        return;
+    }
+
+    request.onreadystatechange=function(){
+        if(request.readyState != 4){
+            return;
+        }
+        if(request.status == 200){
+            var doc = request.responseText || "";
+            // A full HTML document means the server redirected us to the
+            // landing page (e.g. the session expired). Navigate the shell
+            // there instead of injecting it as a fragment.
+            if(/^\s*<!DOCTYPE html/i.test(doc) || /^\s*<html/i.test(doc)){
+                window.location.href = "index.php";
+                return;
+            }
+            var target = document.getElementById("mainDisplay");
+            if(target){
+                stylizeDiv(doc,target);
+            }
+            queryString="";
+        } else if(request.status > 0){
+            alert("A problem occurred communicating with the server program (HTTP "+
+                request.status+"). Please try again.");
+        }
+        // status 0: request aborted or offline - handle silently
+    };
+
+    request.open(reqType,url,asynch);
+    if(reqType.toUpperCase() == "POST"){
+        request.setRequestHeader("Content-Type",
+            "application/x-www-form-urlencoded; charset=UTF-8");
+    }
+    request.send(reqType.toUpperCase() == "POST" ? queryString : null);
+    queryString=null;
 }
 
 function stylizeDiv(bdyTxt,div){
@@ -212,17 +220,18 @@ function stylizeDiv(bdyTxt,div){
 function setQueryString(){
     queryString="";
     var frm = document.forms[1];
-    var numberElements =  frm.elements.length;
-    for(var i = 0; i < numberElements; i++)  {
-            if(i < numberElements-1)  {
-                queryString += frm.elements[i].name+"="+
-                               encodeURIComponent(frm.elements[i].value)+"&";
-            } else {
-                queryString += frm.elements[i].name+"="+
-                               encodeURIComponent(frm.elements[i].value);
-            }
-
+    if(!frm || !frm.elements){
+        return;
     }
+    var parts = [];
+    var numberElements = frm.elements.length;
+    for(var i = 0; i < numberElements; i++)  {
+            var el = frm.elements[i];
+            if(el && el.name){
+                parts.push(el.name+"="+encodeURIComponent(el.value));
+            }
+    }
+    queryString = parts.join("&");
 	
 }
 
