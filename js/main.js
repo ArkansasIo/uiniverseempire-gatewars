@@ -8,15 +8,15 @@ function getStoredTheme() {
             return storedTheme;
         }
     } catch (e) {
-        // Ignore storage errors and fall back to OG.
+        // Ignore storage errors and fall back to Blue.
     }
-    return 'og';
+    return 'blue';
 }
 
 function setTheme(themeName) {
-    var normalizedTheme = (themeName || getStoredTheme() || 'og').toLowerCase();
+    var normalizedTheme = (themeName || getStoredTheme() || 'blue').toLowerCase();
     if (normalizedTheme !== 'white' && normalizedTheme !== 'og' && normalizedTheme !== 'blue' && normalizedTheme !== 'stargate') {
-        normalizedTheme = 'og';
+        normalizedTheme = 'blue';
     }
 
     if (document.body) {

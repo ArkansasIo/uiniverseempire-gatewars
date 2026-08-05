@@ -1,5 +1,7 @@
 # Hostinger deployment guide
 
+> **Version 1.5.0**
+
 This project is a PHP/MySQL application. A typical Hostinger deployment is:
 
 1. Upload the project files to the public web root.

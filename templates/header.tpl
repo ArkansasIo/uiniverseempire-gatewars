@@ -18,7 +18,7 @@
 	</head>
 	<LINK REL=STYLESHEET TYPE='text/css' HREF='main.css'>
 	
-	<body class="theme-og" onload=" bb_init('divBody', false);sendData('pages','get','empire','overview');autoLoad(); suggestTHIS();setTheme('og');return false;">
+	<body class="theme-blue" onload=" bb_init('divBody', false);sendData('pages','get','empire','overview');autoLoad(); suggestTHIS();setTheme(getStoredTheme());return false;">
     <center>
 	<div id="divBBDebug"></div>
 	<div id="divBody">
