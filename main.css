@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Stargate Wars contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 /* CSS generated at csscreator.com */
 BODY{background-color:#000000; color:#FFFFFF; font-family:cursive; font-size:small; scrollbar-3dlight-color:#FFFFFF; scrollbar-arrow-color:#FFFFFF; scrollbar-base-color:#333333; scrollbar-darkshadow-color:#FFFFFF; scrollbar-face-color:#000000; scrollbar-highlight-color:#FFFFFF; scrollbar-shadow-color:#FFFFFF; }
 FONT{color:#FFFF00; font-size:x-small; font-family:cursive; text-decoration:none; }
@@ -2893,6 +2917,7 @@ body.theme-blue .combat-btn {
 /* Title screen command-console login.  Keep this at the end so theme
    compatibility rules above cannot flatten the portal backdrop. */
 body.theme-og .public-shell,
+body.theme-white .public-shell,
 body.theme-blue .public-shell,
 body.theme-stargate .public-shell {
     max-width: 1240px;
@@ -2902,7 +2927,39 @@ body.theme-stargate .public-shell {
     box-shadow: 0 22px 56px rgba(0, 0, 0, 0.7), inset 0 0 80px rgba(33, 142, 255, 0.1);
 }
 
+body.theme-og .public-top,
+body.theme-white .public-top,
+body.theme-blue .public-top,
+body.theme-stargate .public-top {
+    border-color: #255454 !important;
+    background: linear-gradient(90deg, #092525 0%, #0f3434 45%, #114949 100%) !important;
+}
+
+body.theme-og .public-brand h1,
+body.theme-white .public-brand h1,
+body.theme-blue .public-brand h1,
+body.theme-stargate .public-brand h1 {
+    color: #ffffff !important;
+}
+
+body.theme-white .public-brand p {
+    color: #c8f7f7 !important;
+}
+
+body.theme-white .public-brand .public-tagline {
+    color: #9fd8d8 !important;
+}
+
+body.theme-white .public-github {
+    color: #dffdfd !important;
+}
+
+body.theme-white .public-github:hover {
+    color: #ffffff !important;
+}
+
 body.theme-og .public-content-grid,
+body.theme-white .public-content-grid,
 body.theme-blue .public-content-grid,
 body.theme-stargate .public-content-grid {
     display: block;
@@ -2912,18 +2969,22 @@ body.theme-stargate .public-content-grid {
 }
 
 body.theme-og .public-news,
+body.theme-white .public-news,
 body.theme-blue .public-news,
 body.theme-stargate .public-news,
 body.theme-og .public-hero,
+body.theme-white .public-hero,
 body.theme-blue .public-hero,
 body.theme-stargate .public-hero {
     display: none;
 }
 
 body.theme-og .public-main,
+body.theme-white .public-main,
 body.theme-blue .public-main,
 body.theme-stargate .public-main,
 body.theme-og .public-main #mainDisplay,
+body.theme-white .public-main #mainDisplay,
 body.theme-blue .public-main #mainDisplay,
 body.theme-stargate .public-main #mainDisplay {
     min-height: 0;
@@ -2933,6 +2994,7 @@ body.theme-stargate .public-main #mainDisplay {
 }
 
 body.theme-og .auth-card,
+body.theme-white .auth-card,
 body.theme-blue .auth-card,
 body.theme-stargate .auth-card {
     width: 100%;
@@ -2943,6 +3005,19 @@ body.theme-stargate .auth-card {
     background: linear-gradient(145deg, rgba(3, 15, 31, 0.95), rgba(3, 10, 23, 0.89)) !important;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.66), 0 0 38px rgba(44, 157, 255, 0.2), inset 0 1px rgba(215, 245, 255, 0.16);
     backdrop-filter: blur(8px);
+}
+
+/* Title page always uses the dark portal backdrop, regardless of the stored
+   theme. theme-white normally keeps a light page, so force it dark here. */
+body.theme-white:has(.public-shell) {
+    background: #07121e !important;
+}
+
+body.theme-og .public-footnote,
+body.theme-white .public-footnote,
+body.theme-blue .public-footnote,
+body.theme-stargate .public-footnote {
+    color: #9fd8d8 !important;
 }
 
 .auth-eyebrow,
@@ -3051,11 +3126,36 @@ body.theme-stargate .auth-card {
 .auth-card .auth-submit:hover { background: linear-gradient(90deg, #1074ad, #29a4d7) !important; }
 .auth-card .auth-hint { margin: 16px 0 0; color: #94b8d2 !important; font-family: Arial, sans-serif; line-height: 1.45; }
 
+.auth-card label.auth-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 0;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.auth-card label.auth-remember input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: #1685be;
+    cursor: pointer;
+}
+
 @media (max-width: 640px) {
     body.theme-og .public-content-grid,
+    body.theme-white .public-content-grid,
     body.theme-blue .public-content-grid,
     body.theme-stargate .public-content-grid { margin-top: 26px; padding: 0 12px; }
     body.theme-og .auth-card,
+    body.theme-white .auth-card,
     body.theme-blue .auth-card,
     body.theme-stargate .auth-card { padding: 24px 20px; }
 }
