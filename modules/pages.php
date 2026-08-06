@@ -2226,6 +2226,18 @@ $systemDetails = [
             'features' => ['Priority list', 'Module deep-link', 'Growth strategy guidance'],
             'logic' => ['Higher UP increases military velocity', 'Planet capacity lifts macro growth ceiling', 'Economic stability supports sustained warfare'],
         ],
+        'logistics' => [
+            'brief' => 'Empire-wide supply network that routes resources between economy, war, and expansion programs.',
+            'functions' => ['Route resources across command programs', 'Maintain a stable reserve floor', 'Balance war spend with growth investment'],
+            'features' => ['Supply route map', 'Reserve floor indicators', 'War spend discipline guidance'],
+            'logic' => ['Every action consumes from shared Naquadah and strategic reserves', 'Reserve floors protect against operational lock', 'Supply balance directly affects campaign tempo'],
+        ],
+        'doctrine' => [
+            'brief' => 'Central board for war, economy, and intelligence posture alignment.',
+            'functions' => ['Set synchronized command posture', 'Align war and economy priorities', 'Govern campaign risk tolerance'],
+            'features' => ['Doctrine track table', 'Posture guidance', 'Risk governance reference'],
+            'logic' => ['Doctrine should match current force and treasury state', 'Frequent doctrine shifts waste tempo', 'Risk posture gates how aggressively to commit turns'],
+        ],
     ],
     'military' => [
         'personnel' => [
@@ -2258,6 +2270,18 @@ $systemDetails = [
             'features' => ['Dock entry shortcut', 'Deployment guidance', 'Readiness framing'],
             'logic' => ['Fleet positioning influences reaction speed', 'Readiness windows affect mission timing', 'Sustained operations require economy support'],
         ],
+        'navy' => [
+            'brief' => 'Space navy board for cruiser, destroyer, and capital-ship task forces.',
+            'functions' => ['Organize ship task forces', 'Route warship production toward fleet doctrine', 'Align navy posture with gate defense'],
+            'features' => ['Ship task-force catalog', 'Warship role guidance', 'Capital-ship progression context'],
+            'logic' => ['Capital ships amplify fleet power per action turn', 'Navy composition should counter expected opponent fleets', 'Sustainment cost grows with hull class'],
+        ],
+        'defensegrid' => [
+            'brief' => 'Planetary and orbital defense line commander for static security.',
+            'functions' => ['Budget defensive structure upgrades', 'Cover high-value planets and moons', 'Balance defense spend against invasion risk'],
+            'features' => ['Defense line matrix', 'Coverage recommendation list', 'Invasion-risk budget guidance'],
+            'logic' => ['Defense lines deter opportunistic raids', 'Over-defense starves offense and economy', 'Coverage should follow threat matrix pressure'],
+        ],
     ],
     'operations' => [
         'attack' => [
@@ -2289,6 +2313,18 @@ $systemDetails = [
             'functions' => ['Queue recon, assault, fortify, logistics, and sabotage cycles', 'Run one or many cycles as ETAs complete', 'Adjust doctrine and tempo by campaign phase'],
             'features' => ['Persistent RTS command state', 'Priority queue with ETA and controls', 'Action-turn synchronized cycle execution'],
             'logic' => ['Every cycle spends action turns and strategic resources', 'Queue processing validates readiness before execution', 'State metrics track pressure, reserves, morale, and command XP'],
+        ],
+        'commandqueue' => [
+            'brief' => 'Central queue authority that orders all pending build, research, and mission tasks.',
+            'functions' => ['Review pending empire tasks', 'Reprioritize queue slots', 'Clear stuck or obsolete orders'],
+            'features' => ['Task queue view', 'Priority reordering controls', 'ETC and resource preview'],
+            'logic' => ['Queue slots are gated by builder capacity', 'Priority changes affect completion order only', 'Interrupted tasks return partial resources'],
+        ],
+        'diplomacyops' => [
+            'brief' => 'Covert and political operations channel for influence, sanctions, and alliance signaling.',
+            'functions' => ['Run political influence missions', 'Coordinate alliance signaling', 'Manage sanction and warning posture'],
+            'features' => ['Influence mission brief', 'Sanction action list', 'Alliance signaling log'],
+            'logic' => ['Political actions spend turns without direct combat', 'Visible postures shape rival response patterns', 'Influence missions compound with intel coverage'],
         ],
     ],
     'economy' => [
@@ -2328,6 +2364,36 @@ $systemDetails = [
             'features' => ['Category-based building matrix', 'Live level tracking and next-cost preview', 'Direct integration with Resource HQ, Fleet, and Hyperspace systems'],
             'logic' => ['Each building scales with tiered cost formulas', 'Energy supports advanced construction programs', 'Balanced building progression improves empire efficiency and survivability'],
         ],
+        'logistics' => [
+            'brief' => 'Supply line board for transport capacity, merchant convoys, and route security.',
+            'functions' => ['Route bulk resource convoys', 'Protect trade lanes from raiding', 'Expand transport fleet capacity'],
+            'features' => ['Convoy route planner', 'Lane security rating', 'Capacity and cost preview'],
+            'logic' => ['Convoys move resources on fixed turn timers', 'Unguarded lanes invite interception', 'Larger fleets raise route throughput per turn'],
+        ],
+        'treasury' => [
+            'brief' => 'Strategic reserve management for war chest, premium currency, and bonus payout tracking.',
+            'functions' => ['Track Naquadah and premium balances', 'Set war-chest spending floors', 'Monitor bonus payouts and claim windows'],
+            'features' => ['Balance ledger', 'Reserve floor controls', 'Payout claim tracker'],
+            'logic' => ['War chest floors protect campaign funding', 'Premium balances convert to convenience, not power', 'Bonus windows reward timed construction spikes'],
+        ],
+        'store' => [
+            'brief' => 'Contribution shop and premium catalog for cosmetic and convenience purchases.',
+            'functions' => ['Browse premium offers', 'Review contribution reward tiers', 'Redeem cosmetic and convenience items'],
+            'features' => ['Offer catalog', 'Contribution tier ladder', 'Item claim flow'],
+            'logic' => ['Purchases are convenience-focused and power-neutral', 'Contribution tiers reward consistent support', 'Claims should be redeemed before season reset'],
+        ],
+        'battlepass' => [
+            'brief' => 'Seasonal battle-pass track with activity rewards across operations and economy.',
+            'functions' => ['Track pass level progress', 'Complete seasonal operation goals', 'Claim reward milestones'],
+            'features' => ['Pass progress bar', 'Goal checklist', 'Milestone reward table'],
+            'logic' => ['Pass XP flows from action-turn activity', 'Milestones unlock on fixed thresholds', 'Season end resets unclaimed progress'],
+        ],
+        'seasonpass' => [
+            'brief' => 'Seasonal content roadmap for balance updates, campaigns, and event windows.',
+            'functions' => ['Review current season schedule', 'Preview upcoming campaign themes', 'Plan around season reset timing'],
+            'features' => ['Season timeline', 'Campaign theme previews', 'Reset countdown reference'],
+            'logic' => ['Seasons rotate balance and content cadence', 'Plan upgrades around reset windows', 'Season themes shift optimal build priorities'],
+        ],
     ],
     'diplomacy' => [
         'alliance' => [
@@ -2360,6 +2426,18 @@ $systemDetails = [
             'features' => ['Governance module entry point', 'Settings and option profiles', 'Per-system visual icon matrix'],
             'logic' => ['Each governance system scales through level upgrades', 'Enabled/disabled systems alter effective strategic posture', 'Commander settings influence policy response cadence'],
         ],
+        'treaties' => [
+            'brief' => 'Treaty management for non-aggression, trade, and mutual defense agreements.',
+            'functions' => ['Propose and review treaty drafts', 'Manage NAP and trade terms', 'Honor or break agreements with reputation impact'],
+            'features' => ['Treaty status board', 'Term templates', 'Reputation consequence tracker'],
+            'logic' => ['Treaties reduce raid risk with partners', 'Breaking terms costs reputation and invites retribution', 'Trade clauses smooth resource imbalances'],
+        ],
+        'councils' => [
+            'brief' => 'Alliance council chamber for ranks, voting, and war-plan approval.',
+            'functions' => ['Assign council ranks', 'Hold motion votes', 'Approve alliance war plans'],
+            'features' => ['Council seat matrix', 'Motion and vote ledger', 'War-plan approval gate'],
+            'logic' => ['Rank structure defines command authority', 'Votes gate large alliance decisions', 'War plans bundle targets into one approval cycle'],
+        ],
     ],
     'intel' => [
         'rankings' => [
@@ -2385,6 +2463,18 @@ $systemDetails = [
             'functions' => ['Frame territory influence zones', 'Correlate race/rank/alliance data', 'Support expansion route planning'],
             'features' => ['Strategic mapping brief', 'Influence modeling hints', 'Expansion planning context'],
             'logic' => ['Influence follows power and alliance concentration', 'Regional pressure informs defensive placements', 'Map intelligence should be updated from fresh scans'],
+        ],
+        'signals' => [
+            'brief' => 'Signal intercept board for faction transmissions, fleet movement whispers, and anomaly pings.',
+            'functions' => ['Triage intercepted transmissions', 'Correlate signals with known operations', 'Escalate high-confidence threats'],
+            'features' => ['Signal feed with confidence tags', 'Correlation table', 'Escalation queue'],
+            'logic' => ['Signal confidence rises with intel level', 'Ambiguous signals cost turns to verify', 'Escalated signals feed the threat matrix'],
+        ],
+        'dossiers' => [
+            'brief' => 'Enemy commander dossier library built from reports, scans, and history.',
+            'functions' => ['Open target dossiers', 'Track build and defense patterns', 'Time follow-up strikes to response cycles'],
+            'features' => ['Dossier index', 'Pattern history view', 'Strike-timing hints'],
+            'logic' => ['Dossiers aggregate repeated report data', 'Pattern shifts signal doctrine changes', 'Fresh data beats stale intel every time'],
         ],
     ],
     'community' => [
@@ -2412,6 +2502,18 @@ $systemDetails = [
             'features' => ['Policy and guidance access', 'Beginner-friendly references', 'Rule clarification hub'],
             'logic' => ['Rule knowledge prevents avoidable penalties', 'Policy alignment improves community health', 'Frequent FAQ review reduces repeated errors'],
         ],
+        'events' => [
+            'brief' => 'Community event board for tournaments, giveaways, and scheduled campaign windows.',
+            'functions' => ['Browse scheduled events', 'Enter tournament brackets', 'Track event reward deadlines'],
+            'features' => ['Event calendar', 'Tournament bracket list', 'Reward deadline tracker'],
+            'logic' => ['Events rotate on seasonal cadence', 'Tournament rewards track placement tiers', 'Deadlines reset unclaimed prizes'],
+        ],
+        'academy' => [
+            'brief' => 'Strategy academy library with guides, build orders, and advanced doctrine articles.',
+            'functions' => ['Read core strategy guides', 'Learn opening build orders', 'Study advanced combat and economy doctrine'],
+            'features' => ['Guide index', 'Build-order walkthroughs', 'Doctrine article library'],
+            'logic' => ['Guides codify tested strategies', 'Build orders assume unharassed openings', 'Meta evolves with patch cadence'],
+        ],
     ],
     'help' => [
         'newplayer' => [
@@ -2437,6 +2539,18 @@ $systemDetails = [
             'functions' => ['Provide support reporting guidance', 'Direct users to contact channels', 'Improve issue triage quality'],
             'features' => ['Support workflow brief', 'Evidence checklist cues', 'Escalation context'],
             'logic' => ['Detailed reports are resolved faster', 'Including players and timestamps improves verification', 'Channel discipline prevents lost requests'],
+        ],
+        'troubleshooting' => [
+            'brief' => 'Common error resolution guide for loading, banking, and report display issues.',
+            'functions' => ['Diagnose load and render failures', 'Resolve stale state and cache problems', 'Escalate persistent bugs with evidence'],
+            'features' => ['Symptom checklist', 'Step-by-step fixes', 'Escalation path'],
+            'logic' => ['Most issues resolve with a hard refresh', 'Timestamps and screenshots speed diagnosis', 'Recurring bugs should be reported after one retry'],
+        ],
+        'hotkeys' => [
+            'brief' => 'Keyboard shortcut reference for fast page and command navigation.',
+            'functions' => ['List global page shortcuts', 'Show command hotkeys', 'Speed up repeated workflows'],
+            'features' => ['Shortcut table', 'Suite-level bindings', 'Command key reference'],
+            'logic' => ['Shortcuts reduce clicks on repeat actions', 'Bindings follow suite order for muscle memory', 'Conflicts should be reported for remap'],
         ],
     ],
     'universe' => [
@@ -2494,6 +2608,24 @@ $systemDetails = [
             'features' => ['Act/chapter progression state', 'Prologue unlock gate', 'Persistent story log timeline'],
             'logic' => ['Story progression spends turns and consumes campaign momentum', 'Act completion gates later narrative phases', 'Story logs preserve key commander outcomes'],
         ],
+        'lanes' => [
+            'brief' => 'Hyperspace lane registry mapping secure routes, risk bands, and travel time by galaxy.',
+            'functions' => ['Compare lane risk and ETA', 'Route convoys along secure lanes', 'Expose flanks on contested routes'],
+            'features' => ['Lane table with risk bands', 'ETA and fuel preview', 'Route planner context'],
+            'logic' => ['Secure lanes cost more fuel per hop', 'Contested lanes speed transits but invite interception', 'Lane density determines regional mobility'],
+        ],
+        'anomalies' => [
+            'brief' => 'Anomaly catalog for asteroid belts, debris fields, wormholes, and temporal glitches.',
+            'functions' => ['Survey anomaly signatures', 'Route expeditions to high-value objects', 'Sell anomaly data on the intel market'],
+            'features' => ['Anomaly signature table', 'Value and risk ratings', 'Data-sale option'],
+            'logic' => ['Anomaly value scales with scan depth', 'High-risk anomalies demand escort coverage', 'Sold intel reveals location to buyers'],
+        ],
+        'seeds' => [
+            'brief' => 'Expansion seed planner for colony placement, biome matching, and sector concentration.',
+            'functions' => ['Match biome to colony role', 'Spread seeds across galaxies', 'Balance concentration against risk'],
+            'features' => ['Seed placement grid', 'Biome-role matching table', 'Concentration risk gauge'],
+            'logic' => ['Biome bonuses shape colony specialization', 'Spread reduces wipe risk but slows coordination', 'Concentration trades resilience for tempo'],
+        ],
     ],
     'research' => [
         'tree' => [
@@ -2525,6 +2657,30 @@ $systemDetails = [
             'functions' => ['Upgrade empire-specific technologies', 'Spend Naquadah plus strategic resources on research', 'Scale deep-space mobility and defensive doctrine'],
             'features' => ['Multi-domain empire tech catalog', 'Per-tech level tracking', 'Integrated economy and hyperspace dependencies'],
             'logic' => ['Each upgrade scales in cost by level', 'Energy and deuterium become core late-tier constraints', 'Technology compounding improves interstellar campaign tempo'],
+        ],
+        'infrastructure' => [
+            'brief' => 'Infrastructure research line for orbital, station, and deep-space construction science.',
+            'functions' => ['Research orbital construction tiers', 'Unlock station and moon-base branches', 'Reduce building cost multipliers'],
+            'features' => ['Infrastructure tech ladder', 'Cost reduction previews', 'Station dependency map'],
+            'logic' => ['Infrastructure tiers gate late-game buildings', 'Cost reductions compound across the empire', 'Dependencies force sequential planning'],
+        ],
+        'projects' => [
+            'brief' => 'Long-horizon empire projects with staged funding and milestone payouts.',
+            'functions' => ['Start strategic projects', 'Fund project stages with resources', 'Collect milestone payouts'],
+            'features' => ['Project board', 'Stage funding tracker', 'Milestone reward table'],
+            'logic' => ['Projects lock resources until completion', 'Staged funding protects partial progress', 'Milestones pay out on fixed thresholds'],
+        ],
+        'labs' => [
+            'brief' => 'Research laboratory management for capacity, slots, and scientist allocation.',
+            'functions' => ['Upgrade lab capacity', 'Manage research slots', 'Allocate scientists to active branches'],
+            'features' => ['Lab level controls', 'Slot queue view', 'Scientist allocation table'],
+            'logic' => ['Higher labs unlock parallel research slots', 'Scientist count speeds active projects', 'Slot discipline avoids idle research time'],
+        ],
+        'blueprints' => [
+            'brief' => 'Blueprint archive for unlocked construction patterns and exclusive tech recipes.',
+            'functions' => ['Browse discovered blueprints', 'Claim build permission for exclusive structures', 'Track blueprint drop sources'],
+            'features' => ['Blueprint index', 'Claim flow', 'Drop-source tracker'],
+            'logic' => ['Blueprints gate exclusive late-game builds', 'Drops come from world boss and expedition loot', 'Claims are consumed once per blueprint'],
         ],
     ],
 ];
@@ -4558,21 +4714,39 @@ if ($main === 'empire' && $sub === 'command') {
 
 if ($main === 'empire' && $sub === 'progress') {
     echo '<div class="card"><h4>Progress Status</h4>';
-    echo '<p>Track your expansion level, unit production growth, and military readiness.</p>';
+    echo '<p>Track your expansion level, unit production growth, and military readiness across the four core growth pillars.</p>';
     echo '<p><a href="javascript:void(0)" onclick="sendData(\'progress\',\'get\',\'mainDisplay\'); return false">Open Progress Dashboard</a></p>';
     echo '</div>';
-    echo '<div class="card"><h4>Upgrade Priorities</h4>';
-    echo '<ul><li>Increase Unit Production</li><li>Expand Planet Capacity</li><li>Boost Economy/Turn</li></ul>';
+    echo '<div class="card full"><h4>Upgrade Priorities</h4>';
+    echo '<table class="mini-table" border="0" width="100%">';
+    echo '<tr><th align="left">Priority</th><th align="left">Action</th><th align="left">Outcome</th></tr>';
+    echo '<tr><td>1</td><td>Increase Unit Production</td><td>More military velocity per turn cycle</td></tr>';
+    echo '<tr><td>2</td><td>Expand Planet Capacity</td><td>Higher macro growth ceiling and colony slots</td></tr>';
+    echo '<tr><td>3</td><td>Boost Economy/Turn</td><td>Sustained funding for war and expansion</td></tr>';
+    echo '<tr><td>4</td><td>Raise Reserve Floor</td><td>Protection against operational lockouts</td></tr>';
+    echo '</table></div>';
+    echo '<div class="card"><h4>Growth Milestones</h4>';
+    echo '<ul><li><strong>Early:</strong> stabilize resource lines and reach self-sustaining mining</li><li><strong>Mid:</strong> open interstellar lanes and second colony wave</li><li><strong>Late:</strong> transition to capital-ship fleet and full reserve posture</li></ul>';
     echo '</div>';
 }
 
 if ($main === 'empire' && $sub === 'logistics') {
     echo '<div class="card"><h4>Logistics Hub</h4><p>Route resources between economy, war, and expansion programs with a stable reserve floor.</p></div>';
-    echo '<div class="card"><h4>Active Supply Links</h4><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'resources\'); return false">Resource Hub</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'logistics\'); return false">Supply Logistics</a></p></div>';
+    echo '<div class="card full"><h4>Supply Priorities</h4>';
+    echo '<table class="mini-table" border="0" width="100%">';
+    echo '<tr><th align="left">Lane</th><th align="left">Primary Feed</th><th align="left">Reserve Floor</th></tr>';
+    echo '<tr><td>War Spend</td><td>Naquadah + metal war chest</td><td>35% of on-hand</td></tr>';
+    echo '<tr><td>Economy Growth</td><td>Resource building upgrades</td><td>30% of income</td></tr>';
+    echo '<tr><td>Expansion</td><td>Colony and expedition funding</td><td>15% of income</td></tr>';
+    echo '<tr><td>Research</td><td>Strategic resource allocation</td><td>20% of income</td></tr>';
+    echo '</table></div>';
+    echo '<div class="card"><h4>Active Supply Links</h4><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'resources\'); return false">Resource Hub</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'logistics\'); return false">Supply Logistics</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'economy\',\'treasury\'); return false">Treasury Policy</a></p></div>';
 }
 
 if ($main === 'empire' && $sub === 'doctrine') {
-    echo '<div class="card full"><h4>Doctrine Board</h4><p>Set command posture for conflict, growth, and intelligence in one synchronized board.</p><table class="mini-table" border="0" width="100%"><tr><th align="left">Track</th><th align="left">Current Focus</th></tr><tr><td>War</td><td>Fleet pressure with controlled risk</td></tr><tr><td>Economy</td><td>Compounding production and reserve retention</td></tr><tr><td>Intel</td><td>Scouting before commitment</td></tr></table></div>';
+    echo '<div class="card full"><h4>Doctrine Board</h4><p>Set command posture for conflict, growth, and intelligence in one synchronized board.</p><table class="mini-table" border="0" width="100%"><tr><th align="left">Track</th><th align="left">Current Focus</th><th align="left">Review Cadence</th></tr><tr><td>War</td><td>Fleet pressure with controlled risk</td><td>Per campaign phase</td></tr><tr><td>Economy</td><td>Compounding production and reserve retention</td><td>Per 30-min turn block</td></tr><tr><td>Intel</td><td>Scouting before commitment</td><td>Before each strike wave</td></tr></table></div>';
+    echo '<div class="card"><h4>Doctrine Shift Warning</h4><p>Frequent posture changes waste tempo. Commit to a doctrine for at least one full turn cycle before re-evaluating.</p></div>';
+    echo '<div class="card"><h4>Risk Governance</h4><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_balanced\'); return false">Set Balanced Doctrine</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_aggressive\'); return false">Set Aggressive Doctrine</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts&cmd=ops_set_doctrine_defensive\'); return false">Set Defensive Doctrine</a></p></div>';
 }
 
 if ($main === 'military') {
@@ -4774,10 +4948,27 @@ if ($main === 'military') {
     }
     if ($sub === 'armory') {
         echo '<div class="card"><h4>Armory Control</h4><p>Manage attack/defense equipment loadouts and repair weapons.</p><p><a href="javascript:void(0)" onclick="sendData(\'armory\',\'get\',\'mainDisplay\'); return false">Open Armory</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'military\',\'armory&cmd=mil_armory_refit\'); return false">Run Armory Refit</a></p></div>';
+        echo '<div class="card full"><h4>Loadout Guidance</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Mission Type</th><th align="left">Recommended Loadout</th><th align="left">Note</th></tr>';
+        echo '<tr><td>Assault</td><td>Attack-weighted equipment</td><td>Maximize first-wave damage</td></tr>';
+        echo '<tr><td>Defense</td><td>Defense-weighted equipment</td><td>Shrink raid windows</td></tr>';
+        echo '<tr><td>Recon</td><td>Covert-weighted equipment</td><td>Improve spy penetration</td></tr>';
+        echo '<tr><td>Endurance</td><td>Logistics-weighted equipment</td><td>Sustain long expedition chains</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Repair Discipline</h4><p>Run repairs between campaigns. Damaged equipment reduces effective force power more than unit losses alone.</p></div>';
     }
     if ($sub === 'training') {
         echo '<div class="card"><h4>Training Command</h4><p>Convert untrained units into combat-ready specialists.</p><p><a href="javascript:void(0)" onclick="sendData(\'train\',\'get\',\'mainDisplay\'); return false">Open Training</a></p></div>';
         echo '<div class="card"><h4>Demobilization</h4><p>Reverse assignments when strategy shifts.</p><p><a href="javascript:void(0)" onclick="sendData(\'untrain\',\'get\',\'mainDisplay\'); return false">Open Untrain</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'military\',\'training&cmd=mil_training_surge\'); return false">Run Training Surge</a></p></div>';
+        echo '<div class="card full"><h4>Force Composition Plan</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Role</th><th align="left">Target Share</th><th align="left">Trained From</th></tr>';
+        echo '<tr><td>Attack</td><td>~45%</td><td>Primary combat drill</td></tr>';
+        echo '<tr><td>Defense</td><td>~25%</td><td>Garrison drill</td></tr>';
+        echo '<tr><td>Covert</td><td>~15%</td><td>Spy academy</td></tr>';
+        echo '<tr><td>Anti-Covert</td><td>~15%</td><td>Counter-intel drill</td></tr>';
+        echo '</table></div>';
     }
     if ($sub === 'fleet') {
         echo '<div class="card"><h4>Fleet Operations</h4><p>Deploy, reposition, and monitor fleet readiness.</p><p><a href="javascript:void(0)" onclick="sendData(\'fleetdock\',\'get\',\'mainDisplay\'); return false">Open Fleet Dock</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'objects\'); return false">Scan Debris Fields</a></p></div>';
@@ -4787,30 +4978,83 @@ if ($main === 'military') {
     }
     if ($sub === 'navy') {
         echo '<div class="card"><h4>Navy Operations</h4><p>Coordinate fleet waves, escort sequencing, and timing windows by operation type.</p><p><a href="javascript:void(0)" onclick="sendData(\'fleetdock\',\'get\',\'mainDisplay\'); return false">Open Fleet Dock</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'military\',\'navy&cmd=mil_fleet_wargame\'); return false">Run Fleet War-Game</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'military\',\'navy&cmd=mil_setfocus_aggressive\'); return false">Set Aggressive Focus</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'military\',\'navy&cmd=mil_setfocus_defensive\'); return false">Set Defensive Focus</a></p></div>';
+        echo '<div class="card full"><h4>Task Force Roles</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Hull Class</th><th align="left">Primary Role</th><th align="left">Escort Profile</th></tr>';
+        echo '<tr><td>Frigate / Corvette</td><td>Recon and raiding</td><td>Fast, low sustainment</td></tr>';
+        echo '<tr><td>Cruiser / Destroyer</td><td>Assault line</td><td>Balanced escort waves</td></tr>';
+        echo '<tr><td>Battleship / Carrier</td><td>Capital projection</td><td>Heavy escort required</td></tr>';
+        echo '<tr><td>Mothership</td><td>Command and logistics</td><td>Full defensive screen</td></tr>';
+        echo '</table></div>';
     }
     if ($sub === 'defensegrid') {
         echo '<div class="card full"><h4>Defense Grid</h4><p>Layer defense systems across planets, stations, and fleet routes to reduce raid exposure.</p><p><a href="javascript:void(0)" onclick="sendData(\'stations\',\'get\',\'mainDisplay\'); return false">Open Stations Defense</a></p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'military\',\'defensegrid&cmd=mil_defense_harden\'); return false">Run Defense Hardening</a></p></div>';
+        echo '<div class="card full"><h4>Coverage Layers</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Layer</th><th align="left">Protects</th><th align="left">Priority</th></tr>';
+        echo '<tr><td>Planetary Defense</td><td>Resource buildings and economy</td><td>High-value planets first</td></tr>';
+        echo '<tr><td>Lunar Structures</td><td>Fleet staging and gates</td><td>Strategic chokepoints</td></tr>';
+        echo '<tr><td>Station Defense</td><td>Expedition and trade hubs</td><td>Active logistics routes</td></tr>';
+        echo '<tr><td>Route Patrols</td><td>Convoy lanes</td><td>Under repeated raid pressure</td></tr>';
+        echo '</table></div>';
     }
 }
 
 if ($main === 'operations') {
     if ($sub === 'attack') {
         echo '<div class="card"><h4>Attack Missions</h4><p>Launch direct strikes against enemy empires.</p><p><a href="javascript:void(0)" onclick="sendData(\'rank\',\'get\',\'mainDisplay\'); return false">Select Targets</a></p></div>';
+        echo '<div class="card full"><h4>Strike Checklist</h4>';
+        echo '<ul><li>Spy the target to confirm defense strength</li><li>Match attack force to intel (attack vs defense stat)</li><li>Confirm action-turn budget for the full wave</li><li>Set relation stance before committing</li><li>Review logs after the wave to refine doctrine</li></ul>';
+        echo '</div>';
+        echo '<div class="card"><h4>Target Selection Tips</h4><p>Prefer rivals with lower defense/covert ratings than your attack power. Rapid rank gainers are often worth investigating first.</p></div>';
     }
     if ($sub === 'raid') {
         echo '<div class="card"><h4>Raid Missions</h4><p>Execute high-speed resource raids for rapid gains.</p><p>Use player profiles to trigger raid actions.</p></div>';
+        echo '<div class="card full"><h4>Raid Targeting Rules</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Signal</th><th align="left">Interpretation</th></tr>';
+        echo '<tr><td>Low defense coverage</td><td>High-value extraction window</td></tr>';
+        echo '<tr><td>Resource surplus on profile</td><td>Good haul expectation</td></tr>';
+        echo '<tr><td>Repeated raid history</td><td>Higher retaliation risk</td></tr>';
+        echo '<tr><td>Allied or treaty-bound</td><td>Skip - honor agreements</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Raid Cadence</h4><p>Respect your action-turn budget and bank returns between cycles. Chaining raids into deep space requires logistics coverage.</p></div>';
     }
     if ($sub === 'spy') {
         echo '<div class="card"><h4>Spy Network</h4><p>Gather intel before committing forces.</p><p><a href="javascript:void(0)" onclick="sendData(\'spy\',\'get\',\'mainDisplay\'); return false">Open Spy Module</a></p></div>';
+        echo '<div class="card full"><h4>Recon Value Matrix</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Intel Goal</th><th align="left">Method</th><th align="left">Decision Impact</th></tr>';
+        echo '<tr><td>Defense strength</td><td>Covert scan</td><td>Force sizing</td></tr>';
+        echo '<tr><td>Fleet deployment</td><td>Movement watch</td><td>Strike timing</td></tr>';
+        echo '<tr><td>Resource posture</td><td>Profile review</td><td>Raid targeting</td></tr>';
+        echo '<tr><td>Alliance links</td><td>Roster check</td><td>Escalation risk</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Anti-Covert Balance</h4><p>Every spy mission can be countered. Keep anti-covert units roughly proportional to your spy usage to avoid feeding enemy intel.</p></div>';
     }
     if ($sub === 'logs') {
         echo '<div class="card"><h4>Combat Logs</h4><p>Review outcomes and refine strategy.</p><p><a href="javascript:void(0)" onclick="sendData(\'logs\',\'get\',\'mainDisplay\'); return false">Open Logs</a></p></div>';
+        echo '<div class="card full"><h4>Debrief Review Points</h4>';
+        echo '<ul><li>Compare expected vs actual losses per wave</li><li>Identify composition weaknesses (e.g. missing anti-covert)</li><li>Track raid retaliation frequency against your targets</li><li>Update target dossiers with observed patterns</li></ul>';
+        echo '</div>';
+        echo '<div class="card"><h4>Feedback Loop</h4><p>Consistent log review is the cheapest way to raise combat efficiency without spending a single turn.</p></div>';
     }
     if ($sub === 'commandqueue') {
         echo '<div class="card full"><h4>Command Queue</h4><p>Queue mission phases: recon, strike, raid, and recovery to avoid turn waste.</p><table class="mini-table" border="0" width="100%"><tr><th align="left">Phase</th><th align="left">Recommended Action</th></tr><tr><td>1</td><td>Spy and verify defenses</td></tr><tr><td>2</td><td>Launch primary attack wave</td></tr><tr><td>3</td><td>Execute raid follow-up</td></tr><tr><td>4</td><td>Recover and reposition</td></tr></table></div>';
+        echo '<div class="card"><h4>Queue Discipline</h4><p>Only hold phases that have confirmed targets. Empty queue slots invite off-cycle spending and wasted turn windows.</p></div>';
+        echo '<div class="card"><h4>Live Queue</h4><p>Open the RTS console to inspect the current priority queue and ETAs.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'operations\',\'rts\'); return false">Open RTS Command Console</a></p></div>';
     }
     if ($sub === 'diplomacyops') {
         echo '<div class="card"><h4>Diplomatic Operations</h4><p>Use messages and relation changes to reduce escalation before or after operations.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'diplomacy\',\'messages\'); return false">Open Messaging</a></p></div>';
+        echo '<div class="card full"><h4>Escalation Ladder</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Rung</th><th align="left">Action</th><th align="left">Purpose</th></tr>';
+        echo '<tr><td>1</td><td>Neutral stance</td><td>Signal non-aggression intent</td></tr>';
+        echo '<tr><td>2</td><td>Direct message</td><td>Clarify intent before escalation</td></tr>';
+        echo '<tr><td>3</td><td>War stance</td><td>Formalize conflict posture</td></tr>';
+        echo '<tr><td>4</td><td>Alliance support call</td><td>Coordinate coalition response</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Sanction Signals</h4><p>Public stance changes and warnings shape rival behavior. Keep alliance leadership informed before major posture shifts.</p></div>';
     }
     if ($sub === 'rts') {
         $opsState = $operationsRtsState ?: (object)[
@@ -4902,9 +5146,21 @@ if ($main === 'economy') {
     }
     if ($sub === 'market') {
         echo '<div class="card"><h4>Market Trade</h4><p>Buy and sell resources to tune your economy.</p><p><a href="javascript:void(0)" onclick="sendData(\'market\',\'get\',\'mainDisplay\'); return false">Open Market</a></p></div>';
+        echo '<div class="card full"><h4>Trade Guidance</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Need</th><th align="left">Approach</th><th align="left">Risk</th></tr>';
+        echo '<tr><td>Fuel shortfall</td><td>Buy deuterium during build pauses</td><td>Price spikes near war windows</td></tr>';
+        echo '<tr><td>Build sprint</td><td>Buy metal just before construction</td><td>Holding metal invites raids</td></tr>';
+        echo '<tr><td>Surplus dump</td><td>Sell excess food/water</td><td>Depletes colony sustainment</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Market Timing</h4><p>Trade during quiet windows. Overextension on market swings can starve military spending at the worst moment.</p></div>';
     }
     if ($sub === 'technology') {
         echo '<div class="card"><h4>Technology Tree</h4><p>Advance economy, combat, covert, and empire-era systems.</p><p><a href="javascript:void(0)" onclick="sendData(\'technology\',\'get\',\'mainDisplay\'); return false">Open Technology</a></p><p><a href="javascript:void(0)" onclick="sendData(\'stargatetech\',\'get\',\'mainDisplay\'); return false">Open Empire Technology Command</a></p></div>';
+        echo '<div class="card full"><h4>Research Priorities</h4>';
+        echo '<ul><li>Economy tech first - it compounds every other system</li><li>Combat tech before campaign waves - not during them</li><li>Covert and anti-covert tech together to keep intel parity</li><li>Empire-era tech for gate and fleet scaling in late game</li></ul>';
+        echo '</div>';
+        echo '<div class="card"><h4>Tech Budget</h4><p>Reserve ~20% of income for research. Idle labs are pure lost tempo.</p></div>';
     }
     if ($sub === 'production') {
         echo '<div class="card"><h4>Production Planning</h4><p>Focus on unit production and mining throughput to scale your empire.</p><ul><li>Upgrade UP first for faster growth</li><li>Balance miners vs combat readiness</li><li>Protect income assets with defense</li></ul></div>';
@@ -4969,10 +5225,20 @@ if ($main === 'economy') {
 
     if ($sub === 'logistics') {
         echo '<div class="card"><h4>Supply Logistics</h4><p>Balance transport and spending across combat, expansion, and research lanes.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'empire\',\'logistics\'); return false">Open Empire Logistics Hub</a></p></div>';
+        echo '<div class="card full"><h4>Convoy Priorities</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Cargo</th><th align="left">Route</th><th align="left">Guard Level</th></tr>';
+        echo '<tr><td>Construction metal</td><td>High-production to building colonies</td><td>Medium</td></tr>';
+        echo '<tr><td>Fuel convoys</td><td>To gate staging planets</td><td>High</td></tr>';
+        echo '<tr><td>Surplus dump</td><td>From idle colonies to bank</td><td>Low</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Lane Security</h4><p>Route convoys along secure hyperspace lanes and escort high-value cargo when raid pressure is elevated.</p></div>';
     }
 
     if ($sub === 'treasury') {
         echo '<div class="card full"><h4>Treasury Policy</h4><p>Set reserve thresholds to avoid operational lock during spikes in war spending.</p><ul><li>War reserve: 35%</li><li>Research reserve: 20%</li><li>Expansion reserve: 15%</li><li>Flexible capital: 30%</li></ul></div>';
+        echo '<div class="card"><h4>Naquadah Ledger</h4><p><strong>On Hand:</strong> ' . fnum($bank->onHand ?? 0) . ' | <strong>In Bank:</strong> ' . fnum($bank->inBank ?? 0) . '</p><p><a href="javascript:void(0)" onclick="sendData(\'bank\',\'get\',\'mainDisplay\'); return false">Open Bank</a></p></div>';
+        echo '<div class="card"><h4>Operational Lock Warning</h4><p>If spending pushes you below the war reserve, operations queue automatically. Rebuild reserves before opening new fronts.</p></div>';
     }
 
     if ($sub === 'store') {
@@ -5045,15 +5311,45 @@ if ($main === 'economy') {
 if ($main === 'diplomacy') {
     if ($sub === 'alliance') {
         echo '<div class="card"><h4>Alliance Management</h4><p>Coordinate allies, officer chains, and power blocs.</p><p><a href="javascript:void(0)" onclick="sendData(\'ally_mlist\',\'get\',\'mainDisplay\'); return false">Open Alliance Roster</a></p></div>';
+        echo '<div class="card full"><h4>Bloc Coordination</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Function</th><th align="left">Best Practice</th></tr>';
+        echo '<tr><td>Officer chain</td><td>Keep clear role assignments to avoid decision lag</td></tr>';
+        echo '<tr><td>War coordination</td><td>Announce campaigns before opening fire</td></tr>';
+        echo '<tr><td>Resource support</td><td>Route surplus through bank transfers</td></tr>';
+        echo '<tr><td>Defense pacts</td><td>Confirm pact scope in treaty desk</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Collective Deterrence</h4><p>Coordinated alliances deter opportunistic raids. Active rosters react faster than defensive structures.</p></div>';
     }
     if ($sub === 'relations') {
         echo '<div class="card"><h4>Relations Desk</h4><p>Set war, neutral, and peace stances with other empires through player profile actions.</p><p><a href="javascript:void(0)" onclick="sendData(\'user\',\'get\',\'' . $uid . '\'); return false">Open Profile Actions</a></p></div>';
+        echo '<div class="card full"><h4>Stance Policy</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Stance</th><th align="left">Signal</th><th align="left">Risk Profile</th></tr>';
+        echo '<tr><td>Peace</td><td>Non-aggression intent</td><td>Low, but invites opportunists</td></tr>';
+        echo '<tr><td>Neutral</td><td>Default posture</td><td>Balanced</td></tr>';
+        echo '<tr><td>War</td><td>Formal conflict</td><td>High retaliation expectation</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Conflict-State Awareness</h4><p>Keep stances consistent with treaties and alliance policy. Contradictory signals cost diplomatic trust.</p></div>';
     }
     if ($sub === 'messages') {
         echo '<div class="card"><h4>Secure Messaging</h4><p>Send diplomatic messages and coordinate attacks.</p><p><a href="javascript:void(0)" onclick="sendData(\'messages\',\'get\',\'mainDisplay\'); return false">Open Inbox</a></p></div>';
+        echo '<div class="card full"><h4>Comms Discipline</h4>';
+        echo '<ul><li>Use threads for campaign planning - not one-off pings</li><li>Timestamp operational requests for audit clarity</li><li>Keep alliance leadership on escalation messages</li><li>Archive resolved threads for post-war review</li></ul>';
+        echo '</div>';
+        echo '<div class="card"><h4>Response Tempo</h4><p>Fast replies reduce mis-coordination. Stale threads are a common source of friendly-fire incidents.</p></div>';
     }
     if ($sub === 'commander') {
         echo '<div class="card"><h4>Commander Chain</h4><p>Assign commanders and issue support transfers from player profile pages.</p><p><a href="javascript:void(0)" onclick="sendData(\'user\',\'get\',\'' . $uid . '\'); return false">Open Commander Tools</a></p></div>';
+        echo '<div class="card full"><h4>Chain Structure</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Role</th><th align="left">Responsibility</th><th align="left">Transfer Focus</th></tr>';
+        echo '<tr><td>Empire Commander</td><td>Overall doctrine</td><td>Policy and war approval</td></tr>';
+        echo '<tr><td>Deputy</td><td>Operations continuity</td><td>Coverage during absence</td></tr>';
+        echo '<tr><td>War Officer</td><td>Campaign coordination</td><td>Support transfers to fronts</td></tr>';
+        echo '<tr><td>Intel Officer</td><td>Threat reporting</td><td>Recon tasking</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Stability</h4><p>Frequent commander changes reset support chains. Assign for a season, not a session.</p></div>';
     }
     if ($sub === 'governance') {
         echo '<div class="card"><h4>Commander Governance Systems</h4><p>Activate OGame-style commander governance with 18 policy systems, option profiles, and strategic settings.</p><p><a href="javascript:void(0)" onclick="sendData(\'commandergov\',\'get\',\'mainDisplay\'); return false">Open Commander Governance Console</a></p></div>';
@@ -5069,30 +5365,93 @@ if ($main === 'diplomacy') {
     }
     if ($sub === 'treaties') {
         echo '<div class="card full"><h4>Treaty Desk</h4><p>Track active pacts and peace windows. Use this before multi-target operations.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'diplomacy\',\'relations\'); return false">Open Relations</a></p></div>';
+        echo '<div class="card full"><h4>Treaty Types</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Treaty</th><th align="left">Covers</th><th align="left">Consequence of Breach</th></tr>';
+        echo '<tr><td>Non-Aggression Pact</td><td>No raids or strikes between parties</td><td>Reputation loss + retaliation risk</td></tr>';
+        echo '<tr><td>Trade Agreement</td><td>Favored exchange terms</td><td>Trade access revoked</td></tr>';
+        echo '<tr><td>Mutual Defense</td><td>Joint response to third-party attacks</td><td>Alliance trust erosion</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Before Multi-Target Ops</h4><p>Verify none of your intended targets are covered by active pacts. A single accidental breach can collapse regional alignment.</p></div>';
     }
     if ($sub === 'councils') {
         echo '<div class="card"><h4>Council Chamber</h4><p>Coordinate alliance leadership votes and campaign-wide directives.</p><p><a href="javascript:void(0)" onclick="sendData(\'ally_mlist\',\'get\',\'mainDisplay\'); return false">Open Alliance Roster</a></p></div>';
+        echo '<div class="card full"><h4>Council Functions</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Function</th><th align="left">Scope</th><th align="left">Approval Type</th></tr>';
+        echo '<tr><td>Ranks</td><td>Officer assignments</td><td>Leader approval</td></tr>';
+        echo '<tr><td>Votes</td><td>Major policy decisions</td><td>Majority motion</td></tr>';
+        echo '<tr><td>War plans</td><td>Bundled campaign targets</td><td>Single approval cycle</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Motion Discipline</h4><p>Vote before campaigns, not during them. Approved war plans bundle targets into one clean mandate.</p></div>';
     }
 }
 
 if ($main === 'intel') {
     if ($sub === 'rankings') {
         echo '<div class="card"><h4>Rankings Console</h4><p>Monitor global power standings and rival growth.</p><p><a href="javascript:void(0)" onclick="sendData(\'rank\',\'get\',\'mainDisplay\'); return false">Open Rankings</a></p></div>';
+        echo '<div class="card full"><h4>Ranking Signals</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Signal</th><th align="left">Meaning</th><th align="left">Response</th></tr>';
+        echo '<tr><td>Rapid climb</td><td>Power spike / new strategy</td><td>Investigate before it matures</td></tr>';
+        echo '<tr><td>Stagnation</td><td>Building pause or attrition</td><td>Possible raid window</td></tr>';
+        echo '<tr><td>Bracket cluster</td><td>Regional contest forming</td><td>Plan coalition posture</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Ranking Deltas</h4><p>Compare standings across weeks, not just today. Direction of change is a stronger threat indicator than absolute rank.</p></div>';
     }
     if ($sub === 'reports') {
         echo '<div class="card"><h4>Battle Reports</h4><p>Digest mission outcomes and casualty analytics.</p><p><a href="javascript:void(0)" onclick="sendData(\'actionLogs\',\'get\',\'mainDisplay\'); return false">Open Action Reports</a></p></div>';
+        echo '<div class="card full"><h4>Report Review Flow</h4>';
+        echo '<ul><li>Sort reports by outcome - losses first</li><li>Check loss composition vs expectation</li><li>Flag repeated losses to the same target</li><li>Update dossiers with observed defense patterns</li><li>Archive clean wins for trend reference</li></ul>';
+        echo '</div>';
+        echo '<div class="card"><h4>Efficiency Metric</h4><p>Track resource gained per loss. Missions with low ratios should be re-planned, not repeated.</p></div>';
     }
     if ($sub === 'threats') {
         echo '<div class="card"><h4>Threat Matrix</h4><p>High threat indicators:</p><ul><li>Rapid rank ascension nearby</li><li>Hostile commander chains</li><li>Repeated raid contact</li></ul></div>';
+        echo '<div class="card full"><h4>Threat Escalation Levels</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Level</th><th align="left">Indicators</th><th align="left">Posture</th></tr>';
+        echo '<tr><td>Watch</td><td>New hostile stance, one raid probe</td><td>Verify with spy</td></tr>';
+        echo '<tr><td>Elevated</td><td>Repeated probes, rank climb</td><td>Raise defense coverage</td></tr>';
+        echo '<tr><td>Critical</td><td>Coordinated alliance movement</td><td>Call coalition, prepare response</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Escalation Review</h4><p>Re-evaluate the threat matrix every turn cycle. Threats that sit at Critical without action are the most dangerous.</p></div>';
     }
     if ($sub === 'map') {
         echo '<div class="card"><h4>Sector Map</h4><p>Use race, rank, and alliance data from profile scans to map influence zones.</p></div>';
+        echo '<div class="card full"><h4>Influence Modeling</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Factor</th><th align="left">Weight Trend</th><th align="left">Use</th></tr>';
+        echo '<tr><td>Military rank</td><td>High</td><td>Core pressure baseline</td></tr>';
+        echo '<tr><td>Alliance size</td><td>High</td><td>Coalition reach</td></tr>';
+        echo '<tr><td>Race concentrations</td><td>Medium</td><td>Regional alignment</td></tr>';
+        echo '<tr><td>Recent activity</td><td>Medium</td><td>Current threat focus</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Fresh-Data Rule</h4><p>Influence estimates decay. Re-scan profiles before any major expansion or strike decision.</p></div>';
     }
     if ($sub === 'signals') {
         echo '<div class="card"><h4>Signal Watch</h4><p>Monitor sudden rank jumps, repeated scout activity, and hostile message bursts.</p></div>';
+        echo '<div class="card full"><h4>Signal Types</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Signal</th><th align="left">Confidence</th><th align="left">Action</th></tr>';
+        echo '<tr><td>Rank jump</td><td>High</td><td>Check profile and defenses</td></tr>';
+        echo '<tr><td>Repeated scouts</td><td>High</td><td>Raise anti-covert readiness</td></tr>';
+        echo '<tr><td>Message burst</td><td>Medium</td><td>Alliance coordination likely</td></tr>';
+        echo '<tr><td>Anomaly ping</td><td>Low</td><td>Monitor, verify before acting</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Signal Confidence</h4><p>Confidence rises with your intel level. Verify low-confidence signals before spending turns.</p></div>';
     }
     if ($sub === 'dossiers') {
         echo '<div class="card full"><h4>Target Dossiers</h4><p>Build dossiers for high-value rivals before campaign waves.</p><p><a href="javascript:void(0)" onclick="sendData(\'rank\',\'get\',\'mainDisplay\'); return false">Open Rankings</a></p></div>';
+        echo '<div class="card full"><h4>Dossier Fields</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Field</th><th align="left">Source</th><th align="left">Strike Use</th></tr>';
+        echo '<tr><td>Defense strength</td><td>Spy reports</td><td>Force sizing</td></tr>';
+        echo '<tr><td>Fleet timing</td><td>Movement logs</td><td>Strike windows</td></tr>';
+        echo '<tr><td>Build pattern</td><td>Profile scans</td><td>Raid targeting</td></tr>';
+        echo '<tr><td>Response cycle</td><td>Combat history</td><td>Follow-up timing</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Fresh Data Wins</h4><p>Recon the target the same cycle as the strike. Stale dossiers cause under-sized waves.</p></div>';
     }
 }
 
@@ -5491,10 +5850,85 @@ if ($main === 'universe') {
 
     if ($sub === 'lanes') {
         echo '<div class="card full"><h4>Transit Lanes</h4><p>Use lane planning to distribute fleets and reduce route bottlenecks.</p><table class="mini-table" border="0" width="100%"><tr><th align="left">Lane Type</th><th align="left">Best Use</th></tr><tr><td>Inner Lanes</td><td>Fast military response</td></tr><tr><td>Outer Lanes</td><td>Colonization and deep expeditions</td></tr></table></div>';
+        echo '<div class="card full"><h4>Lane Risk Bands</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Band</th><th align="left">ETA</th><th align="left">Interception Risk</th></tr>';
+        echo '<tr><td>Secure</td><td>Slowest</td><td>Minimal - convoy escort optional</td></tr>';
+        echo '<tr><td>Standard</td><td>Balanced</td><td>Moderate - escort cargo</td></tr>';
+        echo '<tr><td>Contested</td><td>Fastest</td><td>High - military transits only</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Lane Discipline</h4><p>Route convoys along secure lanes and reserve contested lanes for strike windows. Congested lanes are where convoys get intercepted.</p></div>';
     }
 
     if ($sub === 'anomalies') {
         echo '<div class="card"><h4>Anomaly Index</h4><p>Catalog wormholes, ruins, and volatile fields for expedition targeting.</p><p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'objects\'); return false">Open Object Scanner</a></p></div>';
+        echo '<div class="card full"><h4>Anomaly Types</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Type</th><th align="left">Risk</th><th align="left">Payout</th></tr>';
+        echo '<tr><td>Wormhole</td><td>High</td><td>Instant deep-lane transit</td></tr>';
+        echo '<tr><td>Ruins</td><td>Medium</td><td>Artefact and tech loot</td></tr>';
+        echo '<tr><td>Volatile Field</td><td>Medium</td><td>Resource spikes</td></tr>';
+        echo '<tr><td>Debris Cloud</td><td>Low</td><td>Recyclable fleet remains</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Escort Rule</h4><p>High-risk anomalies demand escort coverage. Scouting value before committing expeditions avoids wasted turns.</p></div>';
+    }
+
+    if ($sub === 'seeds') {
+        echo '<div class="card"><h4>Seed Planner</h4><p>Colony placement guidance across the procedural universe seed. Match biomes to colony roles and spread expansion for resilience.</p></div>';
+        echo '<div class="card full"><h4>Seed Placement Grid</h4>';
+        if (count($seedSlice['rows']) === 0) {
+            echo '<p>No seed systems available on this page.</p>';
+        } else {
+            echo '<p>Showing seeds ' . fnum($seedSlice['start']) . '-' . fnum($seedSlice['end']) . ' of ' . fnum($seedSlice['total']) . ' | Page ' . fnum($seedSlice['page']) . ' / ' . fnum($seedSlice['maxPage']) . '</p>';
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Seed</th><th align="left">Key</th><th align="left">Star</th><th align="left">Biome</th><th align="left">Hazard</th><th align="left">Richness</th><th align="left">Sentinels</th><th align="left">Planets</th><th align="left">Moons</th><th align="left">Bookmark</th></tr>';
+            foreach ($seedSlice['rows'] as $sw) {
+                $isBookmarked = false;
+                foreach ($seedBookmarks as $bm) {
+                    if ((string)$bm['seed_key'] === (string)$sw['seedKey']) {
+                        $isBookmarked = true;
+                        break;
+                    }
+                }
+                $bLabel = $isBookmarked ? 'Bookmarked' : 'Bookmark';
+                $bCmd = $isBookmarked ? '' : '&cmd=seed_bookmark&target=' . (int)$sw['index'];
+                echo '<tr>';
+                echo '<td>#' . fnum((int)$sw['index']) . '</td>';
+                echo '<td><small>' . h((string)$sw['seedKey']) . '</small></td>';
+                echo '<td>' . h((string)$sw['star']) . '</td>';
+                echo '<td>' . h((string)$sw['biome']) . '</td>';
+                echo '<td>' . h((string)$sw['hazard']) . '</td>';
+                echo '<td>' . fnum((int)$sw['richness']) . '%</td>';
+                echo '<td>' . fnum((int)$sw['sentinel']) . '</td>';
+                echo '<td>' . fnum((int)$sw['planets']) . '</td>';
+                echo '<td>' . fnum((int)$sw['moons']) . '</td>';
+                echo '<td>';
+                if ($bCmd !== '') {
+                    echo '<a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'seeds' . $bCmd . '\'); return false">' . h($bLabel) . '</a>';
+                } else {
+                    echo h($bLabel);
+                }
+                echo '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+            echo '<p><strong>Pages:</strong> ';
+            for ($sp = 1; $sp <= $seedSlice['maxPage']; $sp++) {
+                $sLabel = ($sp === $seedSlice['page']) ? ('[' . $sp . ']') : (string)$sp;
+                echo '<a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'seeds&p=' . $sp . '\'); return false">' . h($sLabel) . '</a> ';
+            }
+            echo '</p>';
+        }
+        echo '</div>';
+        echo '<div class="card full"><h4>Biome Match Guidance</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Biome</th><th align="left">Colony Role</th><th align="left">Watch For</th></tr>';
+        echo '<tr><td>Lush / Oceanic</td><td>Food and population anchor</td><td>Balanced default</td></tr>';
+        echo '<tr><td>Arid / Volcanic</td><td>Metal and crystal extraction</td><td>Water cost</td></tr>';
+        echo '<tr><td>Frozen / Toxic</td><td>Deuterium and hazard research</td><td>High upkeep</td></tr>';
+        echo '<tr><td>Irradiated / Relic</td><td>Artefact and anomaly hunting</td><td>Sentinel pressure</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Bookmarks</h4><p>Bookmarked seeds persist for quick colony planning. Bookmark spread targets and high-richness systems first.</p></div>';
     }
 
     if ($sub === 'events') {
@@ -5891,47 +6325,183 @@ if ($main === 'research') {
         echo '</div>';
         echo '<p><a href="javascript:void(0)" onclick="sendData(\'techlib\',\'get\',\'mainDisplay\'); return false">Open Tech Library Buildings</a></p></div>';
     }
+
+    if ($sub === 'blueprints') {
+        echo '<div class="card full wows-brief">';
+        echo '<div class="wows-hero-shell">';
+        echo '<div class="wows-hero-copy">';
+        echo '<div class="wows-kicker">Blueprint Archive</div>';
+        echo '<h4>Blueprint Systems</h4>';
+        echo '<p>Acquire copies, research levels, and manufacture exclusive hull classes from the blueprint hangar.</p>';
+        echo '</div>';
+        echo '<div class="wows-hero-stats">';
+        echo '<div class="wows-stat-card"><span>Catalog</span><strong>' . fnum(count($blueprintCatalog)) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Owned</span><strong>' . fnum(count($blueprintOwned)) . '</strong></div>';
+        echo '<div class="wows-stat-card"><span>Hangar</span><strong>' . fnum(count($blueprintHangar)) . '</strong></div>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+
+        echo '<div class="card full wows-info-card"><h4>Blueprint Catalog</h4>';
+        if (count($blueprintCatalog) === 0) {
+            echo '<p>No blueprints in the catalog yet.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Hull Class</th><th align="left">Tier</th><th align="left">Copy Cost</th><th align="left">Copies</th><th align="left">ME</th><th align="left">TE</th><th align="left">Runs</th><th align="left">Actions</th></tr>';
+            foreach ($blueprintCatalog as $id => $bp) {
+                $own = isset($blueprintOwned[$id]) ? $blueprintOwned[$id] : ['owned_copies' => 0, 'me_level' => 0, 'te_level' => 0, 'run_count' => 0];
+                $hangar = isset($blueprintHangar[$id]) ? $blueprintHangar[$id]['quantity'] : 0;
+                echo '<tr>';
+                echo '<td>' . h((string)$bp['name']) . '<br><small>' . h((string)$bp['hull_class']) . '</small></td>';
+                echo '<td>T' . fnum((int)$bp['tier']) . '</td>';
+                echo '<td>' . fnum((int)$bp['copy_cost']) . ' NQ</td>';
+                echo '<td>' . fnum((int)$own['owned_copies']) . '</td>';
+                echo '<td>' . fnum((int)$own['me_level']) . '</td>';
+                echo '<td>' . fnum((int)$own['te_level']) . '</td>';
+                echo '<td>' . fnum((int)$own['run_count']) . ' (' . fnum($hangar) . ' in hangar)</td>';
+                echo '<td>';
+                if ((int)$own['owned_copies'] === 0) {
+                    echo '<a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_acquire&bp=' . (int)$id . '\'); return false">Acquire</a>';
+                } else {
+                    echo '<a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_research&bp=' . (int)$id . '&mode=me\'); return false">ME+1</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_research&bp=' . (int)$id . '&mode=te\'); return false">TE+1</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_build&bp=' . (int)$id . '&qty=1\'); return false">Build</a>';
+                }
+                echo '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
+
+        echo '<div class="card full wows-info-card"><h4>Manufacturing Notes</h4>';
+        echo '<ul><li>Copies are consumed on research; each copy unlocks one level of ME or TE.</li><li>ME (materials) reduces build cost, TE (time) reduces build turns.</li><li>Hangar items add their power to fleet readiness when deployed.</li><li>Blueprints drop from world boss loot and deep expeditions.</li></ul>';
+        echo '</div>';
+    }
 }
 
 if ($main === 'community') {
     if ($sub === 'forums') {
         echo '<div class="card"><h4>Forums</h4><p>Join strategy discussions, diplomacy talks, and event threads.</p><p><a href="forums/" target="_blank">Open Forums</a></p></div>';
+        echo '<div class="card full"><h4>Forum Etiquette</h4><ul><li>Post campaign intel in private alliance boards first</li><li>Cite patch notes when proposing meta shifts</li><li>Keep diplomatic negotiations out of public threads</li></ul></div>';
+        echo '<div class="card"><h4>Knowledge Exchange</h4><p>Public strategy sharing strengthens your alliance. Avoid exposing live operational plans.</p></div>';
     }
     if ($sub === 'updates') {
         echo '<div class="card"><h4>Update Feed</h4><p>Read update announcements and balancing notes.</p><p><a href="javascript:void(0)" onclick="sendData(\'faq\',\'get\',\'mainDisplay\'); return false">Open News/FAQ</a></p></div>';
+        echo '<div class="card full"><h4>Meta-Change Tracking</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Announcement Type</th><th align="left">Impact</th><th align="left">Action</th></tr>';
+        echo '<tr><td>Balance patch</td><td>Stat or cost shifts</td><td>Review build priorities</td></tr>';
+        echo '<tr><td>Event window</td><td>Limited-time rewards</td><td>Plan turn budget around it</td></tr>';
+        echo '<tr><td>Season reset</td><td>Progression rollover</td><td>Claim pass rewards first</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Adaptation Edge</h4><p>Early adopters of balance changes gain a competitive window before the meta settles.</p></div>';
     }
     if ($sub === 'contact') {
         echo '<div class="card"><h4>Contact Command</h4><p>Reach moderators and administrators through in-game messaging channels.</p><p><a href="javascript:void(0)" onclick="sendData(\'messages\',\'get\',\'mainDisplay\'); return false">Open Messaging</a></p></div>';
+        echo '<div class="card full"><h4>Effective Reports</h4><ul><li>Include the affected module and sub-page</li><li>Add mission timestamps and player names</li><li>Describe expected vs observed behavior</li><li>Attach screenshots when available</li></ul></div>';
+        echo '<div class="card"><h4>Escalation Path</h4><p>Start with moderation, then administration. Do not ping staff for competitive disputes - use the conflict review channel.</p></div>';
     }
     if ($sub === 'faq') {
         echo '<div class="card"><h4>FAQ</h4><p>Core rules, policy, and progression advice are available here.</p><p><a href="javascript:void(0)" onclick="sendData(\'faq\',\'get\',\'mainDisplay\'); return false">Open FAQ</a></p></div>';
+        echo '<div class="card full"><h4>Policy Highlights</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Topic</th><th align="left">Policy</th></tr>';
+        echo '<tr><td>Multi-accounting</td><td>One commander per player</td></tr>';
+        echo '<tr><td>Support transfers</td><td>1% broker fee applies</td></tr>';
+        echo '<tr><td>Raid etiquette</td><td>No raiding under active NAP</td></tr>';
+        echo '<tr><td>Exploits</td><td>Report suspected exploits - do not use</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Rule Safety</h4><p>Reading policy before action prevents avoidable penalties. When in doubt, ask a moderator first.</p></div>';
     }
     if ($sub === 'events') {
         echo '<div class="card"><h4>Events Calendar</h4><p>Track alliance events, challenge windows, and campaign checkpoints.</p></div>';
+        echo '<div class="card full"><h4>Event Types</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Type</th><th align="left">Cadence</th><th align="left">Reward Track</th></tr>';
+        echo '<tr><td>Tournament</td><td>Seasonal</td><td>Placement tiers</td></tr>';
+        echo '<tr><td>Campaign</td><td>Rotating</td><td>Campaign points</td></tr>';
+        echo '<tr><td>Giveaway</td><td>Periodic</td><td>One-time claims</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Deadline Discipline</h4><p>Unclaimed event prizes expire at reset. Reserve turn budget before tournament windows open.</p></div>';
     }
     if ($sub === 'academy') {
         echo '<div class="card full"><h4>Academy</h4><p>Structured training path for new and returning commanders.</p><ol><li>Basics: economy and turns</li><li>Intermediate: raids and intel</li><li>Advanced: multi-front doctrine</li></ol></div>';
+        echo '<div class="card full"><h4>Curriculum Tracks</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Track</th><th align="left">Covers</th><th align="left">Recommended For</th></tr>';
+        echo '<tr><td>Foundations</td><td>Resources, turns, training</td><td>New commanders</td></tr>';
+        echo '<tr><td>Campaign School</td><td>Targeting, wave sizing, debrief</td><td>Returning officers</td></tr>';
+        echo '<tr><td>Grand Strategy</td><td>Doctrine, treaties, councils</td><td>Alliance leaders</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Study Note</h4><p>Academy guides assume unharassed openings. Adapt build orders when under raid pressure.</p></div>';
     }
 }
 
 if ($main === 'help') {
     if ($sub === 'newplayer') {
         echo '<div class="card full"><h4>New Player Launch Plan</h4><ol><li>Train a balanced starter army from untrained units.</li><li>Keep a reserve of Naquadah for emergency retraining.</li><li>Upgrade production before expensive wars.</li><li>Scout targets before every major operation.</li></ol></div>';
+        echo '<div class="card full"><h4>Opening Rhythm</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Step</th><th align="left">Action</th><th align="left">Why</th></tr>';
+        echo '<tr><td>1</td><td>Build resource structures</td><td>Compound income baseline</td></tr>';
+        echo '<tr><td>2</td><td>Train balanced starter army</td><td>Deter early opportunistic raids</td></tr>';
+        echo '<tr><td>3</td><td>Reserve Naquadah</td><td>Emergency retraining buffer</td></tr>';
+        echo '<tr><td>4</td><td>Upgrade production</td><td>Faster growth before conflicts</td></tr>';
+        echo '<tr><td>5</td><td>Scout before striking</td><td>Confirm defenses before commit</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>First Cycle Goals</h4><p>Reach self-sustaining mining, a balanced 45/25/15/15 force split, and a full reserve floor before opening your first front.</p></div>';
     }
     if ($sub === 'mechanics') {
         echo '<div class="card"><h4>Core Mechanics</h4><ul><li>Action turns gate all offensive actions.</li><li>Military score influences rank and combat outcomes.</li><li>1% broker fee applies to support transfers.</li><li>Technology upgrades scale growth and resilience.</li></ul></div>';
+        echo '<div class="card full"><h4>System Relationships</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">System</th><th align="left">Feeds</th><th align="left">Gated By</th></tr>';
+        echo '<tr><td>Resources</td><td>Buildings, fleets, research</td><td>Production structures</td></tr>';
+        echo '<tr><td>Action Turns</td><td>Offensive and covert ops</td><td>30-minute cadence</td></tr>';
+        echo '<tr><td>Training</td><td>Combat force composition</td><td>Untrained reserve</td></tr>';
+        echo '<tr><td>Technology</td><td>All empire systems</td><td>Resource + energy</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Planning Discipline</h4><p>Offensive actions are turn-gated - plan waves across multiple cycles and bank turns before big campaigns.</p></div>';
     }
     if ($sub === 'glossary') {
-        echo '<div class="card"><h4>Glossary</h4><p><strong>Naquadah:</strong> Main currency.</p><p><strong>UP:</strong> Unit production per turn.</p><p><strong>Commander:</strong> Parent node in command chain.</p><p><strong>Action Turn:</strong> Strategic action resource.</p></div>';
+        echo '<div class="card full"><h4>Glossary</h4><p><strong>Naquadah:</strong> Main currency.</p><p><strong>UP:</strong> Unit production per turn.</p><p><strong>Commander:</strong> Parent node in command chain.</p><p><strong>Action Turn:</strong> Strategic action resource.</p></div>';
+        echo '<div class="card full"><h4>Extended Terms</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Term</th><th align="left">Definition</th></tr>';
+        echo '<tr><td>Habitability</td><td>Colony viability score - gates build slots</td></tr>';
+        echo '<tr><td>Covert / Anti-Covert</td><td>Spy power vs counter-intel power</td></tr>';
+        echo '<tr><td>Moon Class</td><td>Lunar body type with strategic bonuses</td></tr>';
+        echo '<tr><td>Doctrine</td><td>Aggregate command posture for a cycle</td></tr>';
+        echo '<tr><td>Reserve Floor</td><td>Minimum resource % held before spending</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Shared Vocabulary</h4><p>Common terms speed up alliance coordination. Clarify anything ambiguous before ops.</p></div>';
     }
     if ($sub === 'support') {
         echo '<div class="card"><h4>Support Desk</h4><p>For account issues, use in-game contact and community channels. Include mission timestamps and affected players in reports.</p></div>';
+        echo '<div class="card full"><h4>Evidence Checklist</h4><ul><li>Commander name and server</li><li>Affected module and sub-page</li><li>Mission timestamps and opponent</li><li>Expected vs observed behavior</li><li>Relevant screenshots</li></ul></div>';
+        echo '<div class="card"><h4>Resolution Tempo</h4><p>Complete reports with timestamps resolve faster. Incomplete reports bounce back for clarification.</p></div>';
     }
     if ($sub === 'troubleshooting') {
         echo '<div class="card full"><h4>Troubleshooting</h4><ul><li>If module output stalls, reload and retry the menu action.</li><li>If actions fail, verify enough turns and resources.</li><li>If target actions fail, refresh rank/profile intelligence first.</li></ul></div>';
+        echo '<div class="card full"><h4>Symptom Fixes</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Symptom</th><th align="left">Fix</th><th align="left">Escalate If</th></tr>';
+        echo '<tr><td>Page renders blank</td><td>Hard refresh + retry action</td><td>Persists after refresh</td></tr>';
+        echo '<tr><td>Action rejected</td><td>Check turn/resource balance</td><td>Balances sufficient</td></tr>';
+        echo '<tr><td>Target not found</td><td>Refresh rank/profile intel</td><td>Target still missing</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Retry Rule</h4><p>One retry, then report. Repeating the same failing action without evidence wastes both time and turns.</p></div>';
     }
     if ($sub === 'hotkeys') {
         echo '<div class="card"><h4>Quick Commands</h4><p>Use the left command tree and feature action buttons for rapid sub-page switching.</p></div>';
+        echo '<div class="card full"><h4>Navigation Patterns</h4>';
+        echo '<table class="mini-table" border="0" width="100%">';
+        echo '<tr><th align="left">Pattern</th><th align="left">Use</th></tr>';
+        echo '<tr><td>Suite tree</td><td>Jump between the 10 main suites</td></tr>';
+        echo '<tr><td>Sub-nav buttons</td><td>Switch sub-pages within a suite</td></tr>';
+        echo '<tr><td>Feature workbenches</td><td>Run suite-specific quick actions</td></tr>';
+        echo '<tr><td>Command dropdowns</td><td>Execute preset commands per console</td></tr>';
+        echo '</table></div>';
+        echo '<div class="card"><h4>Muscle Memory</h4><p>Repeated workflows (recon &gt; strike &gt; debrief) are fastest when every step stays on one screen.</p></div>';
     }
 }
 
