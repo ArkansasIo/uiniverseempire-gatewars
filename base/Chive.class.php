@@ -229,6 +229,11 @@ class Chive
     {
         Debug::printMsg(__CLASS__, __FUNCTION__, "Connecting to DB...");
 
+        if ($this->db_link instanceof SafeDbConnection) {
+            Debug::printMsg(__CLASS__, __FUNCTION__, "Previous connection attempt failed; skipping reconnect.");
+            return;
+        }
+
         if (!class_exists('mysqli') || !function_exists('mysqli_report')) {
             $this->db_link = new SafeDbConnection("MySQLi extension is not available in this PHP environment.");
             Debug::printMsg(__CLASS__, __FUNCTION__, "MySQLi extension is not available in this PHP environment.");
@@ -237,28 +242,37 @@ class Chive
 
         mysqli_report(MYSQLI_REPORT_OFF);
 
-        try {
-            $this->db_link = @new mysqli($this->db_server, $this->db_username, $this->db_password, $this->db_name);
+        $servers = [$this->db_server];
+        if ($this->db_server === "localhost") {
+            $servers[] = "127.0.0.1";
+        }
 
-            // If localhost socket resolution fails in container/dev envs, retry over TCP.
-            if ($this->db_link && $this->db_link->connect_error && $this->db_server === "localhost") {
-                $this->db_link = @new mysqli("127.0.0.1", $this->db_username, $this->db_password, $this->db_name);
+        $lastError = "Couldn't connect to DB";
+        foreach ($servers as $server) {
+            $link = mysqli_init();
+            if (!$link) {
+                continue;
             }
-        } catch (Throwable $e) {
-            $this->db_link = new SafeDbConnection("Couldn't connect to DB " . $e->getMessage());
-            Debug::printMsg(__CLASS__, __FUNCTION__, "Couldn't connect to DB " . $e->getMessage());
-            return;
+            mysqli_options($link, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
+            try {
+                if (@mysqli_real_connect($link, $server, $this->db_username, $this->db_password, $this->db_name)) {
+                    $this->db_link = $link;
+                    Debug::printMsg(__CLASS__, __FUNCTION__, "Connected to database");
+                    return;
+                }
+            } catch (Throwable $e) {
+                Debug::printMsg(__CLASS__, __FUNCTION__, "Couldn't connect to DB " . $e->getMessage());
+                $lastError = "Couldn't connect to DB " . $e->getMessage();
+            }
+            $connectError = mysqli_connect_error();
+            if ($connectError) {
+                $lastError = $connectError;
+            }
+            mysqli_close($link);
         }
 
-        if($this->db_link && !$this->db_link->connect_error)
-        {
-            Debug::printMsg(__CLASS__, __FUNCTION__, "Connected to database");
-            return;
-        }
-
-        $error = $this->db_link ? $this->db_link->connect_error : "Unknown connection error";
-        $this->db_link = new SafeDbConnection((string)$error);
-        Debug::printMsg(__CLASS__, __FUNCTION__, "Couldn't connect to DB " . $error);
+        $this->db_link = new SafeDbConnection((string)$lastError);
+        Debug::printMsg(__CLASS__, __FUNCTION__, "Couldn't connect to DB " . $lastError);
     }
     
     /**

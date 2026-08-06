@@ -45,9 +45,14 @@ foreach ($requiredKeys as $key) {
     }
 }
 
-$mysqli = @new mysqli($conf['db_server'], $conf['db_username'], $conf['db_password'], $conf['db_name']);
-if ($mysqli->connect_errno) {
-    fwrite(STDERR, "DB connection failed: " . $mysqli->connect_error . PHP_EOL);
+$mysqli = mysqli_init();
+if (!$mysqli) {
+    fwrite(STDERR, "Healthcheck error: unable to initialize mysqli." . PHP_EOL);
+    exit(3);
+}
+mysqli_options($mysqli, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
+if (!@mysqli_real_connect($mysqli, $conf['db_server'], $conf['db_username'], $conf['db_password'], $conf['db_name'])) {
+    fwrite(STDERR, "DB connection failed: " . mysqli_connect_error() . PHP_EOL);
     exit(1);
 }
 
