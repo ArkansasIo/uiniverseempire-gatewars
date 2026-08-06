@@ -24,7 +24,7 @@
  */
 include_once("config.php");
 $s = new Game();
-if (!empty($_GET['burst']))
+if (!empty($_GET['burst']) && method_exists($s, 'Bursted'))
 {
  echo $s->Bursted($_GET['burst']);
 }
