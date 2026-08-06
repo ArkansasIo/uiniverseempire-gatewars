@@ -219,7 +219,7 @@ $myUntrained = $myPersonnel ? (int)$myPersonnel->uuCount : 0;
         <td align="center" valign="top"><strong>Supporter Status</strong></td>
       </tr>
       <tr>
-        <td align="center" valign="top">Your available resources: <?= number_format((int)$myBank->onHand); ?> Naquadah, <?= number_format($myTurns); ?> Turns, <?= number_format($myUntrained); ?> Untrained Units</td>
+        <td align="center" valign="top">Your available resources: <?= number_format((int)($myBank ? $myBank->onHand : 0)); ?> Naquadah, <?= number_format($myTurns); ?> Turns, <?= number_format($myUntrained); ?> Untrained Units</td>
       </tr>
       <tr>
         <td align="center" valign="top">

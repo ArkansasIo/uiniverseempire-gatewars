@@ -48,8 +48,18 @@ class SafeDbResult
         return null;
     }
 
+    public function fetch_all(int $mode = 1): array
+    {
+        return [];
+    }
+
     public function free(): void
     {
+    }
+
+    public function __call(string $name, array $arguments)
+    {
+        return false;
     }
 }
 

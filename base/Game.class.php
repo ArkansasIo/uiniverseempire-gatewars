@@ -62,7 +62,7 @@ class Game extends User
 	public int $numMessages;    //Number of Messages In Users Inbox
 	public int $uid; 			//UserID
 	public int $rid;			//Race Identifier
-	public array $fields;		//field List
+	public array $fields = ["unitProd","uppl","income","galaxy","puCap","pmCap","attack","auSteal","auEffect","auRes","defense","duSteal","duEffect","duRes","covert","cuEffect","cuRes","anticovert","acuEffect","acuRes","cov_lvl","anti_lvl","pDef","ascend"];	//field List
 
 	public function nextTurn(): int
 	{
@@ -808,6 +808,9 @@ class Game extends User
 		$stmt->execute();
 		$q = $stmt->get_result();
 		$userStats = $q->fetch_object();
+		if ($userStats === null) {
+			$userStats = (object)['covact' => 0];
+		}
 		
 		$query = "SELECT rank.overall, users.uid,users.allyid,bank.onHand,power.mil_cov,power.mil_anti,race.r_name,users.uname,
 				  SUM( units.attack+ units.superAttack+ units.attackMercs+ units.defense+ units.superDefense+ units.defenseMercs+ units.untrained+ units.miners+ units.lifers+ units.covert+ units.superCovert+ units.anticovert+ units.superAnticovert) AS armySize
@@ -822,6 +825,9 @@ class Game extends User
 				  GROUP BY users.uid
 				  ORDER BY rank.overall ASC";
 		$q = $this->query($query);
+		if (!$q) {
+			return $rankings;
+		}
 		while ($rank = $q->fetch_object())
 		{
 			$xfact = $rank->mil_cov + $rank->mil_anti; //Covert Defense See if You Can see stats

@@ -38,14 +38,15 @@ if (!$_REQUEST) {
     $s->updatePower($_SESSION['userid']);
 }
 
-if ($_REQUEST['id'] == "untrn") {
-    $s->untrainUnits($_REQUEST['resatk'], $_REQUEST['resdef'], $_REQUEST['rescov'], $_REQUEST['resanti'], $_REQUEST['resmin']);
+$trainAction = $_REQUEST['id'] ?? '';
+if ($trainAction == "untrn") {
+    $s->untrainUnits((int)($_REQUEST['resatk'] ?? 0), (int)($_REQUEST['resdef'] ?? 0), (int)($_REQUEST['rescov'] ?? 0), (int)($_REQUEST['resanti'] ?? 0), (int)($_REQUEST['resmin'] ?? 0));
     $s->updatePower($_SESSION['userid']);
 }
-if ($_REQUEST['id'] == "trn") {
-    $s->trainUnits($_POST['atk'], $_POST['uberAtk'], $_POST['def'], $_POST['uberDef'],
-                   $_POST['miners'], $_POST['cov'], $_POST['uberCov'], $_POST['anti'],
-                   $_POST['uberAnti']);
+if ($trainAction == "trn") {
+    $s->trainUnits((int)($_POST['atk'] ?? 0), (int)($_POST['uberAtk'] ?? 0), (int)($_POST['def'] ?? 0), (int)($_POST['uberDef'] ?? 0),
+                   (int)($_POST['miners'] ?? 0), (int)($_POST['cov'] ?? 0), (int)($_POST['uberCov'] ?? 0), (int)($_POST['anti'] ?? 0),
+                   (int)($_POST['uberAnti'] ?? 0));
     $s->updatePower($_SESSION['userid']);
 }
 ?>

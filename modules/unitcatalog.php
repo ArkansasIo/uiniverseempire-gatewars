@@ -145,8 +145,13 @@ foreach ($rows as $u):
 <script>
 var ucUnits = <?php
 $allQ = $db->prepare("SELECT * FROM unit_catalog ORDER BY unit_id ASC");
-$allQ->execute();
-$allRows = $allQ->get_result()->fetch_all(MYSQLI_ASSOC);
+$allRows = [];
+if ($allQ && method_exists($allQ, 'get_result')) {
+    $r = $allQ->get_result();
+    if ($r && method_exists($r, 'fetch_all') && defined('MYSQLI_ASSOC')) {
+        $allRows = $r->fetch_all(MYSQLI_ASSOC);
+    }
+}
 echo json_encode(array_column($allRows, null, 'unit_id'));
 ?>;
 

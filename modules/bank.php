@@ -28,8 +28,10 @@ $pagegen->round_to = 4;
 $pagegen->start();
 $s = new Game();
 
-if ($_GET['id'] === "deposit" || $_GET['id'] === "withdrawl") {
-    $s->bank($_GET['id'], (float)$_GET['atype']);
+$bankAction = $_GET['id'] ?? '';
+$bankAmount = (float)($_GET['atype'] ?? 0);
+if ($bankAction === "deposit" || $bankAction === "withdrawl") {
+    $s->bank($bankAction, $bankAmount);
 }
 $data = $s->bank();
 if (!$data) {
