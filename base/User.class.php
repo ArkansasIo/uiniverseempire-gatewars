@@ -168,8 +168,12 @@ class User extends Chive
 		$legacyHash = md5($this->password);
 		$legacySaltyHash = md5(crypt($this->password, '.u55ybcbC,ufzQu2'));
 
+		$bannedCol = $this->db_link->query("SHOW COLUMNS FROM " . $this->db_prefix . "users LIKE 'banned'");
+		$hasBanned = ($bannedCol && $bannedCol->num_rows > 0);
+
 		$query = "
-			SELECT users.uid, users.alevel, userdata.rid, userdata.progress, users.password
+			SELECT users.uid, users.alevel, userdata.rid, userdata.progress, users.password"
+			. ($hasBanned ? ", users.banned" : "") . "
 			FROM ".$this->db_prefix."users AS users
 			LEFT JOIN ".$this->db_prefix."userdata AS userdata ON userdata.uid = users.uid
 			WHERE (users.email=? OR users.uname=?)
@@ -193,6 +197,11 @@ class User extends Chive
 				$matches = true;
 			}
 
+			if ($matches && $hasBanned && isset($row->banned) && (int)$row->banned === 1) {
+				Debug::printMsg(__CLASS__, __FUNCTION__, "Rejected banned user '$this->userName'");
+				return false;
+			}
+
 			if ($matches) {
 				$this->access = (int)$row->alevel;
 				$this->userid = (int)$row->uid;
@@ -209,6 +218,30 @@ class User extends Chive
 	public function isAllowed(int $reqAcc): bool
 	{
 		return (bool)((int)$reqAcc & $this->access);
+	}
+
+	/**
+	 * Checks whether the current account holds staff access.
+	 *
+	 * Access levels are stored as a bitmask on `users.alevel`.
+	 * The convention used across the game is:
+	 *
+	 * - 1 : player
+	 * - 2 : moderator (reserved)
+	 * - 4 : administrator
+	 * - 8 : super administrator (reserved)
+	 *
+	 * Any level >= 4 is treated as staff so older accounts promoted with a
+	 * plain integer (for example 4, 5 or 255) still pass the check.
+	 *
+	 * @return bool
+	 */
+	public function isAdmin(): bool
+	{
+		if (!$this->loggedIn) {
+			return false;
+		}
+		return $this->isAllowed(4) || (int)$this->access >= 4;
 	}
 	
 	/**

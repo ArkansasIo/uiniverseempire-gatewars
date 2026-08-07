@@ -281,6 +281,7 @@ SOFTWARE.
         <a href="javascript:void(0)" onclick="sendData('action','get','mainDisplay'); return false">Actions</a>
       </details>
     </aside>
+{ADMIN_MENU}
 
     <section class="content-panel">
       <div class="content-header">

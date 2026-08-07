@@ -39,6 +39,21 @@ if (isset($_POST['submit']) && ($_POST['submit'] == "Login" || $_POST['submit'] 
         }
 }
 
+$subs['{ADMIN_MENU}'] = '';
+if ($s->loggedIn && method_exists($s, 'isAdmin') && $s->isAdmin()) {
+	$subs['{ADMIN_MENU}'] = '<div class="menu-section-title"><img src="images/ui/core-command.svg" alt="Staff" /><span>Staff Console</span></div>
+<details open>
+  <summary><span class="menu-summary"><img src="images/ui/core-command.svg" alt="Admin" /><span>Admin Control Panel</span></span></summary>
+  <a href="admin/index.php" target="_blank">Admin Control Panel</a>
+  <a href="admin/index.php?view=players" target="_blank">Manage Players</a>
+  <a href="admin/index.php?view=messages" target="_blank">Broadcast Message</a>
+  <a href="admin/index.php?view=logs" target="_blank">Action Logs</a>
+  <a href="admin/index.php?view=market" target="_blank">Market Moderation</a>
+  <a href="admin/index.php?view=adminlog" target="_blank">Staff Log</a>
+  <a href="admin/index.php?view=settings" target="_blank">Settings</a>
+</details>';
+}
+
 if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 {
 
@@ -130,7 +145,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 ?>
       <div id="mainDisplay"></div>
       <div class="public-footnote">
-        <span>Graphics by Stephen</span>
+        <span>Graphics and source code done by Stephen and open code ai</span>
       </div>
     </main>
   </section>
