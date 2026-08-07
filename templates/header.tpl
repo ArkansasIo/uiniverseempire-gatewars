@@ -1,7 +1,7 @@
 <!--
 MIT License
 
-Copyright (c) 2026 Stargate Wars contributors
+Copyright (c) 2026 Universe Civilization : Empire at wars
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ SOFTWARE.
 		<style type='text/css'>td img {display: block;}</style>
 		{HEAD_STUFF}
 	</head>
-	<LINK REL=STYLESHEET TYPE='text/css' HREF='main.css'>
+	<LINK REL=STYLESHEET TYPE='text/css' HREF='css/master.css'>
 	
 	<body class="theme-blue" onload=" bb_init('divBody', false);sendData('pages','get','empire','overview');autoLoad(); suggestTHIS();setTheme(getStoredTheme());return false;">
     <center>

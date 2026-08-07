@@ -1,0 +1,642 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Universe Civilization : Empire at wars
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/* White and gray theme overrides */
+body {
+    background-color: #eef0f3;
+    color: #1f242c;
+}
+
+font,
+p,
+pre,
+div,
+span,
+a,
+a:visited,
+a:hover,
+h1,
+h2,
+h3,
+table,
+thead,
+tbody,
+tr,
+td {
+    color: #1f242c;
+}
+
+input,
+select,
+option,
+textarea {
+    color: #20242b;
+    background-color: #ffffff;
+    border-color: #b5bcc7;
+}
+
+.app-shell {
+    border: 1px solid #c8ced8;
+    background: #f8f9fb;
+    box-shadow: 0 10px 30px rgba(15, 20, 30, 0.08);
+}
+
+.top-header {
+    border-bottom: 1px solid #2b6363;
+    background: linear-gradient(90deg, #0d2f35 0%, #174a58 45%, #1f5f72 100%);
+}
+
+.top-brand p {
+    color: #d8f3f7;
+}
+
+.stat-pill {
+    border: 1px solid #5dc3d0;
+    background: rgba(3, 19, 24, 0.82);
+}
+
+.stat-pill span {
+    color: #bfe7ea;
+}
+
+.stat-pill strong,
+.stat-pill a {
+    color: #f6fbff;
+}
+
+.top-sub-header {
+    border-bottom: 1px solid #2b6363;
+    background: #0f2f35;
+}
+
+.left-menu {
+    border-right: 1px solid #d2d7df;
+    background: #f4f6f9;
+}
+
+.left-menu h3 {
+    color: #2e3440;
+}
+
+.left-menu details {
+    border: 1px solid #d5dbe4;
+    background: #ffffff;
+}
+
+.left-menu summary {
+    background: #edf1f6;
+}
+
+.menu-summary span {
+    color: #323844;
+}
+
+.left-menu summary::after {
+    color: #5f6876;
+}
+
+.menu-section-title {
+    border: 1px solid #d7dde6;
+    background: #e9edf3;
+    color: #4a5463;
+}
+
+.menu-section-title span {
+    color: #4a5463;
+}
+
+.left-menu a {
+    border-top: 1px dotted #d7dde6;
+    color: #2a313c;
+}
+
+.left-menu a:hover {
+    background: #e8edf4;
+}
+
+.content-header {
+    border: 1px solid #d2d7df;
+    background: #ffffff;
+}
+
+.content-header p {
+    color: #5f6775;
+}
+
+#mainDisplay {
+    border: 1px solid #d2d7df;
+    background: #ffffff;
+}
+
+.bottom-header {
+    border-top: 1px solid #d2d7df;
+    border-bottom: 1px solid #d2d7df;
+    background: #eef1f5;
+}
+
+.site-footer {
+    color: #5a6370;
+    background: #e6eaf0;
+}
+
+.public-shell,
+.public-panel,
+.public-main #mainDisplay,
+.auth-card {
+    background: #ffffff;
+    border-color: #d1d7e0;
+}
+
+.public-top,
+.hero-overlay,
+.hero-caption,
+.public-btn,
+.public-btn.secondary,
+.auth-submit {
+    background: #e8ecf2;
+    border-color: #b7bec9;
+    color: #242a33;
+}
+
+.public-btn:hover,
+.auth-submit:hover {
+    background: #dfe5ee;
+}
+
+.hero-pill {
+    background: #d8dee8;
+    border-color: #b7bec9;
+    color: #364151;
+}
+
+.hero-overlay h2,
+.hero-overlay p,
+.auth-card h3,
+.auth-card p,
+.auth-card label,
+.auth-hint {
+    color: #2d3440;
+}
+
+.combat-quickbar {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #d9dee6;
+}
+
+.combat-quickbar-label {
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #586171;
+}
+
+.combat-btn {
+    display: inline-block;
+    padding: 6px 10px;
+    border: 1px solid #b8bfca;
+    background: #f2f4f8;
+    color: #252c36;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+}
+
+.combat-btn:hover {
+    background: #e6ebf3;
+}
+
+/* Public title/login screen: show the Empire portal art behind the login flow. */
+body.theme-og .public-shell,
+body.theme-blue .public-shell,
+body.theme-stargate .public-shell {
+    background-image: linear-gradient(90deg, rgba(1, 7, 15, 0.54), rgba(1, 8, 18, 0.76)), url('images/empire-command-backdrop.png');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+body.theme-og .public-panel,
+body.theme-blue .public-panel,
+body.theme-stargate .public-panel,
+body.theme-og .public-main #mainDisplay,
+body.theme-blue .public-main #mainDisplay,
+body.theme-stargate .public-main #mainDisplay {
+    background-color: rgba(2, 11, 23, 0.72);
+}
+
+body.theme-og .auth-card,
+body.theme-blue .auth-card,
+body.theme-stargate .auth-card {
+    background: linear-gradient(145deg, rgba(3, 15, 31, 0.96), rgba(3, 10, 22, 0.88));
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.6), 0 0 26px rgba(54, 154, 255, 0.18);
+}
+
+/* Theme overrides that win over the older global styles */
+body.theme-og,
+body.theme-og p,
+body.theme-og div,
+body.theme-og span,
+body.theme-og a,
+body.theme-og a:visited,
+body.theme-og a:hover,
+body.theme-og h1,
+body.theme-og h2,
+body.theme-og h3,
+body.theme-og h4,
+body.theme-og h5,
+body.theme-og h6,
+body.theme-og table,
+body.theme-og thead,
+body.theme-og tbody,
+body.theme-og tr,
+body.theme-og td,
+body.theme-og input,
+body.theme-og select,
+body.theme-og textarea,
+body.theme-og label {
+    color: #f0ffff !important;
+}
+
+body.theme-og {
+    background: #000000 !important;
+}
+
+body.theme-og .app-shell,
+body.theme-og .content-header,
+body.theme-og #mainDisplay,
+body.theme-og .bottom-header,
+body.theme-og .site-footer,
+body.theme-og .left-menu,
+body.theme-og .content-panel,
+body.theme-og .card,
+body.theme-og .page-hub,
+body.theme-og .page-subnav,
+body.theme-og .header-settings-menu,
+body.theme-og .combat-btn {
+    background: #061c1c !important;
+    border-color: #2b6363 !important;
+}
+
+body.theme-white,
+body.theme-white p,
+body.theme-white div,
+body.theme-white span,
+body.theme-white a,
+body.theme-white a:visited,
+body.theme-white a:hover,
+body.theme-white h1,
+body.theme-white h2,
+body.theme-white h3,
+body.theme-white h4,
+body.theme-white h5,
+body.theme-white h6,
+body.theme-white table,
+body.theme-white thead,
+body.theme-white tbody,
+body.theme-white tr,
+body.theme-white td,
+body.theme-white input,
+body.theme-white select,
+body.theme-white textarea,
+body.theme-white label {
+    color: #1f2b3a !important;
+}
+
+body.theme-white {
+    background: #f4f6f8 !important;
+}
+
+body.theme-white .app-shell,
+body.theme-white .content-header,
+body.theme-white #mainDisplay,
+body.theme-white .bottom-header,
+body.theme-white .site-footer,
+body.theme-white .left-menu,
+body.theme-white .content-panel,
+body.theme-white .card,
+body.theme-white .page-hub,
+body.theme-white .page-subnav,
+body.theme-white .header-settings-menu,
+body.theme-white .combat-btn {
+    background: #ffffff !important;
+    border-color: #d7e0e8 !important;
+}
+
+body.theme-blue,
+body.theme-blue p,
+body.theme-blue div,
+body.theme-blue span,
+body.theme-blue a,
+body.theme-blue a:visited,
+body.theme-blue a:hover,
+body.theme-blue h1,
+body.theme-blue h2,
+body.theme-blue h3,
+body.theme-blue h4,
+body.theme-blue h5,
+body.theme-blue h6,
+body.theme-blue table,
+body.theme-blue thead,
+body.theme-blue tbody,
+body.theme-blue tr,
+body.theme-blue td,
+body.theme-blue input,
+body.theme-blue select,
+body.theme-blue textarea,
+body.theme-blue label {
+    color: #ebf6ff !important;
+}
+
+body.theme-blue {
+    background: #07121e !important;
+}
+
+body.theme-blue .app-shell,
+body.theme-blue .content-header,
+body.theme-blue #mainDisplay,
+body.theme-blue .bottom-header,
+body.theme-blue .site-footer,
+body.theme-blue .left-menu,
+body.theme-blue .content-panel,
+body.theme-blue .card,
+body.theme-blue .page-hub,
+body.theme-blue .page-subnav,
+body.theme-blue .header-settings-menu,
+body.theme-blue .combat-btn {
+    background: #0b1e34 !important;
+    border-color: #315f9f !important;
+}
+
+/* Title screen command-console login.  Keep this at the end so theme
+   compatibility rules above cannot flatten the portal backdrop. */
+body.theme-og .public-shell,
+body.theme-white .public-shell,
+body.theme-blue .public-shell,
+body.theme-stargate .public-shell {
+    max-width: 1240px;
+    min-height: calc(100vh - 28px);
+    border-color: rgba(100, 189, 255, 0.48);
+    background: linear-gradient(90deg, rgba(1, 6, 14, 0.32), rgba(1, 8, 19, 0.66)), url('images/empire-command-backdrop.png') center / cover no-repeat !important;
+    box-shadow: 0 22px 56px rgba(0, 0, 0, 0.7), inset 0 0 80px rgba(33, 142, 255, 0.1);
+}
+
+body.theme-og .public-top,
+body.theme-white .public-top,
+body.theme-blue .public-top,
+body.theme-stargate .public-top {
+    border-color: #255454 !important;
+    background: linear-gradient(90deg, #092525 0%, #0f3434 45%, #114949 100%) !important;
+}
+
+body.theme-og .public-brand h1,
+body.theme-white .public-brand h1,
+body.theme-blue .public-brand h1,
+body.theme-stargate .public-brand h1 {
+    color: #ffffff !important;
+}
+
+body.theme-white .public-brand p {
+    color: #c8f7f7 !important;
+}
+
+body.theme-white .public-brand .public-tagline {
+    color: #9fd8d8 !important;
+}
+
+body.theme-white .public-github {
+    color: #dffdfd !important;
+}
+
+body.theme-white .public-github:hover {
+    color: #ffffff !important;
+}
+
+body.theme-og .public-content-grid,
+body.theme-white .public-content-grid,
+body.theme-blue .public-content-grid,
+body.theme-stargate .public-content-grid {
+    display: block;
+    max-width: 560px;
+    margin: 44px auto 62px;
+    padding: 0 18px;
+}
+
+body.theme-og .public-news,
+body.theme-white .public-news,
+body.theme-blue .public-news,
+body.theme-stargate .public-news,
+body.theme-og .public-hero,
+body.theme-white .public-hero,
+body.theme-blue .public-hero,
+body.theme-stargate .public-hero {
+    display: none;
+}
+
+body.theme-og .public-main,
+body.theme-white .public-main,
+body.theme-blue .public-main,
+body.theme-stargate .public-main,
+body.theme-og .public-main #mainDisplay,
+body.theme-white .public-main #mainDisplay,
+body.theme-blue .public-main #mainDisplay,
+body.theme-stargate .public-main #mainDisplay {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent !important;
+}
+
+body.theme-og .auth-card,
+body.theme-white .auth-card,
+body.theme-blue .auth-card,
+body.theme-stargate .auth-card {
+    width: 100%;
+    margin: 0;
+    padding: 32px;
+    border: 1px solid rgba(108, 198, 255, 0.68);
+    border-radius: 12px;
+    background: linear-gradient(145deg, rgba(3, 15, 31, 0.95), rgba(3, 10, 23, 0.89)) !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.66), 0 0 38px rgba(44, 157, 255, 0.2), inset 0 1px rgba(215, 245, 255, 0.16);
+    backdrop-filter: blur(8px);
+}
+
+/* Title page always uses the dark portal backdrop, regardless of the stored
+   theme. theme-white normally keeps a light page, so force it dark here. */
+body.theme-white:has(.public-shell) {
+    background: #07121e !important;
+}
+
+body.theme-og .public-footnote,
+body.theme-white .public-footnote,
+body.theme-blue .public-footnote,
+body.theme-stargate .public-footnote {
+    color: #9fd8d8 !important;
+}
+
+.auth-eyebrow,
+.auth-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #8bd7ff !important;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.auth-eyebrow { margin-bottom: 14px; }
+.auth-status { margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(116, 200, 255, 0.2); }
+
+.auth-signal {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #62e5ff;
+    box-shadow: 0 0 10px #62e5ff;
+}
+
+.auth-card h3 {
+    margin: 0;
+    color: #f4fbff !important;
+    font-family: Arial, sans-serif;
+    font-size: clamp(28px, 5vw, 38px);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.auth-card .auth-intro {
+    max-width: 390px;
+    margin: 8px 0 28px;
+    color: #bad4e8 !important;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.auth-card .auth-details {
+    max-width: 390px;
+    margin: -14px 0 22px;
+    padding: 12px 14px 12px 30px;
+    border: 1px solid rgba(109, 192, 242, 0.25);
+    border-radius: 6px;
+    background: rgba(4, 60, 105, 0.18);
+    color: #bad4e8 !important;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.auth-card .auth-details li {
+    margin: 0 0 5px 0;
+}
+
+.auth-card label {
+    margin: 16px 0 7px;
+    color: #a8d9f6 !important;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.auth-card input[type="text"],
+.auth-card input[type="password"] {
+    height: 46px;
+    padding: 0 14px;
+    border: 1px solid rgba(109, 192, 242, 0.46);
+    border-radius: 6px;
+    background: rgba(0, 8, 20, 0.72) !important;
+    color: #f2f9ff !important;
+    font-family: Arial, sans-serif;
+    outline: none;
+}
+
+.auth-card input[type="text"]:focus,
+.auth-card input[type="password"]:focus {
+    border-color: #72d9ff;
+    box-shadow: 0 0 0 3px rgba(68, 185, 255, 0.15), 0 0 18px rgba(68, 185, 255, 0.18);
+}
+
+.auth-card .auth-submit {
+    height: 48px;
+    margin-top: 26px;
+    border: 1px solid #79dcff;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #0b5c91, #1685be) !important;
+    box-shadow: 0 8px 20px rgba(4, 80, 145, 0.35);
+    color: #f5fdff !important;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.auth-card .auth-submit:hover { background: linear-gradient(90deg, #1074ad, #29a4d7) !important; }
+.auth-card .auth-hint { margin: 16px 0 0; color: #94b8d2 !important; font-family: Arial, sans-serif; line-height: 1.45; }
+
+.auth-card label.auth-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 0;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    font-weight: normal;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.auth-card label.auth-remember input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: #1685be;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    body.theme-og .public-content-grid,
+    body.theme-white .public-content-grid,
+    body.theme-blue .public-content-grid,
+    body.theme-stargate .public-content-grid { margin-top: 26px; padding: 0 12px; }
+    body.theme-og .auth-card,
+    body.theme-white .auth-card,
+    body.theme-blue .auth-card,
+    body.theme-stargate .auth-card { padding: 24px 20px; }
+}
+

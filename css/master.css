@@ -1,0 +1,129 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 Universe Civilization : Empire at wars
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/* ============================================================
+   Stargate Wars - Master Stylesheet
+   ------------------------------------------------------------
+   Loads the modular sub-sheets in cascade order:
+
+     1. base.css        - reset, element defaults, legacy foundation
+     2. themes.css      - theme overrides and title/login screens
+     3. components.css  - Empire Ops shell + unified UI component system
+     4. responsive.css  - media queries (must stay last so it wins)
+
+   Keep this import order intact: later sheets intentionally win
+   over earlier ones for equal-specificity rules.
+   ============================================================ */
+
+@import url("base.css");
+@import url("themes.css");
+@import url("components.css");
+@import url("responsive.css");
+
+/* ============================================================
+   Master design tokens (v2.0)
+   ------------------------------------------------------------
+   Neutral base tokens shared across every theme. Theme-specific
+   accent tokens (--accent / --accent-strong / --accent-soft /
+   --accent-faint) are declared per theme in themes.css and win
+   over these defaults because body.theme-* selectors have a
+   higher specificity than :root.
+   ============================================================ */
+
+:root {
+    /* Typography */
+    --sgw-font-base: "Trebuchet MS", "Segoe UI", Tahoma, Arial, sans-serif;
+    --sgw-font-console: "Consolas", "Courier New", monospace;
+    --sgw-font-size-xs: 11px;
+    --sgw-font-size-sm: 12px;
+    --sgw-font-size-md: 14px;
+    --sgw-font-size-lg: 16px;
+    --sgw-font-size-xl: 20px;
+
+    /* Spacing scale */
+    --sgw-space-1: 4px;
+    --sgw-space-2: 8px;
+    --sgw-space-3: 12px;
+    --sgw-space-4: 16px;
+    --sgw-space-5: 24px;
+    --sgw-space-6: 32px;
+
+    /* Radii */
+    --sgw-radius-sm: 4px;
+    --sgw-radius-md: 8px;
+    --sgw-radius-lg: 12px;
+    --sgw-radius-pill: 999px;
+
+    /* Neutral palette (overridden per theme) */
+    --sgw-bg: #0a0e14;
+    --sgw-panel: rgba(18, 24, 34, 0.85);
+    --sgw-border: rgba(255, 255, 255, 0.12);
+    --sgw-text: #e8edf4;
+    --sgw-text-muted: #9aa8b8;
+    --sgw-text-inverse: #0a0e14;
+
+    /* Default accent fallback (theme-blue) */
+    --accent: #4da3ff;
+    --accent-strong: #1d66bf;
+    --accent-soft: rgba(77, 163, 255, 0.16);
+    --accent-faint: rgba(77, 163, 255, 0.06);
+
+    /* Semantic status colors */
+    --sgw-ok: #46c982;
+    --sgw-warn: #e8b64c;
+    --sgw-danger: #e05d5d;
+    --sgw-info: #4da3ff;
+
+    /* Motion */
+    --sgw-transition: 0.15s ease-in-out;
+}
+
+/* ============================================================
+   Master utilities (v2.0 additions)
+   Namespaced under .sgw-* so they never clash with existing
+   component or legacy classes.
+   ============================================================ */
+
+::selection {
+    background: var(--accent-soft);
+    color: var(--sgw-text);
+}
+
+/* Visible, keyboard-friendly focus ring */
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.sgw-hidden { display: none !important; }
+.sgw-text-muted { color: var(--sgw-text-muted); }
+.sgw-text-accent { color: var(--accent); }
+.sgw-text-ok { color: var(--sgw-ok); }
+.sgw-text-warn { color: var(--sgw-warn); }
+.sgw-text-danger { color: var(--sgw-danger); }
+.sgw-mono { font-family: var(--sgw-font-console); }
+.sgw-mt-2 { margin-top: var(--sgw-space-2); }
+.sgw-mt-4 { margin-top: var(--sgw-space-4); }
+.sgw-mb-2 { margin-bottom: var(--sgw-space-2); }
+.sgw-mb-4 { margin-bottom: var(--sgw-space-4); }

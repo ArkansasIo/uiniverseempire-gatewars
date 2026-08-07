@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2026 Stargate Wars contributors
+ * Copyright (c) 2026 Universe Civilization : Empire at wars
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -117,7 +117,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 		<script type="text/javascript" src="js/bbfix.js"></script>
     <title>Universe Civilization: Empire at Wars</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<LINK REL=STYLESHEET TYPE='text/css' HREF='main.css' />
+<LINK REL=STYLESHEET TYPE='text/css' HREF='css/master.css' />
 </head>
 
 <body class="theme-blue" onLoad="mainUpdate('login','Login'); MM_preloadImages('images/galaxy1-2.jpg','images/galaxy2-2.jpg','images/galaxy3-2.jpg'); autoclear(); bb_init('divBody', false); if (typeof setTheme === 'function') { setTheme(getStoredTheme()); }">
