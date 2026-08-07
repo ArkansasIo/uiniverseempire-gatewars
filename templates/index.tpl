@@ -91,6 +91,7 @@ SOFTWARE.
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','overview'); return false">Operations Overview</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','planets'); return false">Planet Management</a>
         <a href="javascript:void(0)" onclick="sendData('colonies','get','mainDisplay'); return false">Colony Management</a>
+        <a href="javascript:void(0)" onclick="sendData('colonygrid','get','mainDisplay','grid'); return false">Colony Grid</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','command'); return false">Command Structure</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','progress'); return false">Empire Progress</a>
         <details>

@@ -3763,6 +3763,559 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 		return "Colony focus set to " . $focus . ".";
 	}
 
+	// ========================================================================
+	// Colony Grid Systems: 9-class field grid, power grid, AIC, AI factory.
+	// ========================================================================
+
+	public function colonyGridEnsureTables(): void
+	{
+		$this->query("CREATE TABLE IF NOT EXISTS universe_colony_profiles (
+			uid INT NOT NULL,
+			world_index INT NOT NULL,
+			target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
+			moon_no INT NOT NULL DEFAULT 0,
+			world_type VARCHAR(40) NOT NULL,
+			biome VARCHAR(80) NOT NULL,
+			sub_biome VARCHAR(80) NOT NULL,
+			city_name VARCHAR(90) NOT NULL,
+			district_focus VARCHAR(40) NOT NULL DEFAULT 'balanced',
+			field_total INT NOT NULL DEFAULT 16,
+			field_used INT NOT NULL DEFAULT 0,
+			infrastructure_tier INT NOT NULL DEFAULT 1,
+			size_class INT NOT NULL DEFAULT 1,
+			power_capacity BIGINT NOT NULL DEFAULT 0,
+			power_consumption BIGINT NOT NULL DEFAULT 0,
+			power_storage BIGINT NOT NULL DEFAULT 0,
+			grid_stability INT NOT NULL DEFAULT 100,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY(uid, world_index, target_type, moon_no)
+		)");
+		$this->query("CREATE TABLE IF NOT EXISTS universe_colony_fields (
+			field_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+			uid INT NOT NULL,
+			world_index INT NOT NULL,
+			target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
+			moon_no INT NOT NULL DEFAULT 0,
+			slot_no INT NOT NULL DEFAULT 1,
+			slot_class INT NOT NULL DEFAULT 1,
+			building_code VARCHAR(24) NOT NULL,
+			building_key VARCHAR(32) NOT NULL DEFAULT '',
+			building_name VARCHAR(90) NOT NULL,
+			building_level INT NOT NULL DEFAULT 1,
+			power_draw INT NOT NULL DEFAULT 0,
+			power_generated BIGINT NOT NULL DEFAULT 0,
+			population_use INT NOT NULL DEFAULT 0,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			UNIQUE KEY uniq_field_slot (uid, world_index, target_type, moon_no, slot_no)
+		)");
+		$this->query("CREATE TABLE IF NOT EXISTS blueprint_catalog (
+			blueprint_id INT NOT NULL PRIMARY KEY,
+			bp_name VARCHAR(96) NOT NULL,
+			hull_class VARCHAR(40) NOT NULL,
+			bp_kind VARCHAR(16) NOT NULL DEFAULT 'ship',
+			target_key VARCHAR(32) NOT NULL DEFAULT '',
+			tier INT NOT NULL DEFAULT 1,
+			copy_cost INT NOT NULL DEFAULT 0,
+			base_metal INT NOT NULL DEFAULT 0,
+			base_crystal INT NOT NULL DEFAULT 0,
+			base_deuterium INT NOT NULL DEFAULT 0,
+			base_turns INT NOT NULL DEFAULT 1,
+			base_power INT NOT NULL DEFAULT 0
+		)");
+		$this->query("CREATE TABLE IF NOT EXISTS player_blueprints (
+			uid INT NOT NULL,
+			blueprint_id INT NOT NULL,
+			owned_copies INT NOT NULL DEFAULT 0,
+			me_level INT NOT NULL DEFAULT 0,
+			te_level INT NOT NULL DEFAULT 0,
+			run_count INT NOT NULL DEFAULT 0,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY(uid, blueprint_id)
+		)");
+		$this->query("CREATE TABLE IF NOT EXISTS blueprint_hangar (
+			uid INT NOT NULL,
+			blueprint_id INT NOT NULL,
+			hull_class VARCHAR(40) NOT NULL,
+			quantity INT NOT NULL DEFAULT 0,
+			total_power BIGINT NOT NULL DEFAULT 0,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY(uid, blueprint_id)
+		)");
+	}
+
+	public function colonyGridCatalog(): array
+	{
+		$cat = [];
+		$q = $this->query("SELECT building_key,building_name,category,tier,size_requirement,blueprint_id,
+			base_metal,base_crystal,base_deuterium,base_food,base_water,base_naq,base_turns,power_generated,population_use,scale_factor,notes
+			FROM field_building_catalog ORDER BY tier ASC, category ASC, building_key ASC");
+		if ($q) {
+			while ($row = $q->fetch_assoc()) {
+				$row['building_key'] = (string)$row['building_key'];
+				$cat[$row['building_key']] = $row;
+			}
+		}
+		return $cat;
+	}
+
+	public function colonySizeClass(int $uid, int $worldIndex, string $targetType, int $moonNo): int
+	{
+		$moonBias = ($targetType === 'moon') ? 3 : 0;
+		return 1 + ((($uid % 9) + (($worldIndex * 11) % 9) + (($moonNo * 7) % 9) + $moonBias) % 9);
+	}
+
+	public function colonySlotClasses(int $fieldTotal, int $sizeClass): array
+	{
+		$fieldTotal = max(1, $fieldTotal);
+		$sizeClass = max(1, min(9, $sizeClass));
+		$classes = [];
+		for ($i = 1; $i <= $fieldTotal; $i++) {
+			$classes[$i] = 1 + (int)floor((($i - 1) * ($sizeClass - 1)) / max(1, $fieldTotal - 1));
+		}
+		return $classes;
+	}
+
+	public function colonyPowerTotals(array $rows, array $cat): array
+	{
+		$capacity = 0;
+		$consumption = 0;
+		$storage = 0;
+		foreach ($rows as $row) {
+			$level = max(1, (int)$row['building_level']);
+			$key = (string)($row['building_key'] ?? '');
+			$base = 0;
+			if ($key !== '' && isset($cat[$key])) {
+				$base = (int)$cat[$key]['power_generated'];
+			} elseif (isset($row['power_generated'])) {
+				$base = (int)$row['power_generated'];
+			}
+			if ($key === 'power_capacitor') {
+				$storage += $level * 2000;
+			}
+			$contribution = $base * $level;
+			if ($contribution < 0) {
+				$capacity += -$contribution;
+			} else {
+				$consumption += $contribution;
+			}
+		}
+		$stability = 100;
+		if ($consumption > $capacity) {
+			$stability = (int)max(0, 100 - floor(100 * ($consumption - $capacity) / max(1, $capacity + $storage)));
+		}
+		return [
+			'capacity' => $capacity,
+			'consumption' => $consumption,
+			'storage' => $storage,
+			'stability' => $stability,
+			'surplus' => $capacity - $consumption,
+		];
+	}
+
+	public function colonyGridState(int $uid, int $worldIndex, string $targetType, int $moonNo): array
+	{
+		$this->colonyGridEnsureTables();
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+
+		$profile = null;
+		$q = $this->query("SELECT * FROM universe_colony_profiles
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+		if ($q && $q->num_rows > 0) {
+			$profile = $q->fetch_assoc();
+		}
+
+		$rows = [];
+		$rq = $this->query("SELECT field_id,slot_no,building_key,building_code,building_name,building_level,power_generated,population_use
+			FROM universe_colony_fields
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . "
+			ORDER BY slot_no ASC");
+		if ($rq) {
+			while ($row = $rq->fetch_assoc()) {
+				$rows[(int)$row['slot_no']] = $row;
+			}
+		}
+
+		$sizeClass = $profile ? max(1, (int)($profile['size_class'] ?? 1)) : 1;
+		if ($profile && (int)$profile['size_class'] < 1) {
+			$sizeClass = $this->colonySizeClass($uid, $worldIndex, $targetType, $moonNo);
+		}
+		$fieldTotal = $profile ? max(1, (int)($profile['field_total'] ?? 0)) : 0;
+		$fieldUsed = $profile ? max(0, (int)($profile['field_used'] ?? 0)) : 0;
+		$cat = $this->colonyGridCatalog();
+		$slotClasses = $this->colonySlotClasses($fieldTotal, $sizeClass);
+		$power = $this->colonyPowerTotals($rows, $cat);
+
+		return [
+			'uid' => $uid,
+			'world_index' => $worldIndex,
+			'target_type' => $targetType,
+			'moon_no' => $moonNo,
+			'profile' => $profile,
+			'rows' => $rows,
+			'slot_classes' => $slotClasses,
+			'size_class' => $sizeClass,
+			'field_total' => $fieldTotal,
+			'field_used' => $fieldUsed,
+			'catalog' => $cat,
+			'power' => $power,
+		];
+	}
+
+	public function colonyRecalcPower(int $uid, int $worldIndex, string $targetType, int $moonNo): array
+	{
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+		$state = $this->colonyGridState($uid, $worldIndex, $targetType, $moonNo);
+		$power = $state['power'];
+		$this->query("UPDATE universe_colony_profiles SET
+			power_capacity=" . (int)$power['capacity'] . ",
+			power_consumption=" . (int)$power['consumption'] . ",
+			power_storage=" . (int)$power['storage'] . ",
+			grid_stability=" . (int)$power['stability'] . "
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+		return $power;
+	}
+
+	public function colonyBuildCost(string $key, array $entry, int $curLevel, int $meLevel = 0): array
+	{
+		$scale = max(1.0, (float)($entry['scale_factor'] ?? 2.00));
+		$lvl = max(0, $curLevel);
+		$mult = (float)($lvl + 1) * pow($scale, $lvl);
+		$materialFactor = max(0.55, 1 - min(0.45, $meLevel * 0.02));
+		$cost = [
+			'metal' => (int)round(((int)$entry['base_metal'] ?? 0) * $mult * $materialFactor),
+			'crystal' => (int)round(((int)$entry['base_crystal'] ?? 0) * $mult * $materialFactor),
+			'deuterium' => (int)round(((int)$entry['base_deuterium'] ?? 0) * $mult * $materialFactor),
+			'food' => (int)round(((int)$entry['base_food'] ?? 0) * $mult * $materialFactor),
+			'water' => (int)round(((int)$entry['base_water'] ?? 0) * $mult * $materialFactor),
+			'naq' => (int)round(((int)$entry['base_naq'] ?? 0) * $mult),
+			'turns' => max(1, (int)ceil(((int)$entry['base_turns'] ?? 1) * pow($scale, $lvl))),
+			'population' => (int)round(((int)$entry['population_use'] ?? 0) * ($lvl + 1)),
+		];
+		return $cost;
+	}
+
+	public function colonyInvestedCost(string $key, array $entry, int $level): array
+	{
+		$total = ['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'naq' => 0];
+		for ($lvl = 0; $lvl < $level; $lvl++) {
+			$c = $this->colonyBuildCost($key, $entry, $lvl);
+			foreach (array_keys($total) as $res) {
+				$total[$res] += (int)$c[$res];
+			}
+		}
+		return $total;
+	}
+
+	public function colonyFieldBuild(int $uid, int $worldIndex, string $targetType, int $moonNo, int $slotNo, string $key): string
+	{
+		$this->colonyGridEnsureTables();
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+		$slotNo = max(1, (int)$slotNo);
+		$key = preg_replace('/[^a-z0-9_]/', '', strtolower((string)$key));
+		$state = $this->colonyGridState($uid, $worldIndex, $targetType, $moonNo);
+		$profile = $state['profile'];
+		if (!$profile) { return 'Field build failed: colony profile missing.'; }
+		$cat = $state['catalog'];
+		if ($key === '' || !isset($cat[$key])) { return 'Field build failed: unknown building type.'; }
+		$entry = $cat[$key];
+		$slotClasses = $state['slot_classes'];
+		if (!isset($slotClasses[$slotNo])) { return 'Field build failed: slot is outside this colony grid.'; }
+		if (isset($state['rows'][$slotNo])) { return 'Field build failed: slot #' . $slotNo . ' is already occupied.'; }
+		if ((int)$entry['size_requirement'] > (int)$slotClasses[$slotNo]) { return 'Field build failed: slot #' . $slotNo . ' requires class ' . (int)$entry['size_requirement'] . ' or higher.'; }
+
+		$bpId = (int)$entry['blueprint_id'];
+		if ($bpId > 0) {
+			$bpQ = $this->query("SELECT owned_copies FROM player_blueprints WHERE uid=" . $uid . " AND blueprint_id=" . $bpId . " LIMIT 1");
+			$bpRow = ($bpQ && $bpQ->num_rows > 0) ? $bpQ->fetch_object() : null;
+			if (!$bpRow || (int)$bpRow->owned_copies < 1) { return 'Field build failed: building blueprint not owned.'; }
+		}
+
+		if ((int)$entry['tier'] >= 5) {
+			$aicQ = $this->query("SELECT building_level FROM universe_colony_fields
+				WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " AND building_key='aic_factory' LIMIT 1");
+			$aic = ($aicQ && $aicQ->num_rows > 0) ? $aicQ->fetch_object() : null;
+			if (!$aic || (int)$aic->building_level < 1) { return 'Field build failed: requires an Alliance Industrial Complex (AIC) on this colony.'; }
+		}
+
+		if ((int)$state['field_used'] >= (int)$state['field_total']) { return 'Field build failed: no free fields. Expand the grid first.'; }
+
+		$meLevel = 0;
+		if ($bpId > 0) {
+			$meQ = $this->query("SELECT me_level FROM player_blueprints WHERE uid=" . $uid . " AND blueprint_id=" . $bpId . " LIMIT 1");
+			if ($meQ && $meQ->num_rows > 0) { $meLevel = (int)$meQ->fetch_object()->me_level; }
+		}
+		$cost = $this->colonyBuildCost($key, $entry, 0, $meLevel);
+
+		$resQ = $this->query("SELECT metal,crystal,deuterium,food,water,population FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+		$res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'population' => 0];
+		$turnQ = $this->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+		$turns = $turnQ ? (int)$turnQ->fetch_object()->actionTurns : 0;
+		$bankQ = $this->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+		$bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+
+		if ($turns < (int)$cost['turns']) { return 'Field build failed: insufficient action turns.'; }
+		if ((int)$bankObj->onHand < (int)$cost['naq']) { return 'Field build failed: insufficient Naquadah.'; }
+		if ((int)$res->metal < (int)$cost['metal'] || (int)$res->crystal < (int)$cost['crystal'] || (int)$res->deuterium < (int)$cost['deuterium'] || (int)$res->food < (int)$cost['food'] || (int)$res->water < (int)$cost['water'] || (int)$res->population < (int)$cost['population']) {
+			return 'Field build failed: insufficient resources or population.';
+		}
+
+		$roboticsLevel = $this->colonyBuildingLevel($uid, $worldIndex, $targetType, $moonNo, 'robotics_factory');
+		$buildTurns = (int)max(1, round($cost['turns'] / (1 + ($roboticsLevel * 0.10))));
+
+		$this->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $buildTurns . ") WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE bank SET onHand=onHand-" . (int)$cost['naq'] . " WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE player_resources SET
+			metal=metal-" . (int)$cost['metal'] . ",
+			crystal=crystal-" . (int)$cost['crystal'] . ",
+			deuterium=deuterium-" . (int)$cost['deuterium'] . ",
+			food=food-" . (int)$cost['food'] . ",
+			water=water-" . (int)$cost['water'] . ",
+			population=GREATEST(0,population-" . (int)$cost['population'] . ")
+			WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("INSERT INTO universe_colony_fields
+			(uid,world_index,target_type,moon_no,slot_no,slot_class,building_code,building_key,building_name,building_level,power_draw,power_generated,population_use)
+			VALUES (" . $uid . "," . $worldIndex . ",'" . $targetType . "'," . $moonNo . "," . $slotNo . "," . (int)$slotClasses[$slotNo] . ",
+			'" . $key . "','" . $key . "','" . str_replace("'", "''", (string)$entry['building_name']) . "',1,
+			" . max(0, (int)$entry['power_generated']) . "," . (int)$entry['power_generated'] . "," . (int)$entry['population_use'] . ")");
+		$this->query("UPDATE universe_colony_profiles SET field_used=field_used+1
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+		$this->colonyRecalcPower($uid, $worldIndex, $targetType, $moonNo);
+		return 'Field build complete: ' . (string)$entry['building_name'] . ' placed in slot #' . $slotNo . '.';
+	}
+
+	public function colonyFieldUpgrade(int $uid, int $worldIndex, string $targetType, int $moonNo, int $slotNo): string
+	{
+		$this->colonyGridEnsureTables();
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+		$slotNo = max(1, (int)$slotNo);
+		$state = $this->colonyGridState($uid, $worldIndex, $targetType, $moonNo);
+		$profile = $state['profile'];
+		if (!$profile) { return 'Field upgrade failed: colony profile missing.'; }
+		if (!isset($state['rows'][$slotNo])) { return 'Field upgrade failed: no building in slot #' . $slotNo . '.'; }
+		$row = $state['rows'][$slotNo];
+		$key = (string)$row['building_key'];
+		if ($key === '' || !isset($state['catalog'][$key])) { return 'Field upgrade failed: unknown building type.'; }
+		$entry = $state['catalog'][$key];
+		$curLevel = max(1, (int)$row['building_level']);
+
+		$bpId = (int)$entry['blueprint_id'];
+		$meLevel = 0;
+		if ($bpId > 0) {
+			$meQ = $this->query("SELECT me_level FROM player_blueprints WHERE uid=" . $uid . " AND blueprint_id=" . $bpId . " LIMIT 1");
+			if ($meQ && $meQ->num_rows > 0) { $meLevel = (int)$meQ->fetch_object()->me_level; }
+		}
+		$cost = $this->colonyBuildCost($key, $entry, $curLevel, $meLevel);
+
+		$resQ = $this->query("SELECT metal,crystal,deuterium,food,water,population FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+		$res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'population' => 0];
+		$turnQ = $this->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+		$turns = $turnQ ? (int)$turnQ->fetch_object()->actionTurns : 0;
+		$bankQ = $this->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+		$bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+
+		if ($turns < (int)$cost['turns']) { return 'Field upgrade failed: insufficient action turns.'; }
+		if ((int)$bankObj->onHand < (int)$cost['naq']) { return 'Field upgrade failed: insufficient Naquadah.'; }
+		if ((int)$res->metal < (int)$cost['metal'] || (int)$res->crystal < (int)$cost['crystal'] || (int)$res->deuterium < (int)$cost['deuterium'] || (int)$res->food < (int)$cost['food'] || (int)$res->water < (int)$cost['water'] || (int)$res->population < (int)$cost['population']) {
+			return 'Field upgrade failed: insufficient resources or population.';
+		}
+
+		$roboticsLevel = $this->colonyBuildingLevel($uid, $worldIndex, $targetType, $moonNo, 'robotics_factory');
+		$aicLevel = $this->colonyBuildingLevel($uid, $worldIndex, $targetType, $moonNo, 'aic_factory');
+		$speed = (1 + ($roboticsLevel * 0.10)) * (1 + ($aicLevel * 0.15));
+		$buildTurns = (int)max(1, round($cost['turns'] / $speed));
+
+		$nextLevel = $curLevel + 1;
+		$this->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $buildTurns . ") WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE bank SET onHand=onHand-" . (int)$cost['naq'] . " WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE player_resources SET
+			metal=metal-" . (int)$cost['metal'] . ",
+			crystal=crystal-" . (int)$cost['crystal'] . ",
+			deuterium=deuterium-" . (int)$cost['deuterium'] . ",
+			food=food-" . (int)$cost['food'] . ",
+			water=water-" . (int)$cost['water'] . ",
+			population=GREATEST(0,population-" . (int)$cost['population'] . ")
+			WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE universe_colony_fields SET
+			building_level=" . $nextLevel . ",
+			power_draw=" . max(0, (int)($entry['power_generated'] * $nextLevel)) . ",
+			power_generated=" . (int)($entry['power_generated'] * $nextLevel) . ",
+			population_use=" . (int)((int)$entry['population_use'] * $nextLevel) . "
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " AND slot_no=" . $slotNo . " LIMIT 1");
+		$this->colonyRecalcPower($uid, $worldIndex, $targetType, $moonNo);
+		return 'Field upgrade complete: ' . (string)$row['building_name'] . ' is now level ' . $nextLevel . '.';
+	}
+
+	public function colonyFieldDemolish(int $uid, int $worldIndex, string $targetType, int $moonNo, int $slotNo): string
+	{
+		$this->colonyGridEnsureTables();
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+		$slotNo = max(1, (int)$slotNo);
+		$state = $this->colonyGridState($uid, $worldIndex, $targetType, $moonNo);
+		$profile = $state['profile'];
+		if (!$profile) { return 'Field demolish failed: colony profile missing.'; }
+		if (!isset($state['rows'][$slotNo])) { return 'Field demolish failed: no building in slot #' . $slotNo . '.'; }
+		$row = $state['rows'][$slotNo];
+		$key = (string)$row['building_key'];
+		$entry = ($key !== '' && isset($state['catalog'][$key])) ? $state['catalog'][$key] : null;
+		$curLevel = max(1, (int)$row['building_level']);
+
+		$turnQ = $this->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+		$turns = $turnQ ? (int)$turnQ->fetch_object()->actionTurns : 0;
+		if ($turns < 1) { return 'Field demolish failed: insufficient action turns.'; }
+
+		$refund = ['metal' => 0, 'crystal' => 0, 'deuterium' => 0, 'food' => 0, 'water' => 0, 'naq' => 0];
+		if ($entry) {
+			$invested = $this->colonyInvestedCost($key, $entry, $curLevel);
+			foreach (array_keys($refund) as $res) {
+				$refund[$res] = (int)round($invested[$res] * 0.5);
+			}
+		}
+
+		$this->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-1) WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE player_resources SET
+			metal=metal+" . (int)$refund['metal'] . ",
+			crystal=crystal+" . (int)$refund['crystal'] . ",
+			deuterium=deuterium+" . (int)$refund['deuterium'] . ",
+			food=food+" . (int)$refund['food'] . ",
+			water=water+" . (int)$refund['water'] . "
+			WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE bank SET onHand=onHand+" . (int)$refund['naq'] . " WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("DELETE FROM universe_colony_fields
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " AND slot_no=" . $slotNo . " LIMIT 1");
+		$this->query("UPDATE universe_colony_profiles SET field_used=GREATEST(0,field_used-1)
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+		$this->colonyRecalcPower($uid, $worldIndex, $targetType, $moonNo);
+		return 'Field demolished: ' . (string)$row['building_name'] . ' removed from slot #' . $slotNo . '. 50% of invested resources refunded.';
+	}
+
+	public function colonyFieldExpand(int $uid, int $worldIndex, string $targetType, int $moonNo): string
+	{
+		$this->colonyGridEnsureTables();
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+		$state = $this->colonyGridState($uid, $worldIndex, $targetType, $moonNo);
+		$profile = $state['profile'];
+		if (!$profile) { return 'Field expansion failed: colony profile missing.'; }
+		$tier = max(1, (int)$profile['infrastructure_tier']);
+		$needTurns = 2;
+		$needNaq = 26000 + ($tier * 12000);
+		$needMetal = 18000 + ($tier * 9000);
+		$needCrystal = 12000 + ($tier * 7000);
+
+		$turnQ = $this->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+		$turns = $turnQ ? (int)$turnQ->fetch_object()->actionTurns : 0;
+		$bankQ = $this->query("SELECT onHand FROM bank WHERE uid=" . $uid . " LIMIT 1");
+		$bankObj = $bankQ ? $bankQ->fetch_object() : (object)['onHand' => 0];
+		$resQ = $this->query("SELECT metal,crystal FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+		$res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0];
+
+		if ($turns < $needTurns) { return 'Field expansion failed: insufficient action turns.'; }
+		if ((int)$bankObj->onHand < $needNaq || (int)$res->metal < $needMetal || (int)$res->crystal < $needCrystal) {
+			return 'Field expansion failed: insufficient Naquadah/metal/crystal.';
+		}
+
+		$addFields = ($targetType === 'planet') ? 3 : 2;
+		$this->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $needTurns . ") WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE bank SET onHand=onHand-" . $needNaq . " WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE player_resources SET metal=metal-" . $needMetal . ", crystal=crystal-" . $needCrystal . " WHERE uid=" . $uid . " LIMIT 1");
+		$newClass = min(9, (int)$state['size_class'] + 1);
+		$this->query("UPDATE universe_colony_profiles SET
+			field_total=field_total+" . $addFields . ",
+			infrastructure_tier=infrastructure_tier+1,
+			size_class=" . $newClass . "
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " LIMIT 1");
+		$this->colonyRecalcPower($uid, $worldIndex, $targetType, $moonNo);
+		return 'Field expansion complete: +' . $addFields . ' build fields unlocked. Colony grid upgraded to class ' . $newClass . '.';
+	}
+
+	public function colonyBuildingLevel(int $uid, int $worldIndex, string $targetType, int $moonNo, string $key): int
+	{
+		$uid = (int)$uid;
+		$worldIndex = (int)$worldIndex;
+		$targetType = ($targetType === 'moon') ? 'moon' : 'planet';
+		$moonNo = ($targetType === 'moon') ? max(1, (int)$moonNo) : 0;
+		$key = preg_replace('/[^a-z0-9_]/', '', strtolower((string)$key));
+		$q = $this->query("SELECT building_level FROM universe_colony_fields
+			WHERE uid=" . $uid . " AND world_index=" . $worldIndex . " AND target_type='" . $targetType . "' AND moon_no=" . $moonNo . " AND building_key='" . $key . "' LIMIT 1");
+		if ($q && $q->num_rows > 0) { return (int)$q->fetch_object()->building_level; }
+		return 0;
+	}
+
+	public function aiFactoryStatus(int $uid): array
+	{
+		$uid = (int)$uid;
+		$q = $this->query("SELECT COALESCE(MAX(building_level),0) AS lvl FROM universe_colony_fields WHERE uid=" . $uid . " AND building_key='ai_factory'");
+		$level = 0;
+		if ($q && $q->num_rows > 0) { $level = (int)$q->fetch_object()->lvl; }
+		$units = [];
+		$uq = $this->query("SELECT unit_type,quantity FROM player_ai_units WHERE uid=" . $uid . " ORDER BY unit_type ASC");
+		if ($uq) {
+			while ($row = $uq->fetch_assoc()) {
+				$units[$row['unit_type']] = (int)$row['quantity'];
+			}
+		}
+		return [
+			'level' => $level,
+			'units' => $units,
+			'unit_catalog' => [
+				'worker' => ['name' => 'AI Worker', 'metal' => 500, 'crystal' => 200, 'deuterium' => 50, 'turns' => 1, 'per_level' => 100],
+				'drone' => ['name' => 'Combat Drone', 'metal' => 1500, 'crystal' => 900, 'deuterium' => 300, 'turns' => 1, 'per_level' => 40],
+				'core' => ['name' => 'AI Core', 'metal' => 6000, 'crystal' => 5000, 'deuterium' => 2000, 'turns' => 2, 'per_level' => 10],
+			],
+		];
+	}
+
+	public function aiFactoryProduce(int $uid, string $unitType, int $qty): string
+	{
+		$uid = (int)$uid;
+		$unitType = preg_replace('/[^a-z0-9_]/', '', strtolower((string)$unitType));
+		$qty = max(1, (int)$qty);
+		$status = $this->aiFactoryStatus($uid);
+		if ($status['level'] < 1) { return 'AI production failed: build an AI Factory on one of your colonies first.'; }
+		if (!isset($status['unit_catalog'][$unitType])) { return 'AI production failed: unknown unit type.'; }
+		$def = $status['unit_catalog'][$unitType];
+		$cap = (int)$status['level'] * (int)$def['per_level'];
+		$qty = min($qty, $cap);
+
+		$resQ = $this->query("SELECT metal,crystal,deuterium FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
+		$res = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0];
+		$turnQ = $this->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
+		$turns = $turnQ ? (int)$turnQ->fetch_object()->actionTurns : 0;
+
+		$costM = (int)$def['metal'] * $qty;
+		$costC = (int)$def['crystal'] * $qty;
+		$costD = (int)$def['deuterium'] * $qty;
+		$costT = (int)$def['turns'] * $qty;
+
+		if ($turns < $costT) { return 'AI production failed: insufficient action turns.'; }
+		if ((int)$res->metal < $costM || (int)$res->crystal < $costC || (int)$res->deuterium < $costD) {
+			return 'AI production failed: insufficient strategic resources.';
+		}
+
+		$this->query("UPDATE userdata SET actionTurns=GREATEST(0,actionTurns-" . $costT . ") WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("UPDATE player_resources SET metal=metal-" . $costM . ", crystal=crystal-" . $costC . ", deuterium=deuterium-" . $costD . " WHERE uid=" . $uid . " LIMIT 1");
+		$this->query("INSERT INTO player_ai_units (uid,unit_type,quantity) VALUES (" . $uid . ",'" . $unitType . "'," . $qty . ")
+			ON DUPLICATE KEY UPDATE quantity=quantity+" . $qty);
+		return 'AI production complete: ' . $qty . 'x ' . (string)$def['name'] . ' added to your AI reserves.';
+	}
+
 	public function sabotage(int $uid, int $turns = 0): ?int
 	{
 		if ($turns == 0) { echo "No Turns Used<br>"; exit; }

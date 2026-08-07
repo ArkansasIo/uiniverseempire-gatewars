@@ -132,7 +132,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
     </a>
     <div class="public-brand">
       <h1>Universe Civilization: Empire at Wars</h1>
-      <p>Strategic command and empire operations across the Stargate network</p>
+      <p>Strategic command and empire operations across the universe </p>
       <p class="public-tagline">A persistent, turn-based war game. Raise a fleet, develop technologies, and conquer worlds through the Stargate frontier — every decision shapes your empire and the balance of power in the galaxy.</p>
     </div>
     <div class="public-actions">
@@ -150,7 +150,7 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
         <div class="hero-overlay">
           <span class="hero-pill">Stargate Command</span>
           <h2>Command the Final Frontier</h2>
-          <p>Build fleets, seize systems, and wage turn-based war across the Stargate frontier.</p>
+          <p>Build fleets, seize systems, and wage turn-based war across the universe frontier.</p>
         </div>
       </div>
     </div>

@@ -1536,6 +1536,8 @@ function blueprintEnsureTables(Game $s, array $catalog): void {
         blueprint_id INT NOT NULL PRIMARY KEY,
         bp_name VARCHAR(96) NOT NULL,
         hull_class VARCHAR(40) NOT NULL,
+        bp_kind VARCHAR(16) NOT NULL DEFAULT 'ship',
+        target_key VARCHAR(32) NOT NULL DEFAULT '',
         tier INT NOT NULL DEFAULT 1,
         copy_cost INT NOT NULL DEFAULT 0,
         base_metal INT NOT NULL DEFAULT 0,
@@ -1577,8 +1579,8 @@ function blueprintEnsureTables(Game $s, array $catalog): void {
         $d = (int)$bp['base_deuterium'];
         $t = (int)$bp['base_turns'];
         $p = (int)$bp['base_power'];
-        $s->query("REPLACE INTO blueprint_catalog (blueprint_id,bp_name,hull_class,tier,copy_cost,base_metal,base_crystal,base_deuterium,base_turns,base_power)
-            VALUES (" . $id . ", '" . $name . "', '" . $hull . "', " . $tier . ", " . $copy . ", " . $m . ", " . $c . ", " . $d . ", " . $t . ", " . $p . ")");
+        $s->query("REPLACE INTO blueprint_catalog (blueprint_id,bp_name,hull_class,bp_kind,target_key,tier,copy_cost,base_metal,base_crystal,base_deuterium,base_turns,base_power)
+            VALUES (" . $id . ", '" . $name . "', '" . $hull . "', 'ship', '', " . $tier . ", " . $copy . ", " . $m . ", " . $c . ", " . $d . ", " . $t . ", " . $p . ")");
     }
 }
 
@@ -2787,6 +2789,7 @@ $resourceHub = resourceEnsureAndTick($s, $uid, $baseData, $planets, $techView);
 $blueprintCatalog = blueprintCatalog();
 $blueprintOwned = [];
 $blueprintHangar = [];
+$blueprintBuildingCatalog = [];
 $seedSlice = ['rows' => [], 'page' => 1, 'perPage' => 25, 'maxPage' => 1, 'start' => 0, 'end' => 0, 'total' => 0];
 $seedBookmarks = [];
 $operationsRtsCatalog = [
@@ -4197,6 +4200,31 @@ if ($main === 'research') {
 
 if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && $sub === 'seeds') || strpos($cmd, 'bp_') === 0 || $cmd === 'seed_bookmark') {
     blueprintEnsureTables($s, $blueprintCatalog);
+    $blueprintBuildingCatalog = [];
+    $bpBuildQ = $s->query("SELECT blueprint_id,bp_name,hull_class,bp_kind,target_key,tier,copy_cost,base_metal,base_crystal,base_deuterium,base_turns,base_power
+        FROM blueprint_catalog WHERE bp_kind='building' ORDER BY tier ASC, blueprint_id ASC");
+    if ($bpBuildQ) {
+        while ($r = $bpBuildQ->fetch_assoc()) {
+            $blueprintBuildingCatalog[(int)$r['blueprint_id']] = [
+                'name' => (string)$r['bp_name'],
+                'hull_class' => (string)$r['hull_class'],
+                'target_key' => (string)$r['target_key'],
+                'tier' => (int)$r['tier'],
+                'copy_cost' => (int)$r['copy_cost'],
+                'base_metal' => (int)$r['base_metal'],
+                'base_crystal' => (int)$r['base_crystal'],
+                'base_deuterium' => (int)$r['base_deuterium'],
+                'base_turns' => (int)$r['base_turns'],
+                'base_power' => (int)$r['base_power'],
+            ];
+        }
+    }
+
+    foreach ($blueprintCatalog as $id => $bp) {
+        if (isset($blueprintBuildingCatalog[(int)$id])) { continue; }
+        $s->query("INSERT IGNORE INTO player_blueprints (uid, blueprint_id) VALUES (" . $uid . ", " . (int)$id . ")");
+    }
+
     $s->query("CREATE TABLE IF NOT EXISTS universe_seed_bookmarks (
         uid INT NOT NULL,
         seed_index INT NOT NULL,
@@ -4206,12 +4234,9 @@ if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && 
         PRIMARY KEY(uid, seed_index)
     )");
 
-    foreach ($blueprintCatalog as $id => $bp) {
-        $s->query("INSERT IGNORE INTO player_blueprints (uid, blueprint_id) VALUES (" . $uid . ", " . (int)$id . ")");
-    }
-
-    if (strpos($cmd, 'bp_') === 0 && isset($blueprintCatalog[$bpId])) {
-        $bp = $blueprintCatalog[$bpId];
+    if (strpos($cmd, 'bp_') === 0 && (isset($blueprintCatalog[$bpId]) || isset($blueprintBuildingCatalog[$bpId]))) {
+        $bp = isset($blueprintCatalog[$bpId]) ? $blueprintCatalog[$bpId] : $blueprintBuildingCatalog[$bpId];
+        $isFieldBuilding = !isset($blueprintCatalog[$bpId]);
         $resQ = $s->query("SELECT metal,crystal,deuterium FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
         $resObj = $resQ ? $resQ->fetch_object() : (object)['metal' => 0, 'crystal' => 0, 'deuterium' => 0];
         $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
@@ -4260,23 +4285,27 @@ if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && 
         }
 
         if ($cmd === 'bp_build') {
-            $qty = max(1, min(200, $bpQty));
-            $costs = blueprintOrderCosts($bp, $qty, (int)$bpRow->me_level, (int)$bpRow->te_level);
-            if ((int)$bpRow->owned_copies < 1) {
-                $pageActionStatus = 'Manufacturing failed: blueprint copy not owned.';
-            } elseif ((int)$turnObj->actionTurns < (int)$costs['turns']) {
-                $pageActionStatus = 'Manufacturing failed: insufficient action turns.';
-            } elseif ((int)$resObj->metal < (int)$costs['metal'] || (int)$resObj->crystal < (int)$costs['crystal'] || (int)$resObj->deuterium < (int)$costs['deuterium']) {
-                $pageActionStatus = 'Manufacturing failed: insufficient resources.';
+            if ($isFieldBuilding) {
+                $pageActionStatus = 'Manufacturing failed: field building blueprints unlock construction in the Colony Grid, not fleet hangar production.';
             } else {
-                $hull = preg_replace('/[^A-Za-z0-9 _-]/', '', (string)$bp['hull']);
-                $s->query("UPDATE player_resources SET metal=metal-" . (int)$costs['metal'] . ", crystal=crystal-" . (int)$costs['crystal'] . ", deuterium=deuterium-" . (int)$costs['deuterium'] . " WHERE uid=" . $uid . " LIMIT 1");
-                $s->query("UPDATE userdata SET actionTurns=GREATEST(0, actionTurns-" . (int)$costs['turns'] . ") WHERE uid=" . $uid . " LIMIT 1");
-                $s->query("INSERT INTO blueprint_hangar (uid, blueprint_id, hull_class, quantity, total_power)
-                    VALUES (" . $uid . ", " . $bpId . ", '" . $hull . "', " . $qty . ", " . (int)$costs['power'] . ")
-                    ON DUPLICATE KEY UPDATE quantity=quantity+" . $qty . ", total_power=total_power+" . (int)$costs['power']);
-                $s->query("UPDATE player_blueprints SET run_count=run_count+" . $qty . " WHERE uid=" . $uid . " AND blueprint_id=" . $bpId . " LIMIT 1");
-                $pageActionStatus = 'Manufacturing complete: ' . fnum($qty) . 'x ' . (string)$bp['name'] . ' added to blueprint hangar.';
+                $qty = max(1, min(200, $bpQty));
+                $costs = blueprintOrderCosts($bp, $qty, (int)$bpRow->me_level, (int)$bpRow->te_level);
+                if ((int)$bpRow->owned_copies < 1) {
+                    $pageActionStatus = 'Manufacturing failed: blueprint copy not owned.';
+                } elseif ((int)$turnObj->actionTurns < (int)$costs['turns']) {
+                    $pageActionStatus = 'Manufacturing failed: insufficient action turns.';
+                } elseif ((int)$resObj->metal < (int)$costs['metal'] || (int)$resObj->crystal < (int)$costs['crystal'] || (int)$resObj->deuterium < (int)$costs['deuterium']) {
+                    $pageActionStatus = 'Manufacturing failed: insufficient resources.';
+                } else {
+                    $hull = preg_replace('/[^A-Za-z0-9 _-]/', '', (string)$bp['hull']);
+                    $s->query("UPDATE player_resources SET metal=metal-" . (int)$costs['metal'] . ", crystal=crystal-" . (int)$costs['crystal'] . ", deuterium=deuterium-" . (int)$costs['deuterium'] . " WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("UPDATE userdata SET actionTurns=GREATEST(0, actionTurns-" . (int)$costs['turns'] . ") WHERE uid=" . $uid . " LIMIT 1");
+                    $s->query("INSERT INTO blueprint_hangar (uid, blueprint_id, hull_class, quantity, total_power)
+                        VALUES (" . $uid . ", " . $bpId . ", '" . $hull . "', " . $qty . ", " . (int)$costs['power'] . ")
+                        ON DUPLICATE KEY UPDATE quantity=quantity+" . $qty . ", total_power=total_power+" . (int)$costs['power']);
+                    $s->query("UPDATE player_blueprints SET run_count=run_count+" . $qty . " WHERE uid=" . $uid . " AND blueprint_id=" . $bpId . " LIMIT 1");
+                    $pageActionStatus = 'Manufacturing complete: ' . fnum($qty) . 'x ' . (string)$bp['name'] . ' added to blueprint hangar.';
+                }
             }
         }
     }
@@ -6372,8 +6401,37 @@ if ($main === 'research') {
         }
         echo '</div>';
 
+        echo '<div class="card full wows-info-card"><h4>Field Building Blueprints</h4>';
+        if (count($blueprintBuildingCatalog) === 0) {
+            echo '<p>No field building blueprints found.</p>';
+        } else {
+            echo '<table class="mini-table" border="0" width="100%">';
+            echo '<tr><th align="left">Blueprint</th><th align="left">Tier</th><th align="left">Used By</th><th align="left">Copy Cost</th><th align="left">Copies</th><th align="left">ME</th><th align="left">TE</th><th align="left">Actions</th></tr>';
+            foreach ($blueprintBuildingCatalog as $id => $bp) {
+                $own = isset($blueprintOwned[$id]) ? $blueprintOwned[$id] : ['owned_copies' => 0, 'me_level' => 0, 'te_level' => 0, 'run_count' => 0];
+                echo '<tr>';
+                echo '<td>' . h((string)$bp['name']) . '<br><small>' . h((string)$bp['hull_class']) . '</small></td>';
+                echo '<td>T' . fnum((int)$bp['tier']) . '</td>';
+                echo '<td>' . h((string)$bp['target_key']) . '<br><small>field building</small></td>';
+                echo '<td>' . fnum((int)$bp['copy_cost']) . ' NQ</td>';
+                echo '<td>' . fnum((int)$own['owned_copies']) . '</td>';
+                echo '<td>' . fnum((int)$own['me_level']) . '</td>';
+                echo '<td>' . fnum((int)$own['te_level']) . '</td>';
+                echo '<td>';
+                if ((int)$own['owned_copies'] === 0) {
+                    echo '<a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_acquire&bp=' . (int)$id . '\'); return false">Acquire</a>';
+                } else {
+                    echo '<a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_research&bp=' . (int)$id . '&mode=me\'); return false">ME+1</a> | <a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'research\',\'blueprints&cmd=bp_research&bp=' . (int)$id . '&mode=te\'); return false">TE+1</a> <br><small>Unlocks construction in the Colony Grid.</small>';
+                }
+                echo '</td>';
+                echo '</tr>';
+            }
+            echo '</table>';
+        }
+        echo '</div>';
+
         echo '<div class="card full wows-info-card"><h4>Manufacturing Notes</h4>';
-        echo '<ul><li>Copies are consumed on research; each copy unlocks one level of ME or TE.</li><li>ME (materials) reduces build cost, TE (time) reduces build turns.</li><li>Hangar items add their power to fleet readiness when deployed.</li><li>Blueprints drop from world boss loot and deep expeditions.</li></ul>';
+        echo '<ul><li>Copies are consumed on research; each copy unlocks one level of ME or TE.</li><li>ME (materials) reduces build cost, TE (time) reduces build turns.</li><li>Hangar items add their power to fleet readiness when deployed.</li><li>Blueprints drop from world boss loot and deep expeditions.</li><li>Field building blueprints are used by the Colony Grid. Owning a copy unlocks construction; ME research discounts its material cost.</li></ul>';
         echo '</div>';
     }
 }
