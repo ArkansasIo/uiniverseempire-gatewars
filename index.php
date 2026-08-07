@@ -23,7 +23,8 @@
  * SOFTWARE.
  */
 include_once("config.php");
-$s = new Game();
+$game = new Game();
+$s = $game;
 if (isset($_GET['logout']) && $_GET['logout']) { User::logOut();} 
 if (isset($_POST['submit']) && ($_POST['submit'] == "Login" || $_POST['submit'] == "Initialize Command Link"))
 {
@@ -39,10 +40,10 @@ if (isset($_POST['submit']) && ($_POST['submit'] == "Login" || $_POST['submit'] 
         }
 }
 
-$maintenanceEnabled = $s->getAppSetting('maintenance.enabled', '0') === '1';
-$announcementActive = $s->getAppSetting('announcement.active', '0') === '1';
-$announcementTitle = $s->getAppSetting('announcement.title', '');
-$announcementBody = $s->getAppSetting('announcement.body', '');
+$maintenanceEnabled = $game->getAppSetting('maintenance.enabled', '0') === '1';
+$announcementActive = $game->getAppSetting('announcement.active', '0') === '1';
+$announcementTitle = $game->getAppSetting('announcement.title', '');
+$announcementBody = $game->getAppSetting('announcement.body', '');
 
 $subs['{ANNOUNCEMENT_BANNER}'] = '';
 if ($announcementActive && ($announcementTitle !== '' || $announcementBody !== '')) {
@@ -71,7 +72,7 @@ if ($s->loggedIn && method_exists($s, 'isAdmin') && $s->isAdmin()) {
 $isStaff = $s->loggedIn && method_exists($s, 'isAdmin') && $s->isAdmin();
 if ($maintenanceEnabled && !$isStaff) {
     header('HTTP/1.1 503 Service Unavailable');
-    $maintenanceMessage = $s->getAppSetting('maintenance.message', 'The Stargate network is currently undergoing maintenance. Please check back soon.');
+    $maintenanceMessage = $game->getAppSetting('maintenance.message', 'The Stargate network is currently undergoing maintenance. Please check back soon.');
     $maintenanceMessage = htmlspecialchars($maintenanceMessage, ENT_QUOTES, 'UTF-8');
     ?>
 <!DOCTYPE html>

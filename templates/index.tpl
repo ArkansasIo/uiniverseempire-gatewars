@@ -90,6 +90,7 @@ SOFTWARE.
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','home'); return false">Empire Home</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','overview'); return false">Operations Overview</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','planets'); return false">Planet Management</a>
+        <a href="javascript:void(0)" onclick="sendData('colonies','get','mainDisplay'); return false">Colony Management</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','command'); return false">Command Structure</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','empire','progress'); return false">Empire Progress</a>
         <details>
@@ -141,6 +142,7 @@ SOFTWARE.
         <a href="javascript:void(0)" onclick="sendData('pages','get','operations','attack'); return false">Attack Missions</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','operations','raid'); return false">Raid Missions</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','operations','spy'); return false">Spy Network</a>
+        <a href="javascript:void(0)" onclick="sendData('sabotage','get','mainDisplay'); return false">Sabotage &amp; Counter-Intel</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','operations','logs'); return false">Combat Logs</a>
         <details>
           <summary><span class="menu-summary"><span>Operations Suites</span></span></summary>
@@ -167,6 +169,7 @@ SOFTWARE.
       <details>
         <summary><span class="menu-summary"><img src="images/ui/economy.svg" alt="Economy" /><span>Economy</span></span></summary>
         <a href="javascript:void(0)" onclick="sendData('pages','get','economy','banking'); return false">Banking</a>
+        <a href="javascript:void(0)" onclick="sendData('trade','get','mainDisplay'); return false">Trade Routes</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','economy','market'); return false">Market</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','economy','technology'); return false">Technology</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','economy','production'); return false">Production</a>
@@ -204,7 +207,8 @@ SOFTWARE.
 
       <details>
         <summary><span class="menu-summary"><img src="images/ui/diplomacy.svg" alt="Diplomacy" /><span>Diplomacy</span></span></summary>
-        <a href="javascript:void(0)" onclick="sendData('pages','get','diplomacy','alliance'); return false">Alliance</a>
+        <a href="javascript:void(0)" onclick="sendData('alliance','get','mainDisplay'); return false">Alliance Command</a>
+        <a href="javascript:void(0)" onclick="sendData('ascension','get','mainDisplay'); return false">Ascension</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','diplomacy','relations'); return false">Relations</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','diplomacy','messages'); return false">Messages</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','diplomacy','commander'); return false">Commander Chain</a>
@@ -268,8 +272,8 @@ SOFTWARE.
       <details>
         <summary><span class="menu-summary"><img src="images/ui/diplomacy.svg" alt="Diplomacy Tools" /><span>Diplomacy Tools</span></span></summary>
         <a href="javascript:void(0)" onclick="sendData('sendmessage','get','mainDisplay'); return false">Send Message</a>
-        <a href="javascript:void(0)" onclick="sendData('c_ally','get','mainDisplay'); return false">Create Alliance</a>
-        <a href="javascript:void(0)" onclick="sendData('ally_mlist','get','mainDisplay'); return false">Alliance Member List</a>
+        <a href="javascript:void(0)" onclick="sendData('alliance','get','mainDisplay'); return false">Create Alliance</a>
+        <a href="javascript:void(0)" onclick="sendData('alliance','get','mainDisplay'); return false">Alliance Member List</a>
         <a href="javascript:void(0)" onclick="sendData('recruit','get','mainDisplay'); return false">Recruit Commander</a>
       </details>
 
@@ -300,7 +304,7 @@ SOFTWARE.
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','attack'); return false">Attack</a>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','raid'); return false">Raid</a>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('pages','get','operations','spy'); return false">Spy</a>
-          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('logs','get','mainDisplay','sab'); return false">Sabotage Logs</a>
+          <a href="javascript:void(0)" class="combat-btn" onclick="sendData('sabotage','get','mainDisplay'); return false">Sabotage</a>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('terminal','get','mainDisplay'); return false">War Terminal</a>
           <a href="javascript:void(0)" class="combat-btn" onclick="sendData('fleetdock','get','mainDisplay'); return false">Fleet Dock</a>
         </div>

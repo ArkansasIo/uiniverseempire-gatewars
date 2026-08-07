@@ -208,9 +208,7 @@ class GameTick extends Game
 		while ($row = $q->fetch_object()) {
 			$ids[] = (int)$row->uid;
 		}
-		if ($q->free_result) {
-			$q->free_result();
-		}
+		$q->free_result();
 
 		foreach ($ids as $uid) {
 			if ($uid <= 0) {
@@ -397,13 +395,12 @@ class GameTick extends Game
 		while ($row = $q->fetch_object()) {
 			$pos++;
 			if ($stmt) {
-				$stmt->bind_param("ii", $pos, (int)$row->uid);
+				$uidVal = (int)$row->uid;
+				$stmt->bind_param("ii", $pos, $uidVal);
 				$stmt->execute();
 			}
 		}
-		if ($q->free_result) {
-			$q->free_result();
-		}
+		$q->free_result();
 	}
 
 	/**

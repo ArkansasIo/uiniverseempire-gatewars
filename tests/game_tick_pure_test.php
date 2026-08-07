@@ -23,8 +23,9 @@
  * SOFTWARE.
  */
 // Tests for the GameTick turn-tick engine and the admin tick/settings helpers.
-// The CLI runtime has no mysqli, so only pure helpers and no-DB fallbacks are
-// exercised here; the DB-backed paths are covered by the admin smoke tests.
+// Pure helpers always run. The no-DB fallback checks only apply when no live
+// database is reachable; when a database IS available, the DB-backed paths are
+// exercised with dry-run options so nothing is mutated.
 require_once __DIR__ . '/../config.php';
 
 // --- computeIncome(): formula mirrors Game::turnUpdate() income column.
@@ -83,8 +84,9 @@ if ($refill['granted'] !== 0 || $refill['total'] !== 250) {
 
 // --- tickStatus(): safe defaults without a database.
 $tick = new GameTick();
+$dbAvailable = $tick->connected();
 $status = $tick->tickStatus();
-if ($status['last_run'] !== 0 || $status['last_status'] !== 'never') {
+if (!$dbAvailable && ($status['last_run'] !== 0 || $status['last_status'] !== 'never')) {
     fwrite(STDERR, "game_tick_pure_test failed: tickStatus defaults\n");
     exit(1);
 }
@@ -93,11 +95,19 @@ if ($status['upkeep_per_unit'] !== 1 || $status['max_turns'] !== 250 || $status[
     exit(1);
 }
 
-// --- run(): no database -> explicit error, never crashes.
-$result = $tick->run();
-if ($result['ok'] !== false || $result['error'] !== 'Database connection is unavailable.') {
-    fwrite(STDERR, "game_tick_pure_test failed: run() no-DB error\n");
-    exit(1);
+// --- run(): no database -> explicit error; database -> dry-run success, no mutation.
+if (!$dbAvailable) {
+    $result = $tick->run();
+    if ($result['ok'] !== false || $result['error'] !== 'Database connection is unavailable.') {
+        fwrite(STDERR, "game_tick_pure_test failed: run() no-DB error\n");
+        exit(1);
+    }
+} else {
+    $result = $tick->run(['dry_run' => true, 'rank' => false]);
+    if ($result['ok'] !== true) {
+        fwrite(STDERR, "game_tick_pure_test failed: run() dry-run error: " . json_encode($result) . "\n");
+        exit(1);
+    }
 }
 
 // --- Admin delegation (no database): runGameTick reports failure cleanly.
@@ -110,10 +120,18 @@ if ($admin->isAdmin()) {
     fwrite(STDERR, "game_tick_pure_test failed: demo account must not be admin without a real DB\n");
     exit(1);
 }
-$result = $admin->runGameTick();
-if ($result['ok'] !== false || $result['message'] !== 'Database connection is unavailable.') {
-    fwrite(STDERR, "game_tick_pure_test failed: runGameTick no-DB\n");
-    exit(1);
+if (!$dbAvailable) {
+    $result = $admin->runGameTick();
+    if ($result['ok'] !== false || $result['message'] !== 'Database connection is unavailable.') {
+        fwrite(STDERR, "game_tick_pure_test failed: runGameTick no-DB\n");
+        exit(1);
+    }
+} else {
+    $result = $admin->runGameTick(['dry_run' => true, 'rank' => false]);
+    if ($result['ok'] !== true) {
+        fwrite(STDERR, "game_tick_pure_test failed: runGameTick dry-run\n");
+        exit(1);
+    }
 }
 
 // --- Admin tickStatus(): default shape present.
@@ -123,6 +141,10 @@ if (!isset($status['last_run'], $status['last_status'], $status['turns_per_tick'
     exit(1);
 }
 
+// --- The no-DB fallback checks below are intentionally skipped when a live
+//     database is reachable, because they would mutate real player data
+//     (delete/reset/grant). They are covered by the admin smoke tests there.
+if (!$dbAvailable) {
 // --- Admin player operations (no database): graceful error arrays.
 $errors = $admin->deletePlayer(2);
 if (!is_array($errors) || count($errors) === 0) {
@@ -186,6 +208,7 @@ $passErrors = $u->updatePassword(1, '123');
 if (!in_array('Database connection is unavailable.', $passErrors, true)) {
     fwrite(STDERR, "game_tick_pure_test failed: updatePassword no-DB\n");
     exit(1);
+}
 }
 
 echo "game tick pure checks passed\n";

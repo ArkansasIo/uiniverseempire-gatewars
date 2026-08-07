@@ -151,6 +151,28 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && $admin->isAdmin()) {
                 $redirect = 'index.php?view=player&uid=' . (int)($_POST['uid'] ?? 0);
                 break;
 
+            case 'staff_access':
+                $target = (int)($_POST['uid'] ?? 0);
+                $level = (int)($_POST['alevel'] ?? 1);
+                if ($target === (int)$admin->userid) {
+                    adminFlash('err', 'You cannot change your own access level here.');
+                } elseif ($admin->setAccessLevel($target, $level)) {
+                    adminFlash('ok', 'Access level updated.');
+                } else {
+                    adminFlash('err', 'Could not update access level.');
+                }
+                $redirect = 'index.php?view=staff';
+                break;
+
+            case 'record_snapshot':
+                if ($admin->recordEconomySnapshot()) {
+                    adminFlash('ok', 'Daily economy snapshot recorded for ' . date('Y-m-d') . '.');
+                } else {
+                    adminFlash('err', 'Could not record economy snapshot.');
+                }
+                $redirect = 'index.php?view=economy';
+                break;
+
             case 'ban':
                 if ($admin->setBanned((int)($_POST['uid'] ?? 0), true)) {
                     adminFlash('ok', 'Player banned.');
@@ -329,7 +351,7 @@ if (!$admin->isAdmin()) {
 
 // ---- View routing ----------------------------------------------------------------
 $view = (string)($_GET['view'] ?? 'dashboard');
-$views = ['dashboard', 'players', 'player', 'messages', 'logs', 'market', 'adminlog', 'settings', 'tick', 'announcements', 'maintenance', 'mass'];
+$views = ['dashboard', 'players', 'player', 'staff', 'banned', 'messages', 'logs', 'market', 'adminlog', 'settings', 'tick', 'announcements', 'maintenance', 'mass', 'economy', 'planets', 'military', 'races', 'units', 'weapons', 'jobs', 'audit', 'server'];
 if (!in_array($view, $views, true)) {
     $view = 'dashboard';
 }
@@ -339,23 +361,58 @@ $csrf = adminCsrfToken();
 // ---- Content renderers ------------------------------------------------------------
 function adminShellStart(string $view, string $csrf, string $title = 'Admin Control Panel'): void
 {
-    $navItems = [
-        'dashboard'     => ['Dashboard', 'index.php'],
-        'players'       => ['Players', 'index.php?view=players'],
-        'messages'      => ['Broadcast', 'index.php?view=messages'],
-        'tick'          => ['Game Tick', 'index.php?view=tick'],
-        'mass'          => ['Mass Grants', 'index.php?view=mass'],
-        'announcements' => ['Announcements', 'index.php?view=announcements'],
-        'maintenance'   => ['Maintenance', 'index.php?view=maintenance'],
-        'logs'          => ['Action Logs', 'index.php?view=logs'],
-        'market'        => ['Market', 'index.php?view=market'],
-        'adminlog'      => ['Staff Log', 'index.php?view=adminlog'],
-        'settings'      => ['Settings', 'index.php?view=settings'],
+    $navGroups = [
+        'Overview' => [
+            'dashboard' => ['Dashboard', 'index.php'],
+        ],
+        'Players' => [
+            'players' => ['Player Roster', 'index.php?view=players'],
+            'player'  => ['Player Profile', 'index.php?view=players'],
+            'staff'   => ['Staff Accounts', 'index.php?view=staff'],
+            'banned'  => ['Banned Players', 'index.php?view=banned'],
+        ],
+        'Universe' => [
+            'economy'  => ['Economy', 'index.php?view=economy'],
+            'planets'  => ['Planets', 'index.php?view=planets'],
+            'military' => ['Military', 'index.php?view=military'],
+            'races'    => ['Races', 'index.php?view=races'],
+        ],
+        'Catalog' => [
+            'units'   => ['Unit Catalog', 'index.php?view=units'],
+            'weapons' => ['Weapons', 'index.php?view=weapons'],
+            'market'  => ['Market', 'index.php?view=market'],
+        ],
+        'Operations' => [
+            'tick' => ['Game Tick', 'index.php?view=tick'],
+            'mass' => ['Mass Grants', 'index.php?view=mass'],
+            'jobs' => ['Server Jobs', 'index.php?view=jobs'],
+        ],
+        'Content' => [
+            'messages'      => ['Broadcast', 'index.php?view=messages'],
+            'announcements' => ['Announcements', 'index.php?view=announcements'],
+            'maintenance'   => ['Maintenance', 'index.php?view=maintenance'],
+        ],
+        'Monitoring' => [
+            'logs'     => ['Action Logs', 'index.php?view=logs'],
+            'audit'    => ['Audit Log', 'index.php?view=audit'],
+            'adminlog' => ['Staff Log', 'index.php?view=adminlog'],
+        ],
+        'System' => [
+            'settings' => ['Settings', 'index.php?view=settings'],
+            'server'   => ['Server Info', 'index.php?view=server'],
+        ],
     ];
+
+    // A player profile is a sub-page of the Players section.
+    $activeView = $view === 'player' ? 'players' : $view;
+
     $nav = '';
-    foreach ($navItems as $key => $item) {
-        $active = $key === $view ? ' class="active"' : '';
-        $nav .= '<a href="' . Admin::clean($item[1]) . '"' . $active . '>' . Admin::clean($item[0]) . '</a>';
+    foreach ($navGroups as $group => $items) {
+        $nav .= '<div class="admin-nav-group">' . Admin::clean($group) . '</div>';
+        foreach ($items as $key => $item) {
+            $active = $key === $activeView ? ' class="active"' : '';
+            $nav .= '<a href="' . Admin::clean($item[1]) . '"' . $active . '>' . Admin::clean($item[0]) . '</a>';
+        }
     }
     echo '<!DOCTYPE html>
 <html>
@@ -376,6 +433,8 @@ a:hover { text-decoration:underline; }
 .admin-nav { width:190px; flex:0 0 190px; padding:16px 10px; background:#111827; border-right:1px solid #2a3550; }
 .admin-nav a { display:block; padding:9px 12px; margin:2px 0; border-radius:6px; color:#aebcd6; font-size:14px; }
 .admin-nav a.active, .admin-nav a:hover { background:#1e2c47; color:#fff; }
+.admin-nav-group { margin:16px 6px 2px; font-size:11px; color:#5f79a8; text-transform:uppercase; letter-spacing:1px; font-weight:600; }
+.admin-nav-group:first-child { margin-top:0; }
 .admin-content { flex:1 1 auto; padding:20px 26px; overflow-x:auto; }
 .admin-content h2 { margin-top:0; color:#fff; }
 .admin-card { background:#141c2e; border:1px solid #2a3550; border-radius:8px; padding:16px; margin-bottom:16px; }
@@ -560,6 +619,81 @@ switch ($view) {
         <?php
         break;
 
+    case 'staff':
+        $staff = $admin->staffAccounts();
+        $accessOptions = Admin::accessOptions();
+        ?>
+        <h2>Staff Accounts</h2>
+        <div class="admin-card">
+            <p class="admin-meta">Accounts with moderator (2) or higher access. Changing a level below Admin removes panel access. Actions are recorded in the staff log.</p>
+            <?php if (count($staff) === 0): ?>
+                <p class="admin-meta">No staff accounts found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Banned</th><th>Last Login</th><th>Access Level</th></tr>
+                <?php foreach ($staff as $u): ?>
+                <tr>
+                    <td><a href="index.php?view=player&uid=<?= (int)$u->uid ?>"><?= (int)$u->uid ?></a></td>
+                    <td><?= Admin::clean($u->uname) ?></td>
+                    <td><?= Admin::clean($u->email) ?></td>
+                    <td><?= Admin::clean(Admin::roleLabel((int)$u->alevel)) ?></td>
+                    <td><?= (int)$u->banned === 1 ? 'Yes' : 'No' ?></td>
+                    <td><?= (int)$u->lastLogin > 0 ? Admin::clean(date('Y-m-d H:i', (int)$u->lastLogin)) : 'never' ?></td>
+                    <td>
+                        <form method="post" action="index.php" class="admin-form" style="display:inline;">
+                            <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                            <input type="hidden" name="action" value="staff_access">
+                            <input type="hidden" name="uid" value="<?= (int)$u->uid ?>">
+                            <select name="alevel" onchange="this.form.submit()">
+                                <?php foreach ($accessOptions as $level => $label): ?>
+                                    <option value="<?= $level ?>" <?= (int)$u->alevel === $level ? 'selected' : '' ?>><?= Admin::clean($label) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'banned':
+        $banned = $admin->bannedPlayers();
+        ?>
+        <h2>Banned Players</h2>
+        <div class="admin-card">
+            <?php if (count($banned) === 0): ?>
+                <p class="admin-meta">No banned players. The universe is at peace.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Last Login</th><th>Action</th></tr>
+                <?php foreach ($banned as $u): ?>
+                <tr>
+                    <td><a href="index.php?view=player&uid=<?= (int)$u->uid ?>"><?= (int)$u->uid ?></a></td>
+                    <td><?= Admin::clean($u->uname) ?></td>
+                    <td><?= Admin::clean($u->email) ?></td>
+                    <td><?= Admin::clean(Admin::roleLabel((int)$u->alevel)) ?></td>
+                    <td><?= (int)$u->lastLogin > 0 ? Admin::clean(date('Y-m-d H:i', (int)$u->lastLogin)) : 'never' ?></td>
+                    <td>
+                        <?php if ((int)$u->uid !== (int)$admin->userid): ?>
+                        <form method="post" action="index.php" style="display:inline;">
+                            <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                            <input type="hidden" name="action" value="unban">
+                            <input type="hidden" name="uid" value="<?= (int)$u->uid ?>">
+                            <button class="admin-btn" type="submit">Unban</button>
+                        </form>
+                        <?php else: ?>&mdash;<?php endif; ?>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
     case 'player':
         $uid = (int)($_GET['uid'] ?? 0);
         $p = $admin->getPlayer($uid);
@@ -708,6 +842,253 @@ switch ($view) {
         <?php
         break;
 
+    case 'economy':
+        $eco = $admin->economyOverview();
+        $daily = $admin->dailyEconomyMetrics(30);
+        ?>
+        <h2>Economy</h2>
+        <div class="admin-grid">
+            <div class="admin-stat"><b><?= number_format($eco['playerCount']) ?></b><span>Player Accounts</span></div>
+            <div class="admin-stat"><b><?= number_format($eco['totalOnHand']) ?></b><span>Naq On Hand</span></div>
+            <div class="admin-stat"><b><?= number_format($eco['totalInBank']) ?></b><span>Naq In Bank</span></div>
+            <div class="admin-stat"><b><?= number_format($eco['totalNaq']) ?></b><span>Total In Circulation</span></div>
+            <div class="admin-stat"><b><?= number_format($eco['totalUntrained']) ?></b><span>Untrained Units</span></div>
+        </div>
+        <div class="admin-card">
+            <h3>Record Daily Snapshot</h3>
+            <p class="admin-meta">Writes today's universe totals into the daily economy metrics table. Safe to run more than once per day.</p>
+            <form method="post" action="index.php" class="admin-form">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="record_snapshot">
+                <button class="admin-btn" type="submit">Record Snapshot</button>
+            </form>
+        </div>
+        <div class="admin-card">
+            <h3>Richest Empires</h3>
+            <?php if (count($eco['topPlayers']) === 0): ?>
+                <p class="admin-meta">No players found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Username</th><th>On Hand</th><th>In Bank</th><th>Total Naq</th></tr>
+                <?php foreach ($eco['topPlayers'] as $p): ?>
+                <tr>
+                    <td><a href="index.php?view=player&uid=<?= (int)$p->uid ?>"><?= (int)$p->uid ?></a></td>
+                    <td><?= Admin::clean($p->uname) ?></td>
+                    <td><?= number_format((int)$p->onHand) ?></td>
+                    <td><?= number_format((int)$p->inBank) ?></td>
+                    <td><?= number_format((int)$p->total) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <div class="admin-card">
+            <h3>Daily Economy Metrics</h3>
+            <?php if (count($daily) === 0): ?>
+                <p class="admin-meta">No daily snapshots recorded yet. Use the button above to record the first one.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>Date</th><th>Players</th><th>On Hand</th><th>In Bank</th><th>Untrained</th><th>Attack</th><th>Defense</th></tr>
+                <?php foreach ($daily as $m): ?>
+                <tr>
+                    <td><?= Admin::clean($m->metric_date) ?></td>
+                    <td><?= number_format((int)$m->total_players) ?></td>
+                    <td><?= number_format((int)$m->total_onhand) ?></td>
+                    <td><?= number_format((int)$m->total_inbank) ?></td>
+                    <td><?= number_format((int)$m->total_untrained) ?></td>
+                    <td><?= number_format((int)$m->total_attack) ?></td>
+                    <td><?= number_format((int)$m->total_defense) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'planets':
+        $census = $admin->planetCensus();
+        ?>
+        <h2>Planets</h2>
+        <div class="admin-grid">
+            <div class="admin-stat"><b><?= number_format($census['total']) ?></b><span>Total Planets</span></div>
+            <div class="admin-stat"><b><?= number_format($census['home']) ?></b><span>Home Worlds</span></div>
+            <div class="admin-stat"><b><?= number_format($census['colonies']) ?></b><span>Colonies</span></div>
+        </div>
+        <div class="admin-card">
+            <h3>Distribution by Race</h3>
+            <?php if (count($census['byRace']) === 0): ?>
+                <p class="admin-meta">No planets found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>Race</th><th>Planets</th></tr>
+                <?php foreach ($census['byRace'] as $row): ?>
+                <tr>
+                    <td><?= Admin::clean($row->r_name) ?></td>
+                    <td><?= number_format((int)$row->planets) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <div class="admin-card">
+            <h3>Largest Planets</h3>
+            <?php if (count($census['largest']) === 0): ?>
+                <p class="admin-meta">No planets found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Planet</th><th>Owner</th><th>Race</th><th>Size</th><th>Type</th></tr>
+                <?php foreach ($census['largest'] as $p): ?>
+                <tr>
+                    <td><?= (int)$p->pid ?></td>
+                    <td><?= Admin::clean($p->plnt_name) ?></td>
+                    <td><a href="index.php?view=player&uid=<?= (int)$p->uid ?>"><?= Admin::clean($p->uname) ?></a></td>
+                    <td><?= Admin::clean($p->r_name) ?></td>
+                    <td><?= number_format((int)$p->plnt_size) ?></td>
+                    <td><?= (int)$p->isHome === 1 ? 'Home' : 'Colony' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'military':
+        $mil = $admin->militaryOverview();
+        ?>
+        <h2>Military</h2>
+        <div class="admin-grid">
+            <div class="admin-stat"><b><?= number_format($mil['total_atk']) ?></b><span>Attack Power</span></div>
+            <div class="admin-stat"><b><?= number_format($mil['total_def']) ?></b><span>Defense Power</span></div>
+            <div class="admin-stat"><b><?= number_format($mil['total_cov']) ?></b><span>Covert Power</span></div>
+            <div class="admin-stat"><b><?= number_format($mil['total_anti']) ?></b><span>Anticovert Power</span></div>
+            <div class="admin-stat"><b><?= number_format($mil['total']) ?></b><span>Total Military Power</span></div>
+        </div>
+        <div class="admin-card">
+            <h3>Strongest Fleets</h3>
+            <?php if (count($mil['topArmies']) === 0): ?>
+                <p class="admin-meta">No military power recorded yet.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Username</th><th>Attack</th><th>Defense</th><th>Covert</th><th>Anticovert</th><th>Total</th></tr>
+                <?php foreach ($mil['topArmies'] as $a): ?>
+                <tr>
+                    <td><a href="index.php?view=player&uid=<?= (int)$a->uid ?>"><?= (int)$a->uid ?></a></td>
+                    <td><?= Admin::clean($a->uname) ?></td>
+                    <td><?= number_format((int)$a->mil_atk) ?></td>
+                    <td><?= number_format((int)$a->mil_def) ?></td>
+                    <td><?= number_format((int)$a->mil_cov) ?></td>
+                    <td><?= number_format((int)$a->mil_anti) ?></td>
+                    <td><?= number_format((int)$a->mil_total) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'races':
+        $races = $admin->raceCatalog();
+        ?>
+        <h2>Races</h2>
+        <div class="admin-card">
+            <?php if (count($races) === 0): ?>
+                <p class="admin-meta">No races found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Race</th><th>Group</th><th>Income Bonus</th><th>Up Bonus</th><th>Players</th></tr>
+                <?php foreach ($races as $r): ?>
+                <tr>
+                    <td><?= (int)$r->rid ?></td>
+                    <td><?= Admin::clean($r->r_name) ?></td>
+                    <td><?= Admin::clean($r->r_group) ?></td>
+                    <td><?= (int)$r->income_bonus ?></td>
+                    <td><?= (int)$r->up_bonus ?></td>
+                    <td><?= number_format((int)$r->players) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'units':
+        $cat = (string)($_GET['cat'] ?? '');
+        $units = $admin->unitCatalog($cat);
+        ?>
+        <h2>Unit Catalog</h2>
+        <div class="admin-card">
+            <form method="get" action="index.php" class="admin-form">
+                <input type="hidden" name="view" value="units">
+                <div class="row">
+                    <label>Category:</label>
+                    <select name="cat" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        <?php foreach (['military', 'civilian', 'government'] as $c): ?>
+                            <option value="<?= $c ?>" <?= $cat === $c ? 'selected' : '' ?>><?= Admin::clean(ucfirst($c)) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="admin-card">
+            <?php if (count($units) === 0): ?>
+                <p class="admin-meta">No units found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>Code</th><th>Name</th><th>Type</th><th>Tier</th><th>Cost</th><th>Upkeep</th><th>Atk</th><th>Def</th><th>Cov</th><th>Income</th><th>Ability</th></tr>
+                <?php foreach ($units as $u): ?>
+                <tr>
+                    <td><?= Admin::clean($u->unit_code) ?></td>
+                    <td><?= Admin::clean($u->unit_name) ?></td>
+                    <td><?= Admin::clean($u->unit_type) ?> <?= Admin::clean($u->unit_subtype) ?></td>
+                    <td><?= (int)$u->tier ?></td>
+                    <td><?= number_format((int)$u->training_cost) ?></td>
+                    <td><?= number_format((int)$u->upkeep_per_turn) ?></td>
+                    <td><?= number_format((int)$u->attack_power) ?></td>
+                    <td><?= number_format((int)$u->defense_power) ?></td>
+                    <td><?= number_format((int)$u->covert_power) ?></td>
+                    <td><?= number_format((int)$u->income_gen) ?></td>
+                    <td><?= Admin::clean($u->special_ability) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'weapons':
+        $weapons = $admin->weaponCatalog();
+        ?>
+        <h2>Weapons</h2>
+        <div class="admin-card">
+            <?php if (count($weapons) === 0): ?>
+                <p class="admin-meta">No weapons found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Race</th><th>Weapon</th><th>Type</th><th>Power</th><th>Cash Cost</th><th>Unit Cost</th><th>Requires Trained</th></tr>
+                <?php foreach ($weapons as $w): ?>
+                <tr>
+                    <td><?= (int)$w->wid ?></td>
+                    <td><?= Admin::clean($w->r_name) ?></td>
+                    <td><?= Admin::clean($w->weaponName) ?></td>
+                    <td><?= (int)$w->isDefense === 1 ? 'Defense' : 'Attack' ?></td>
+                    <td><?= number_format((int)$w->weaponPower) ?></td>
+                    <td><?= number_format((int)$w->cash_cost) ?></td>
+                    <td><?= number_format((int)$w->unit_cost) ?></td>
+                    <td><?= number_format((int)$w->requireTrained) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
     case 'tick':
         $tick = $admin->tickStatus();
         $lastRun = (int)($tick['last_run'] ?? 0);
@@ -765,6 +1146,34 @@ switch ($view) {
                 <div class="row"><label>All players:</label><input type="checkbox" name="all_players" value="1"></div>
                 <button class="admin-btn" type="submit">Apply Grant</button>
             </form>
+        </div>
+        <?php
+        break;
+
+    case 'jobs':
+        $jobs = $admin->serverJobs();
+        ?>
+        <h2>Server Jobs</h2>
+        <div class="admin-card">
+            <p class="admin-meta">Long-running backend jobs recorded in <code>app_server_jobs</code> (turn ticks, daily economy aggregation, exports).</p>
+            <?php if (count($jobs) === 0): ?>
+                <p class="admin-meta">No jobs have been recorded yet.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Job</th><th>Status</th><th>Started</th><th>Finished</th><th>Created</th><th>Error</th></tr>
+                <?php foreach ($jobs as $j): ?>
+                <tr>
+                    <td><?= (int)$j->id ?></td>
+                    <td><?= Admin::clean($j->job_name) ?></td>
+                    <td><?= Admin::clean($j->status) ?></td>
+                    <td><?= $j->started_at ? Admin::clean($j->started_at) : '&mdash;' ?></td>
+                    <td><?= $j->finished_at ? Admin::clean($j->finished_at) : '&mdash;' ?></td>
+                    <td><?= Admin::clean($j->created_at) ?></td>
+                    <td><?= Admin::clean($j->last_error) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
         </div>
         <?php
         break;
@@ -916,6 +1325,49 @@ switch ($view) {
         <?php
         break;
 
+    case 'audit':
+        $module = (string)($_GET['module'] ?? '');
+        $audit = $admin->auditLog(100, $module);
+        $modules = $admin->auditModules();
+        ?>
+        <h2>Audit Log</h2>
+        <div class="admin-card">
+            <form method="get" action="index.php" class="admin-form">
+                <input type="hidden" name="view" value="audit">
+                <div class="row">
+                    <label>Filter module:</label>
+                    <select name="module" onchange="this.form.submit()">
+                        <option value="">All modules</option>
+                        <?php foreach ($modules as $m): ?>
+                            <option value="<?= Admin::clean($m) ?>" <?= $module === $m ? 'selected' : '' ?>><?= Admin::clean($m) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="admin-card">
+            <?php if (count($audit) === 0): ?>
+                <p class="admin-meta">No audit entries found.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>ID</th><th>Time</th><th>UID</th><th>Module</th><th>Action</th><th>IP</th><th>Details</th></tr>
+                <?php foreach ($audit as $a): ?>
+                <tr>
+                    <td><?= (int)$a->id ?></td>
+                    <td><?= Admin::clean($a->created_at) ?></td>
+                    <td><?= (int)$a->uid > 0 ? '<a href="index.php?view=player&uid=' . (int)$a->uid . '">' . (int)$a->uid . '</a>' : '&mdash;' ?></td>
+                    <td><?= Admin::clean($a->module_name) ?></td>
+                    <td><?= Admin::clean($a->action_type) ?></td>
+                    <td><?= Admin::clean($a->ip_address) ?></td>
+                    <td><?= Admin::clean(substr($a->details_json, 0, 120)) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php endif; ?>
+        </div>
+        <?php
+        break;
+
     case 'market':
         $showAll = (string)($_GET['all'] ?? '') === '1';
         $listings = $admin->marketListings(!$showAll, 150);
@@ -1019,6 +1471,20 @@ switch ($view) {
                 </div>
             </form>
             <?php endforeach; ?>
+        </div>
+        <?php
+        break;
+
+    case 'server':
+        $info = $admin->serverInfoExtended();
+        ?>
+        <h2>Server Info</h2>
+        <div class="admin-card">
+            <table class="admin-tbl">
+                <?php foreach ($info as $key => $value): ?>
+                <tr><th style="width:220px;"><?= Admin::clean(ucfirst(str_replace('_', ' ', $key))) ?></th><td><?= Admin::clean((string)$value) ?></td></tr>
+                <?php endforeach; ?>
+            </table>
         </div>
         <?php
         break;

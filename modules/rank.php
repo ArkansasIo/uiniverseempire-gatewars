@@ -51,7 +51,7 @@ $rankings = $s->Rankings($page);
 for($x = 0; $x < count($rankings); $x++)
 {
   if($rankings[$x]['rank'] != 0){
-  $allyinfo = $s->getallyinfo($rankings[$x]['allyid']); ?>
+  $allyinfo = ($rankings[$x]['allyid'] != 0) ? $s->getallyinfo((int)$rankings[$x]['allyid']) : null; ?>
     <tr style="border-bottom:1px solid #23364d;">
 	
   	  <td><a href='javascript:void(0)' onclick="sendData('user','get','<?= htmlspecialchars($rankings[$x]['uid'], ENT_QUOTES, 'UTF-8'); ?>')"><?= htmlspecialchars($rankings[$x]['name'], ENT_QUOTES, 'UTF-8'); ?></a><?php if ($rankings[$x]['allyid'] != 0){ ?> [<a href="javascript:void(0)" onclick="sendData('ally_mlist','get','<?= htmlspecialchars($rankings[$x]['allyid'], ENT_QUOTES, 'UTF-8'); ?>','attack'); return false;"><?= htmlspecialchars($allyinfo->allyname, ENT_QUOTES, 'UTF-8');?></a>]<?php } ?></td>

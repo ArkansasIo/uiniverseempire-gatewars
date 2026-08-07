@@ -1042,6 +1042,411 @@ class Admin extends Game
 	}
 
 	/**
+	 * Staff accounts (moderator access level 2 or higher).
+	 */
+	public function staffAccounts(): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$q = $this->query("SELECT `uid`, `uname`, `email`, `alevel`, `banned`, `lastLogin`
+		                   FROM `users` WHERE `alevel` >= 2
+		                   ORDER BY `alevel` DESC, `uname` ASC");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Accounts currently flagged as banned.
+	 */
+	public function bannedPlayers(): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$q = $this->query("SELECT u.`uid`, u.`uname`, u.`email`, u.`alevel`, u.`lastLogin`
+		                   FROM `users` u WHERE u.`banned` = 1
+		                   ORDER BY u.`uid` ASC");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Universe-wide economy totals and the richest empires.
+	 */
+	public function economyOverview(): array
+	{
+		$overview = [
+			'totalOnHand'    => 0,
+			'totalInBank'    => 0,
+			'totalNaq'       => 0,
+			'totalUntrained' => 0,
+			'playerCount'    => 0,
+			'topPlayers'     => [],
+		];
+		if (!$this->connected() || !$this->db_link) {
+			return $overview;
+		}
+		$q = $this->query("SELECT IFNULL(SUM(b.`onHand`),0) AS onHand, IFNULL(SUM(b.`inBank`),0) AS inBank,
+		                          COUNT(DISTINCT u.`uid`) AS players
+		                   FROM `users` u
+		                   LEFT JOIN `bank` b ON b.`uid` = u.`uid`");
+		if ($q && $row = $q->fetch_object()) {
+			$overview['totalOnHand'] = (int)$row->onHand;
+			$overview['totalInBank'] = (int)$row->inBank;
+			$overview['totalNaq']    = (int)$row->onHand + (int)$row->inBank;
+			$overview['playerCount'] = (int)$row->players;
+		}
+		$q = $this->query("SELECT IFNULL(SUM(`untrained`),0) AS untrained FROM `units`");
+		if ($q && $row = $q->fetch_object()) {
+			$overview['totalUntrained'] = (int)$row->untrained;
+		}
+		$q = $this->query("SELECT u.`uid`, u.`uname`, IFNULL(b.`onHand`,0) AS onHand, IFNULL(b.`inBank`,0) AS inBank,
+		                          (IFNULL(b.`onHand`,0) + IFNULL(b.`inBank`,0)) AS total
+		                   FROM `users` u
+		                   LEFT JOIN `bank` b ON b.`uid` = u.`uid`
+		                   ORDER BY total DESC LIMIT 10");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$overview['topPlayers'][] = $row;
+			}
+		}
+		return $overview;
+	}
+
+	/**
+	 * Recent daily economy snapshots (app_daily_economy_metrics).
+	 */
+	public function dailyEconomyMetrics(int $limit = 30): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$limit = max(1, min(365, (int)$limit));
+		$q = $this->query("SELECT * FROM `app_daily_economy_metrics`
+		                   ORDER BY `metric_date` DESC LIMIT " . (int)$limit);
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Writes today's universe totals into app_daily_economy_metrics.
+	 * Upserts on metric_date so it is safe to run more than once per day.
+	 */
+	public function recordEconomySnapshot(): bool
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return false;
+		}
+		$query = "INSERT INTO `app_daily_economy_metrics`
+			(`metric_date`, `total_players`, `total_onhand`, `total_inbank`, `total_untrained`, `total_attack`, `total_defense`)
+			SELECT CURDATE(),
+			       COUNT(DISTINCT u.`uid`),
+			       IFNULL(SUM(b.`onHand`),0),
+			       IFNULL(SUM(b.`inBank`),0),
+			       IFNULL(SUM(un.`untrained`),0),
+			       IFNULL(SUM(un.`attack` + un.`superAttack` + un.`attackMercs`),0),
+			       IFNULL(SUM(un.`defense` + un.`superDefense` + un.`defenseMercs`),0)
+			FROM `users` u
+			LEFT JOIN `bank` b ON b.`uid` = u.`uid`
+			LEFT JOIN `units` un ON un.`uid` = u.`uid`
+			ON DUPLICATE KEY UPDATE
+				total_players   = VALUES(total_players),
+				total_onhand    = VALUES(total_onhand),
+				total_inbank    = VALUES(total_inbank),
+				total_untrained = VALUES(total_untrained),
+				total_attack    = VALUES(total_attack),
+				total_defense   = VALUES(total_defense)";
+		$ok = (bool)$this->query($query);
+		if ($ok) {
+			$this->log('economy.snapshot', ['date' => date('Y-m-d')], 0);
+		}
+		return $ok;
+	}
+
+	/**
+	 * Planet census: totals, home worlds, colonies, distribution by race
+	 * and the largest planets in the universe.
+	 */
+	public function planetCensus(): array
+	{
+		$census = ['total' => 0, 'home' => 0, 'colonies' => 0, 'byRace' => [], 'largest' => []];
+		if (!$this->connected() || !$this->db_link) {
+			return $census;
+		}
+		$q = $this->query("SELECT COUNT(*) AS n, IFNULL(SUM(`isHome`),0) AS home FROM `planets`");
+		if ($q && $row = $q->fetch_object()) {
+			$census['total'] = (int)$row->n;
+			$census['home']  = (int)$row->home;
+			$census['colonies'] = $census['total'] - $census['home'];
+		}
+		$q = $this->query("SELECT r.`r_name`, COUNT(p.`pid`) AS planets
+		                   FROM `planets` p
+		                   LEFT JOIN `userdata` ud ON ud.`uid` = p.`uid`
+		                   LEFT JOIN `race` r ON r.`rid` = ud.`rid`
+		                   GROUP BY r.`rid`, r.`r_name`
+		                   ORDER BY planets DESC");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$census['byRace'][] = $row;
+			}
+		}
+		$q = $this->query("SELECT p.`pid`, p.`plnt_name`, p.`plnt_size`, p.`isHome`, u.`uid`, u.`uname`, r.`r_name`
+		                   FROM `planets` p
+		                   LEFT JOIN `users` u ON u.`uid` = p.`uid`
+		                   LEFT JOIN `userdata` ud ON ud.`uid` = p.`uid`
+		                   LEFT JOIN `race` r ON r.`rid` = ud.`rid`
+		                   ORDER BY p.`plnt_size` DESC LIMIT 10");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$census['largest'][] = $row;
+			}
+		}
+		return $census;
+	}
+
+	/**
+	 * Universe military totals and the strongest fleets.
+	 */
+	public function militaryOverview(): array
+	{
+		$overview = [
+			'total' => 0, 'total_atk' => 0, 'total_def' => 0, 'total_cov' => 0, 'total_anti' => 0,
+			'topArmies' => [],
+		];
+		if (!$this->connected() || !$this->db_link) {
+			return $overview;
+		}
+		$q = $this->query("SELECT IFNULL(SUM(`mil_atk`),0) AS a, IFNULL(SUM(`mil_def`),0) AS d,
+		                          IFNULL(SUM(`mil_cov`),0) AS c, IFNULL(SUM(`mil_anti`),0) AS an,
+		                          IFNULL(SUM(`mil_total`),0) AS t FROM `power`");
+		if ($q && $row = $q->fetch_object()) {
+			$overview['total_atk']  = (int)$row->a;
+			$overview['total_def']  = (int)$row->d;
+			$overview['total_cov']  = (int)$row->c;
+			$overview['total_anti'] = (int)$row->an;
+			$overview['total']      = (int)$row->t;
+		}
+		$q = $this->query("SELECT u.`uid`, u.`uname`, p.`mil_atk`, p.`mil_def`, p.`mil_cov`, p.`mil_anti`, p.`mil_total`
+		                   FROM `power` p
+		                   INNER JOIN `users` u ON u.`uid` = p.`uid`
+		                   ORDER BY p.`mil_total` DESC LIMIT 10");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$overview['topArmies'][] = $row;
+			}
+		}
+		return $overview;
+	}
+
+	/**
+	 * Full race catalog with per-race player counts.
+	 */
+	public function raceCatalog(): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$q = $this->query("SELECT r.`rid`, r.`r_name`, r.`income_bonus`, r.`up_bonus`, r.`r_group`, COUNT(ud.`uid`) AS players
+		                   FROM `race` r
+		                   LEFT JOIN `userdata` ud ON ud.`rid` = r.`rid`
+		                   GROUP BY r.`rid`, r.`r_name`, r.`income_bonus`, r.`up_bonus`, r.`r_group`
+		                   ORDER BY r.`rid` ASC");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Unit catalog browser with optional category filter.
+	 */
+	public function unitCatalog(string $category = ''): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$where = "";
+		$params = [];
+		$types = '';
+		if ($category !== '' && in_array($category, ['military', 'civilian', 'government'], true)) {
+			$where = " WHERE `category`=?";
+			$params[] = $category;
+			$types = 's';
+		}
+		$query = "SELECT * FROM `unit_catalog`" . $where . "
+		          ORDER BY `category` ASC, `tier` ASC, `unit_id` ASC LIMIT 500";
+		$stmt = $this->db_link->prepare($query);
+		if (!$stmt) {
+			return $rows;
+		}
+		if ($params) {
+			$stmt->bind_param($types, ...$params);
+		}
+		$stmt->execute();
+		$result = $stmt->get_result();
+		if ($result) {
+			while ($row = $result->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Armory weapon catalog joined with race names.
+	 */
+	public function weaponCatalog(): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$q = $this->query("SELECT a.`wid`, a.`rid`, r.`r_name`, a.`isDefense`, a.`cash_cost`, a.`unit_cost`,
+		                          a.`weaponName`, a.`weaponPower`, a.`requireTrained`
+		                   FROM `armory` a
+		                   LEFT JOIN `race` r ON r.`rid` = a.`rid`
+		                   ORDER BY a.`rid` ASC, a.`isDefense` ASC, a.`wid` ASC LIMIT 500");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Background job list from app_server_jobs.
+	 */
+	public function serverJobs(int $limit = 50): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$limit = max(1, min(500, (int)$limit));
+		$q = $this->query("SELECT * FROM `app_server_jobs` ORDER BY `id` DESC LIMIT " . (int)$limit);
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Audit trail browse from app_audit_log with optional module filter.
+	 */
+	public function auditLog(int $limit = 100, string $module = ''): array
+	{
+		$rows = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $rows;
+		}
+		$limit = max(1, min(500, (int)$limit));
+		$where = "";
+		$params = [];
+		$types = '';
+		if ($module !== '') {
+			$where = " WHERE `module_name`=?";
+			$params[] = $module;
+			$types = 's';
+		}
+		$query = "SELECT * FROM `app_audit_log`" . $where . " ORDER BY `id` DESC LIMIT " . (int)$limit;
+		$stmt = $this->db_link->prepare($query);
+		if (!$stmt) {
+			return $rows;
+		}
+		if ($params) {
+			$stmt->bind_param($types, ...$params);
+		}
+		$stmt->execute();
+		$result = $stmt->get_result();
+		if ($result) {
+			while ($row = $result->fetch_object()) {
+				$rows[] = $row;
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * Distinct audit module names for the audit-log filter.
+	 */
+	public function auditModules(): array
+	{
+		$modules = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $modules;
+		}
+		$q = $this->query("SELECT DISTINCT `module_name` FROM `app_audit_log` ORDER BY `module_name` ASC LIMIT 200");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$modules[] = (string)$row->module_name;
+			}
+		}
+		return $modules;
+	}
+
+	/**
+	 * Extended runtime + database information for the server screen.
+	 */
+	public function serverInfoExtended(): array
+	{
+		$info = $this->serverInfo();
+		$info['php_ini_file'] = php_ini_loaded_file() ?: 'n/a';
+		$info['memory_limit'] = (string)ini_get('memory_limit');
+		$info['max_execution_time'] = (string)ini_get('max_execution_time') . 's';
+		$info['upload_max_filesize'] = (string)ini_get('upload_max_filesize');
+		$extensions = [];
+		foreach (['mysqli', 'pdo', 'mysqlnd', 'json', 'curl', 'gd', 'mbstring', 'openssl', 'zip'] as $ext) {
+			$extensions[] = $ext . (extension_loaded($ext) ? '' : ' (missing)');
+		}
+		$info['key_extensions'] = implode(', ', $extensions);
+		$info['db_size'] = 'n/a';
+		$info['table_count'] = 0;
+		$info['view_count'] = 0;
+		if ($this->connected() && $this->db_link) {
+			$dbName = (string)$this->db_name;
+			$stmt = $this->db_link->prepare(
+				"SELECT IFNULL(SUM(`data_length` + `index_length`),0) AS sz,
+				        IFNULL(SUM(`table_type`='BASE TABLE'),0) AS tbls,
+				        IFNULL(SUM(`table_type`='VIEW'),0) AS views
+				 FROM `information_schema`.`TABLES` WHERE `table_schema`=?"
+			);
+			if ($stmt) {
+				$stmt->bind_param("s", $dbName);
+				$stmt->execute();
+				if ($row = $stmt->get_result()->fetch_object()) {
+					$info['db_size'] = number_format((float)$row->sz / 1048576, 2) . ' MB';
+					$info['table_count'] = (int)$row->tbls;
+					$info['view_count'] = (int)$row->views;
+				}
+			}
+		}
+		return $info;
+	}
+
+	/**
 	 * Ensures the GameTick engine class is loadable.
 	 */
 	private function loadTickEngine(): void

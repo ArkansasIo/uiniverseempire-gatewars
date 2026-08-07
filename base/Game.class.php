@@ -990,6 +990,9 @@ class Game extends User
 					WHERE alliances.allyid = ? 
 					LIMIT 1";
 	$stmt = $this->db_link->prepare($query);
+	if (!$stmt) {
+		return (object)[];
+	}
 	$stmt->bind_param("i", $allyid);
 	$stmt->execute();
 	$q = $stmt->get_result();
@@ -2991,7 +2994,8 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 				$max = ($tech->ascend+1)*10;
 				break;	
 			case "ascend":
-				echo "Ascension is not Ready Yet";		
+				echo $this->ascend();
+				return;
 				break;
 			case "cov_lvl":
 				$cost = 15000;
@@ -3122,7 +3126,7 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 	$v = $stmt->get_result();
 	$rcount = $v->num_rows;
 	if($rcount==0){
-	$q="INSERT INTO `alliances` (`allyid`,`allyname`,`desc`,`forumadd`,`isclosed`,`allybank`,`founder`) VALUES ('', ?, ?, ?, ?, '0', ?)";
+	$q="INSERT INTO `alliances` (`allyname`,`desc`,`forumadd`,`isclosed`,`allybank`,`founder`) VALUES (?, ?, ?, ?, '0', ?)";
 	$stmt = $this->db_link->prepare($q);
 	$stmt->bind_param("sssis", $name, $desc, $forumadd, $isclosed, $UID);
 	$stmt->execute();
@@ -3458,31 +3462,501 @@ INNER JOIN userdata ON technology.uid = userdata.uid
 		return $q;
 	}*/
 	
-	public function sabotage(int $uid, int $turns = 0): void 
+	public function joinAlliance(int $allyid): string
 	{
-		if($turns == 0){ echo "no Turns Used<br>"; exit; }
-		$query = "SELECT (Select `mil_cov` FROM `power` WHERE `uid`=? LIMIT 1) AS toCov, `mil_cov` AS fromCov, `actionTurns` FROM userdata,power WHERE userdata.`uid` =? AND power.uid = userdata.uid ";
+		$myUid = (int)$_SESSION['userid'];
+		$query = "SELECT `allyid` FROM `users` WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		$me = $q->fetch_object();
+		if ((int)$me->allyid > 0) { return "You are already in an alliance."; }
+		$query = "SELECT `allyid`,`allyname`,`isclosed` FROM `alliances` WHERE `allyid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $allyid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		if ($q->num_rows === 0) { return "Alliance does not exist."; }
+		$ally = $q->fetch_object();
+		if ((int)$ally->isclosed === 1) { return "That alliance is not accepting new members."; }
+		$query = "UPDATE `users` SET `allyid`=?, `arank`=1 WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("ii", $allyid, $myUid);
+		if (!$stmt->execute()) { return "Failed to join alliance."; }
+		return "You have joined the alliance " . $ally->allyname . ".";
+	}
+
+	public function leaveAlliance(): string
+	{
+		$myUid = (int)$_SESSION['userid'];
+		$query = "SELECT `allyid`,`arank` FROM `users` WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		$me = $q->fetch_object();
+		if ((int)$me->allyid <= 0) { return "You are not in an alliance."; }
+		if ((int)$me->arank === 2) {
+			$query = "SELECT COUNT(*) AS members FROM `users` WHERE `allyid`=?";
+			$stmt = $this->db_link->prepare($query);
+			$stmt->bind_param("i", $me->allyid);
+			$stmt->execute();
+			$cnt = $stmt->get_result()->fetch_object();
+			if ((int)$cnt->members <= 1) {
+				$query = "DELETE FROM `alliances` WHERE `allyid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("i", $me->allyid);
+				$stmt->execute();
+			}
+		}
+		$query = "UPDATE `users` SET `allyid`=0, `arank`=0 WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		if (!$stmt->execute()) { return "Failed to leave alliance."; }
+		return "You have left your alliance.";
+	}
+
+	public function allianceBank(string $action, float $amount = 0): string
+	{
+		$myUid = (int)$_SESSION['userid'];
+		$amount = floor($amount);
+		$query = "SELECT u.allyid, a.allybank, b.onHand, b.inbank FROM users u INNER JOIN alliances a ON a.allyid=u.allyid INNER JOIN bank b ON b.uid=u.uid WHERE u.uid=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		if ($q->num_rows === 0) { return "You are not in an alliance."; }
+		$data = $q->fetch_object();
+		$allyid = (int)$data->allyid;
+		if ($action === 'deposit') {
+			if ($amount <= 0) { return "Enter a valid deposit amount."; }
+			if ($amount > $data->onHand) { return "You do not have that much Naquadah on hand."; }
+			$query = "UPDATE `bank` SET `onHand`=`onHand`-? WHERE `uid`=? LIMIT 1";
+			$stmt = $this->db_link->prepare($query);
+			$stmt->bind_param("di", $amount, $myUid);
+			if (!$stmt->execute()) { return "Deposit failed."; }
+			$query = "UPDATE `alliances` SET `allybank`=`allybank`+? WHERE `allyid`=? LIMIT 1";
+			$stmt = $this->db_link->prepare($query);
+			$stmt->bind_param("di", $amount, $allyid);
+			$stmt->execute();
+			$this->logAllianceBank($allyid, $myUid, 'deposit', $amount);
+			return "Deposited " . number_format($amount) . " Naquadah into the alliance bank.";
+		}
+		if ($action === 'withdraw') {
+			if ($amount <= 0) { return "Enter a valid withdrawal amount."; }
+			if ($amount > $data->allybank) { return "The alliance bank does not have that much."; }
+			$query = "UPDATE `alliances` SET `allybank`=`allybank`-? WHERE `allyid`=? LIMIT 1";
+			$stmt = $this->db_link->prepare($query);
+			$stmt->bind_param("di", $amount, $allyid);
+			if (!$stmt->execute()) { return "Withdrawal failed."; }
+			$query = "UPDATE `bank` SET `onHand`=`onHand`+? WHERE `uid`=? LIMIT 1";
+			$stmt = $this->db_link->prepare($query);
+			$stmt->bind_param("di", $amount, $myUid);
+			$stmt->execute();
+			$this->logAllianceBank($allyid, $myUid, 'withdraw', $amount);
+			return "Withdrew " . number_format($amount) . " Naquadah from the alliance bank.";
+		}
+		return "Unknown bank action.";
+	}
+
+	private function logAllianceBank(int $allyid, int $uid, string $action, float $amount): void
+	{
+		$time = date("F j H:i:s");
+		$query = "INSERT INTO `alliance_bank_log` (`allyid`,`uid`,`action`,`amount`,`time`) VALUES (?,?,?,?,?)";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iisis", $allyid, $uid, $action, $amount, $time);
+		$stmt->execute();
+	}
+
+	public function getAllianceMembers(int $allyid): array
+	{
+		$query = "SELECT u.uid, u.uname, u.arank, p.overall FROM users u LEFT JOIN power p ON p.uid=u.uid WHERE u.allyid=? ORDER BY u.arank DESC, p.overall DESC";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $allyid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		$members = [];
+		while ($row = $q->fetch_object()) { $members[] = $row; }
+		return $members;
+	}
+
+	public function getAllianceList(): array
+	{
+		$query = "SELECT a.allyid, a.allyname, a.isclosed, a.allybank, COUNT(u.uid) AS members,
+					(SELECT p.overall FROM power p INNER JOIN users u2 ON u2.uid=p.uid WHERE u2.allyid=a.allyid ORDER BY p.overall DESC LIMIT 1) AS top_power
+					FROM alliances a LEFT JOIN users u ON u.allyid=a.allyid GROUP BY a.allyid ORDER BY members DESC, top_power DESC";
+		$q = $this->db_link->query($query);
+		$list = [];
+		while ($row = $q->fetch_object()) { $list[] = $row; }
+		return $list;
+	}
+
+	public function getMyAlliance(): ?object
+	{
+		$myUid = (int)$_SESSION['userid'];
+		$query = "SELECT a.*, u.arank FROM users u INNER JOIN alliances a ON a.allyid=u.allyid WHERE u.uid=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		if ($q->num_rows === 0) { return null; }
+		return $q->fetch_object();
+	}
+
+	public function ascensionCost(int $level): float
+	{
+		$tiers = [0 => 0, 1 => 250000000, 2 => 500000000, 3 => 1000000000, 4 => 2000000000, 5 => 5000000000, 6 => 10000000000];
+		return (float)($tiers[$level] ?? 0);
+	}
+
+	public function ascend(): string
+	{
+		$myUid = (int)$_SESSION['userid'];
+		$query = "SELECT t.ascend, t.income, t.unitProd, t.cov_lvl, b.onHand, b.inbank, ud.actionTurns
+				  FROM technology t INNER JOIN bank b ON b.uid=t.uid INNER JOIN userdata ud ON ud.uid=t.uid WHERE t.uid=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		if ($q->num_rows === 0) { return "Account data not found."; }
+		$tech = $q->fetch_object();
+		$current = (int)$tech->ascend;
+		if ($current >= 6) { return "You have already reached the final ascension tier."; }
+		if ((int)$tech->income < 50 || (int)$tech->unitProd < 50) { return "Ascension requires income and unit production of at least level 50."; }
+		if ((int)$tech->actionTurns < 100) { return "You need at least 100 action turns to ascend."; }
+		$cost = $this->ascensionCost($current + 1);
+		$money = (float)$tech->onHand + (float)$tech->inbank;
+		if ($money < $cost) { return "Not enough Naquadah. Next ascension costs " . number_format($cost) . "."; }
+		$query = "UPDATE `bank` SET `onHand`=`onHand`-? WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("di", $cost, $myUid);
+		$stmt->execute();
+		$query = "UPDATE `userdata` SET `actionTurns`=`actionTurns`-100 WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$newLevel = $current + 1;
+		$query = "UPDATE `technology` SET `ascend`=? WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("ii", $newLevel, $myUid);
+		if (!$stmt->execute()) { return "Ascension failed."; }
+		$time = date("F j H:i:s");
+		$query = "INSERT INTO `ascension_log` (`uid`,`level`,`naq`,`time`) VALUES (?,?,?,?)";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iids", $myUid, $newLevel, $cost, $time);
+		$stmt->execute();
+		$this->updatePower($myUid);
+		return "Ascension Complete! You are now " . $this->level($newLevel)['str'] . ".";
+	}
+
+	public function createTradeRoute(int $toUid, float $amount, int $turns): string
+	{
+		$myUid = (int)$_SESSION['userid'];
+		if ($toUid === $myUid) { return "You cannot trade with yourself."; }
+		$amount = floor($amount);
+		$turns = max(1, (int)$turns);
+		if ($amount <= 0) { return "Enter a valid trade amount."; }
+		$query = "SELECT `uname` FROM `users` WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $toUid);
+		$stmt->execute();
+		if ($stmt->get_result()->num_rows === 0) { return "Target player does not exist."; }
+		$query = "SELECT `onHand` FROM `bank` WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $myUid);
+		$stmt->execute();
+		$me = $stmt->get_result()->fetch_object();
+		if ($amount > (float)$me->onHand) { return "You do not have that much Naquadah on hand."; }
+		$rate = (int)ceil($amount / $turns);
+		$time = date("F j H:i:s");
+		$query = "INSERT INTO `trade_routes` (`from_uid`,`to_uid`,`amount`,`rate`,`turns`,`total`,`status`,`created`) VALUES (?,?,?,?,?,?,'active',?)";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iiiiiis", $myUid, $toUid, $amount, $rate, $turns, $turns, $time);
+		if (!$stmt->execute()) { return "Failed to create trade route."; }
+		return "Trade route created: " . number_format($amount) . " Naquadah over " . $turns . " turns to player " . $toUid . ".";
+	}
+
+	public function listTradeRoutes(int $uid = 0): array
+	{
+		if ($uid === 0) { $uid = (int)$_SESSION['userid']; }
+		$query = "SELECT tr.*, uu.uname AS from_name, uu2.uname AS to_name
+				  FROM trade_routes tr
+				  INNER JOIN users uu ON uu.uid=tr.from_uid
+				  INNER JOIN users uu2 ON uu2.uid=tr.to_uid
+				  WHERE (tr.from_uid=? OR tr.to_uid=?) AND tr.status='active'
+				  ORDER BY tr.route_id DESC";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("ii", $uid, $uid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		$routes = [];
+		while ($row = $q->fetch_object()) { $routes[] = $row; }
+		return $routes;
+	}
+
+	public function processTradeRoutes(int $uid = 0): array
+	{
+		$results = [];
+		$query = "SELECT tr.*, b.onHand FROM trade_routes tr INNER JOIN bank b ON b.uid=tr.from_uid WHERE tr.status='active' AND tr.turns > 0";
+		if ($uid > 0) {
+			$query .= " AND (tr.from_uid=? OR tr.to_uid=?)";
+		}
+		$q = $this->db_link->query($query);
+		while ($row = $q->fetch_object()) {
+			$transfer = (int)min($row->rate, $row->amount, $row->onHand);
+			if ($transfer > 0) {
+				$query = "UPDATE `bank` SET `onHand`=`onHand`-? WHERE `uid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("ii", $transfer, $row->from_uid);
+				$stmt->execute();
+				$query = "UPDATE `bank` SET `onHand`=`onHand`+? WHERE `uid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("ii", $transfer, $row->to_uid);
+				$stmt->execute();
+				$query = "UPDATE `trade_routes` SET `amount`=`amount`-?, `turns`=`turns`-1 WHERE `route_id`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("ii", $transfer, $row->route_id);
+				$stmt->execute();
+				$results[] = $row->route_id;
+			}
+			if ($row->turns - 1 <= 0 || $row->amount - $transfer <= 0) {
+				$query = "UPDATE `trade_routes` SET `status`='complete' WHERE `route_id`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("i", $row->route_id);
+				$stmt->execute();
+			}
+		}
+		return $results;
+	}
+
+	public function getColonyState(int $uid = 0): array
+	{
+		if ($uid === 0) { $uid = (int)$_SESSION['userid']; }
+		$query = "SELECT p.pid, p.plnt_name, p.income_bonus, p.up_bonus, p.isHome, p.plnt_size,
+					COALESCE(c.focus,'balanced') AS focus, COALESCE(c.defense,0) AS defense
+				  FROM planets p LEFT JOIN colony_state c ON c.uid=p.uid AND c.pid=p.pid
+				  WHERE p.uid=? ORDER BY p.isHome DESC, p.pid ASC";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("i", $uid);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		$planets = [];
+		while ($row = $q->fetch_object()) { $planets[] = $row; }
+		return $planets;
+	}
+
+	public function setColonyFocus(int $pid, string $focus): string
+	{
+		$myUid = (int)$_SESSION['userid'];
+		if (!in_array($focus, ['income', 'up', 'military', 'balanced'], true)) { return "Unknown focus type."; }
+		$query = "SELECT `pid` FROM `planets` WHERE `uid`=? AND `pid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("ii", $myUid, $pid);
+		$stmt->execute();
+		if ($stmt->get_result()->num_rows === 0) { return "Colony not found."; }
+		$query = "INSERT INTO `colony_state` (`uid`,`pid`,`focus`) VALUES (?,?,?)
+				  ON DUPLICATE KEY UPDATE `focus`=?";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iiss", $myUid, $pid, $focus, $focus);
+		if (!$stmt->execute()) { return "Failed to set colony focus."; }
+		return "Colony focus set to " . $focus . ".";
+	}
+
+	public function sabotage(int $uid, int $turns = 0): ?int
+	{
+		if ($turns == 0) { echo "No Turns Used<br>"; exit; }
+		if ($uid == $_SESSION['userid']) { echo "Can't Sabotage Ones Self<br>"; exit; }
+		$time = date("F j H:i:s");
+		$this->updatePower($_SESSION['userid']);
+		$this->updatePower($uid);
+		$query = "SELECT userdata.actionTurns,
+					(SELECT mil_cov FROM power WHERE uid=?) AS toCov,
+					(SELECT mil_anti FROM power WHERE uid=?) AS toAnti,
+					power.mil_cov AS fromCov,
+					power.mil_anti AS fromAnti
+				  FROM userdata, power
+				  WHERE userdata.uid=? AND power.uid=userdata.uid LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iii", $uid, $uid, $_SESSION['userid']);
+		$stmt->execute();
+		$q = $stmt->get_result();
+		$data = $q->fetch_object();
+		if ((int)$data->actionTurns < $turns) { echo "You do not have that many turns<br>"; exit; }
+		$fromCov = (float)$data->fromCov + (float)$data->fromAnti;
+		$toCov = (float)$data->toCov + (float)$data->toAnti;
+		$suc = 0;
+		$perc = 0;
+		if ($fromCov >= 5 * $toCov) { $suc = 1; $perc = 1; }
+		elseif ($fromCov > 3 * $toCov) { $suc = 1; $perc = .75; }
+		elseif ($fromCov > 2 * $toCov) { $suc = 1; $perc = .5; }
+		elseif ($fromCov > $toCov) { $suc = 1; $perc = .3; }
+		elseif ($fromCov > .5 * $toCov) { $suc = mt_rand(0, 1) ? 1 : 0; $perc = .15; }
+		$str = "";
+		$destroyedWeapons = 0;
+		$destroyedValue = 0;
+		$covKilled = 0;
+		$covLost = 0;
+		if ($suc === 1) {
+			$str .= "Sabotage Successful<br>";
+			$dmg = min(1, $perc * ($turns / 3) * (mt_rand(80, 120) / 100));
+			$inventory = $this->getWeaponInventory($uid);
+			foreach (['atk', 'def'] as $group) {
+				if (!isset($inventory[$group])) { continue; }
+				foreach ($inventory[$group] as $w) {
+					$killQty = (int)floor($w['quanity'] * $dmg);
+					if ($killQty <= 0) { continue; }
+					$query = "UPDATE `weapons` SET `quanity`=`quanity`-? WHERE `uid`=? AND `wid`=? LIMIT 1";
+					$stmt = $this->db_link->prepare($query);
+					$stmt->bind_param("iii", $killQty, $uid, $w['wid']);
+					$stmt->execute();
+					$destroyedWeapons += $killQty;
+					$destroyedValue += (int)($killQty * $w['sell']);
+				}
+			}
+			$covKilled = (int)round((float)$data->toCov * $dmg * 0.5);
+			if ($covKilled > 0) {
+				$query = "UPDATE `units` SET `covert`=GREATEST(0,`covert`-?), `superCovert`=GREATEST(0,`superCovert`-?) WHERE `uid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("iii", $covKilled, (int)round($covKilled / 2), $uid);
+				$stmt->execute();
+			}
+			$str .= number_format($destroyedWeapons) . " weapons destroyed (value " . number_format($destroyedValue) . " Naquadah)<br>";
+			if ($covKilled > 0) { $str .= number_format($covKilled) . " enemy covert agents eliminated<br>"; }
+		} else {
+			$str .= "Your Sabotage Team Was Eliminated<br>";
+			$covLost = (int)round((float)$data->fromCov * .1);
+			if ($covLost > 0) {
+				$query = "UPDATE `units` SET `covert`=GREATEST(0,`covert`-?) WHERE `uid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("ii", $covLost, $_SESSION['userid']);
+				$stmt->execute();
+			}
+			$str .= number_format($covLost) . " of your covert agents were lost<br>";
+		}
+		$query = "UPDATE `userdata` SET `actionTurns`=`actionTurns`-? WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("ii", $turns, $_SESSION['userid']);
+		$stmt->execute();
+		$query = "INSERT INTO `actionlog` (`uid`,`to_uid`,`time`,`type`,`turnsUsed`,`atkSent`,`atkEquip`,`defSent`,`defEquip`,`atkWeaponStatus`,`defWeaponStatus`,`attackPower`,`defensePower`,`atkDead`,`defDead`,`covDead`,`superCovDead`,`success`,`stolen`,`phrase`)
+					VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$stmt = $this->db_link->prepare($query);
+		$logUid = (int)$_SESSION['userid'];
+		$logTo = $uid;
+		$logTime = $time;
+		$logType = 'sab';
+		$logTurns = $turns;
+		$logAtkSent = (int)$data->fromCov;
+		$logAtkEquip = '';
+		$logDefSent = '';
+		$logDefEquip = '';
+		$logAtkWeaponStatus = '';
+		$logDefWeaponStatus = '';
+		$logAtkPower = (int)$data->fromCov;
+		$logDefPower = (int)$data->toCov;
+		$logAtkDead = $covLost;
+		$logDefDead = $covKilled;
+		$logCovDead = $covKilled;
+		$logSuperCovDead = (int)round($covKilled / 2);
+		$logSuccess = $suc;
+		$logStolen = $destroyedValue;
+		$logPhrase = $str;
+		$stmt->bind_param("iissiisssssiiiiiiids", $logUid, $logTo, $logTime, $logType, $logTurns, $logAtkSent, $logAtkEquip, $logDefSent, $logDefEquip, $logAtkWeaponStatus, $logDefWeaponStatus, $logAtkPower, $logDefPower, $logAtkDead, $logDefDead, $logCovDead, $logSuperCovDead, $logSuccess, $logStolen, $logPhrase);
+		$stmt->execute();
+		$query = "SELECT `actID` FROM `actionlog` WHERE `uid`=? AND `to_uid`=? AND `time`=? ORDER BY actID DESC LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iis", $logUid, $logTo, $logTime);
+		$stmt->execute();
+		$qa = $stmt->get_result()->fetch_object();
+		return $qa ? (int)$qa->actID : null;
+	}
+
+	public function counterSpy(int $uid, int $turns = 0): ?int
+	{
+		if ($turns == 0) { echo "No Turns Used<br>"; exit; }
+		if ($uid == $_SESSION['userid']) { echo "Can't Investigate Ones Self<br>"; exit; }
+		$time = date("F j H:i:s");
+		$this->updatePower($_SESSION['userid']);
+		$this->updatePower($uid);
+		$query = "SELECT userdata.actionTurns,
+					(SELECT mil_cov FROM power WHERE uid=?) AS toCov,
+					power.mil_anti AS fromAnti
+				  FROM userdata, power
+				  WHERE userdata.uid=? AND power.uid=userdata.uid LIMIT 1";
 		$stmt = $this->db_link->prepare($query);
 		$stmt->bind_param("ii", $uid, $_SESSION['userid']);
 		$stmt->execute();
 		$q = $stmt->get_result();
 		$data = $q->fetch_object();
-		$fromCov = $data->fromCov;
-		$toCov = $data->toCov;
-		if ($turns > $data->actionTurns) { echo "You do not have that many turns<br>"; }
-		if ($fromCov > $toCov) { 
-			echo "Your Men Destroyed weapons and live to sabotage another day<br>"; 
-			$query = "SELECT `covert`,`superCovert`,(SELECT `covert` FROM units WHERE `uid`=?) as enemy_cov,(SELECT `superCovert` as enemy_superCovert FROM units WHERE `uid`=?) as enemy_superCovert FROM units WHERE uid=?";
-			$stmt = $this->db_link->prepare($query);
-			$stmt->bind_param("iii", $uid, $uid, $_SESSION['userid']);
-			$stmt->execute();
-			$q = $stmt->get_result();
-			$data2 = $q->fetch_object();
-			$data3 = $this->getWeaponInventory($_SESSION['userid']);
-			print_r($data3);
-		} else { 
-			echo "Your Men are Dead<br>"; 
-		}	
+		if ((int)$data->actionTurns < $turns) { echo "You do not have that many turns<br>"; exit; }
+		$fromAnti = (float)$data->fromAnti;
+		$toCov = (float)$data->toCov;
+		$suc = 0;
+		$perc = 0;
+		if ($fromAnti >= 5 * $toCov) { $suc = 1; $perc = 1; }
+		elseif ($fromAnti > 3 * $toCov) { $suc = 1; $perc = .75; }
+		elseif ($fromAnti > 2 * $toCov) { $suc = 1; $perc = .5; }
+		elseif ($fromAnti > $toCov) { $suc = 1; $perc = .3; }
+		elseif ($fromAnti > .5 * $toCov) { $suc = mt_rand(0, 1) ? 1 : 0; $perc = .15; }
+		$str = "";
+		$agentsKilled = 0;
+		$agentsLost = 0;
+		if ($suc === 1) {
+			$str .= "Counter-Intelligence Sweep Successful<br>";
+			$dmg = min(1, $perc * ($turns / 3));
+			$agentsKilled = (int)round($toCov * $dmg * 0.8);
+			if ($agentsKilled > 0) {
+				$query = "UPDATE `units` SET `covert`=GREATEST(0,`covert`-?) WHERE `uid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("ii", $agentsKilled, $uid);
+				$stmt->execute();
+			}
+			$str .= number_format($agentsKilled) . " enemy covert agents identified and eliminated<br>";
+		} else {
+			$str .= "The Enemy Saw Your Sweep Coming<br>";
+			$agentsLost = (int)round($fromAnti * .1);
+			if ($agentsLost > 0) {
+				$query = "UPDATE `units` SET `anticovert`=GREATEST(0,`anticovert`-?) WHERE `uid`=? LIMIT 1";
+				$stmt = $this->db_link->prepare($query);
+				$stmt->bind_param("ii", $agentsLost, $_SESSION['userid']);
+				$stmt->execute();
+			}
+			$str .= number_format($agentsLost) . " of your anti-covert units were eliminated<br>";
+		}
+		$query = "UPDATE `userdata` SET `actionTurns`=`actionTurns`-? WHERE `uid`=? LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("ii", $turns, $_SESSION['userid']);
+		$stmt->execute();
+		$query = "INSERT INTO `actionlog` (`uid`,`to_uid`,`time`,`type`,`turnsUsed`,`atkSent`,`atkEquip`,`defSent`,`defEquip`,`atkWeaponStatus`,`defWeaponStatus`,`attackPower`,`defensePower`,`atkDead`,`defDead`,`covDead`,`success`,`stolen`,`phrase`)
+					VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$stmt = $this->db_link->prepare($query);
+		$logUid = (int)$_SESSION['userid'];
+		$logTo = $uid;
+		$logTime = $time;
+		$logType = 'cs';
+		$logTurns = $turns;
+		$logAtkSent = (int)$data->fromAnti;
+		$logAtkEquip = '';
+		$logDefSent = '';
+		$logDefEquip = '';
+		$logAtkWeaponStatus = '';
+		$logDefWeaponStatus = '';
+		$logAtkPower = (int)$data->fromAnti;
+		$logDefPower = (int)$data->toCov;
+		$logAtkDead = $agentsLost;
+		$logDefDead = $agentsKilled;
+		$logCovDead = $agentsKilled;
+		$logSuccess = $suc;
+		$logStolen = 0;
+		$logPhrase = $str;
+		$stmt->bind_param("iissiisssssiiiiiids", $logUid, $logTo, $logTime, $logType, $logTurns, $logAtkSent, $logAtkEquip, $logDefSent, $logDefEquip, $logAtkWeaponStatus, $logDefWeaponStatus, $logAtkPower, $logDefPower, $logAtkDead, $logDefDead, $logCovDead, $logSuccess, $logStolen, $logPhrase);
+		$stmt->execute();
+		$query = "SELECT `actID` FROM `actionlog` WHERE `uid`=? AND `to_uid`=? AND `time`=? ORDER BY actID DESC LIMIT 1";
+		$stmt = $this->db_link->prepare($query);
+		$stmt->bind_param("iis", $logUid, $logTo, $logTime);
+		$stmt->execute();
+		$qa = $stmt->get_result()->fetch_object();
+		return $qa ? (int)$qa->actID : null;
 	}
 }
 ?>
