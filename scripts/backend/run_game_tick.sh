@@ -29,6 +29,7 @@ mkdir -p "$PROJECT_ROOT/exports"
 
 if command -v php >/dev/null 2>&1; then
   php "$PROJECT_ROOT/scripts/backend/game_tick.php" >> "$PROJECT_ROOT/exports/game_tick.log" 2>&1
+  php "$PROJECT_ROOT/scripts/backend/turn_tick.php" >> "$PROJECT_ROOT/exports/game_tick.log" 2>&1
 else
   echo "php not found in PATH" >&2
   exit 127

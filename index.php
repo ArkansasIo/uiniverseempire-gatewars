@@ -39,6 +39,20 @@ if (isset($_POST['submit']) && ($_POST['submit'] == "Login" || $_POST['submit'] 
         }
 }
 
+$maintenanceEnabled = $s->getAppSetting('maintenance.enabled', '0') === '1';
+$announcementActive = $s->getAppSetting('announcement.active', '0') === '1';
+$announcementTitle = $s->getAppSetting('announcement.title', '');
+$announcementBody = $s->getAppSetting('announcement.body', '');
+
+$subs['{ANNOUNCEMENT_BANNER}'] = '';
+if ($announcementActive && ($announcementTitle !== '' || $announcementBody !== '')) {
+    $bannerTitle = $announcementTitle !== '' ? $announcementTitle : 'Announcement';
+    $subs['{ANNOUNCEMENT_BANNER}'] = '<div class="announcement-banner">'
+        . '<strong>' . htmlspecialchars($bannerTitle, ENT_QUOTES, 'UTF-8') . '</strong>'
+        . ($announcementBody !== '' ? ' ' . htmlspecialchars($announcementBody, ENT_QUOTES, 'UTF-8') : '')
+        . '</div>';
+}
+
 $subs['{ADMIN_MENU}'] = '';
 if ($s->loggedIn && method_exists($s, 'isAdmin') && $s->isAdmin()) {
 	$subs['{ADMIN_MENU}'] = '<div class="menu-section-title"><img src="images/ui/core-command.svg" alt="Staff" /><span>Staff Console</span></div>
@@ -52,6 +66,40 @@ if ($s->loggedIn && method_exists($s, 'isAdmin') && $s->isAdmin()) {
   <a href="admin/index.php?view=adminlog" target="_blank">Staff Log</a>
   <a href="admin/index.php?view=settings" target="_blank">Settings</a>
 </details>';
+}
+
+$isStaff = $s->loggedIn && method_exists($s, 'isAdmin') && $s->isAdmin();
+if ($maintenanceEnabled && !$isStaff) {
+    header('HTTP/1.1 503 Service Unavailable');
+    $maintenanceMessage = $s->getAppSetting('maintenance.message', 'The Stargate network is currently undergoing maintenance. Please check back soon.');
+    $maintenanceMessage = htmlspecialchars($maintenanceMessage, ENT_QUOTES, 'UTF-8');
+    ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Under Maintenance - Universe Civilization: Empire at Wars</title>
+    <style>
+        body { margin:0; font-family: Arial, Helvetica, sans-serif; background:#0a0f1a; color:#c9d6e8; }
+        .maint-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .maint-card { max-width:560px; margin:24px; padding:36px; background:#111a2b; border:1px solid #24334d; border-radius:8px; text-align:center; }
+        .maint-card h1 { margin:0 0 12px; color:#ffd76e; font-size:26px; }
+        .maint-card p { line-height:1.6; }
+        .maint-card a { color:#7ab4ff; }
+    </style>
+</head>
+<body>
+<div class="maint-wrap">
+  <div class="maint-card">
+    <h1>Under Maintenance</h1>
+    <p><?= $maintenanceMessage; ?></p>
+    <p><a href="index.php">Reload</a></p>
+  </div>
+</div>
+</body>
+</html>
+<?php
+    exit;
 }
 
 if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))

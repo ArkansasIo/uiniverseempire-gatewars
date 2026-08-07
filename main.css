@@ -957,6 +957,21 @@ body.theme-stargate .combat-btn {
     max-width: 100%;
 }
 
+.announcement-banner {
+    margin: 0 12px 12px;
+    padding: 10px 14px;
+    background: #2b2410;
+    border: 1px solid #6b5a1e;
+    border-radius: 6px;
+    color: #ffe9a8;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.announcement-banner strong {
+    color: #ffd76e;
+}
+
 /* Original Empire-at-Wars concept art is deliberately kept behind opaque UI
    layers so command data remains readable at every viewport size. */
 body.theme-og,

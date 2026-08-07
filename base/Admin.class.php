@@ -766,6 +766,7 @@ class Admin extends Game
 	public function serverInfo(): array
 	{
 		return [
+			'game_version' => defined('SGW_VERSION') ? (string)SGW_VERSION : '',
 			'php_version'  => PHP_VERSION,
 			'php_sapi'     => PHP_SAPI,
 			'db_connected' => $this->connected() ? 'Yes' : 'No',
@@ -774,6 +775,280 @@ class Admin extends Game
 			'server_time'  => date('Y-m-d H:i:s'),
 			'unix_time'    => time(),
 		];
+	}
+
+	/**
+	 * Runs one full game turn tick for every player (or a single player).
+	 * Delegates to the GameTick engine so the panel and the cron share one path.
+	 *
+	 * @return array{ok:bool,message:string,processed:int,intents:string[]}
+	 */
+	public function runGameTick(array $options = []): array
+	{
+		$this->loadTickEngine();
+		$tick = new GameTick();
+		$result = $tick->run($options);
+		if (!empty($result['error'])) {
+			return ['ok' => false, 'message' => (string)$result['error'], 'processed' => 0, 'intents' => []];
+		}
+		$intents = [
+			'income_total' => (int)($result['income_total'] ?? 0),
+			'upkeep_total' => (int)($result['upkeep_total'] ?? 0),
+			'turns_granted' => (int)($result['turns_granted'] ?? 0),
+			'untrained_granted' => (int)($result['untrained_granted'] ?? 0),
+			'rank_recalc' => (int)($result['rank_recalc'] ?? 0),
+		];
+		$this->log('tick.run', $intents, 0);
+		return ['ok' => true, 'message' => 'Game tick completed.', 'processed' => (int)($result['processed'] ?? 0), 'intents' => $intents];
+	}
+
+	/**
+	 * Status of the turn-tick engine (last run + configured knobs).
+	 */
+	public function tickStatus(): array
+	{
+		$this->loadTickEngine();
+		$tick = new GameTick();
+		return $tick->tickStatus();
+	}
+
+	/**
+	 * Wipes every piece of game data for a player and re-grants the
+	 * fresh-start package (matches User::addUser), keeping the account row.
+	 *
+	 * @return array<string> list of error messages (empty on success).
+	 */
+	public function resetPlayer(int $uid): array
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return ['Database connection is unavailable.'];
+		}
+		if ($uid <= 0) {
+			return ['Invalid player id.'];
+		}
+		$wipe = ['bank', 'units', 'power', 'rank', 'planets', 'technology', 'player_resources'];
+		foreach ($wipe as $table) {
+			$stmt = $this->db_link->prepare("DELETE FROM `" . $table . "` WHERE `uid`=?");
+			if (!$stmt) {
+				continue;
+			}
+			$stmt->bind_param("i", $uid);
+			$stmt->execute();
+		}
+
+		$fresh = [
+			['bank (uid, inbank, onHand) VALUES (?, 0, 350000)', 'i'],
+			['player_resources (uid, metal, crystal, deuterium, food, water, population, energy, last_tick_at) VALUES (?, 11200, 19000, 16000, 80000, 70000, 150000, 15000, 0)', 'i'],
+			['units (uid, attack, superAttack, attackMercs, defense, superDefense, defenseMercs, untrained, miners, lifers, covert, superCovert, anticovert, superAnticovert) VALUES (?, 0, 0, 0, 0, 0, 0, 250, 0, 0, 0, 0, 0, 0)', 'i'],
+			['technology (uid, income, unitProd, uppl, cov_lvl, anti_lvl, covert, anticovert, attack, defense, auEffect, auRes, auSteal, acuEffect, acuRes, duSteal, cuEffect, cuRes, duEffect, duRes, ascend, galaxy, pDef, puCap, pmCap) VALUES (?, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)', 'i'],
+			['power (uid, overall, mil_atk, mil_def, mil_cov, mil_anti, mil_total) VALUES (?, 0, 0, 0, 0, 0, 0)', 'i'],
+			['rank (uid, overall, mil_atk, mil_def, mil_cov, mil_anti, mil_total) VALUES (?, 0, 0, 0, 0, 0, 0)', 'i'],
+			['planets (uid, text, plnt_name, income_bonus, up_bonus, isHome, pid, plnt_size) VALUES (?, \'\', \'Home Planet\', 0, 0, 1, 0, 0)', 'i'],
+		];
+		foreach ($fresh as $def) {
+			$stmt = $this->db_link->prepare("INSERT INTO `" . $def[0]);
+			if (!$stmt) {
+				return ['Database error while resetting player.'];
+			}
+			$stmt->bind_param($def[1], $uid);
+			$stmt->execute();
+		}
+
+		$stmt = $this->db_link->prepare("UPDATE `userdata` SET `actionTurns`=?, `progress`=0, `cid`=0 WHERE `uid`=? LIMIT 1");
+		if (!$stmt) {
+			return ['Database error while resetting player.'];
+		}
+		$stmt->bind_param("ii", 250, $uid);
+		$ok = $stmt->execute();
+		if (!$ok) {
+			return ['Database error while resetting player.'];
+		}
+		$this->log('player.reset', [], $uid);
+		return [];
+	}
+
+	/**
+	 * Deletes a player account and all associated game data.
+	 *
+	 * @return array<string> list of error messages (empty on success).
+	 */
+	public function deletePlayer(int $uid): array
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return ['Database connection is unavailable.'];
+		}
+		if ($uid <= 0) {
+			return ['Invalid player id.'];
+		}
+		if ($uid === (int)$this->userid) {
+			return ['You cannot delete your own account.'];
+		}
+		$stmt = $this->db_link->prepare("SELECT `uid` FROM `users` WHERE `uid`=? LIMIT 1");
+		if ($stmt) {
+			$stmt->bind_param("i", $uid);
+			$stmt->execute();
+			if (!$stmt->get_result()->fetch_object()) {
+				return ['Player does not exist.'];
+			}
+		}
+		$wipe = ['bank', 'userdata', 'units', 'power', 'rank', 'planets', 'technology', 'player_resources', 'user_prefs'];
+		foreach ($wipe as $table) {
+			$stmt = $this->db_link->prepare("DELETE FROM `" . $table . "` WHERE `uid`=?");
+			if (!$stmt) {
+				continue;
+			}
+			$stmt->bind_param("i", $uid);
+			$stmt->execute();
+		}
+		$stmt = $this->db_link->prepare("DELETE FROM `messages` WHERE `fromUID`=? OR `toUID`=?");
+		if ($stmt) {
+			$stmt->bind_param("ii", $uid, $uid);
+			$stmt->execute();
+		}
+		$stmt = $this->db_link->prepare("DELETE FROM `users` WHERE `uid`=? LIMIT 1");
+		if (!$stmt) {
+			return ['Database error while deleting player.'];
+		}
+		$stmt->bind_param("i", $uid);
+		$ok = $stmt->execute();
+		if (!$ok) {
+			return ['Database error while deleting player.'];
+		}
+		$this->log('player.delete', [], $uid);
+		return [];
+	}
+
+	/**
+	 * Publishes a global in-game announcement banner.
+	 */
+	public function publishAnnouncement(string $title, string $body): bool
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return false;
+		}
+		$title = trim($title);
+		$body = trim($body);
+		if ($title === '' && $body === '') {
+			return false;
+		}
+		$ok = $this->setSetting('announcement.title', $title);
+		$ok = $this->setSetting('announcement.body', $body) && $ok;
+		$ok = $this->setSetting('announcement.active', '1') && $ok;
+		return (bool)$ok;
+	}
+
+	/**
+	 * Hides the active announcement banner.
+	 */
+	public function clearAnnouncement(): bool
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return false;
+		}
+		return $this->setSetting('announcement.active', '0');
+	}
+
+	/**
+	 * Current announcement banner state.
+	 */
+	public function announcementStatus(): array
+	{
+		return [
+			'active' => $this->getSetting('announcement.active', '0') === '1',
+			'title' => $this->getSetting('announcement.title', ''),
+			'body' => $this->getSetting('announcement.body', ''),
+		];
+	}
+
+	/**
+	 * Current maintenance-mode state.
+	 */
+	public function maintenanceStatus(): array
+	{
+		return [
+			'enabled' => $this->getSetting('maintenance.enabled', '0') === '1',
+			'message' => $this->getSetting('maintenance.message', ''),
+		];
+	}
+
+	/**
+	 * Enables or disables maintenance mode. Staff accounts are unaffected.
+	 */
+	public function setMaintenance(bool $enabled, string $message): bool
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return false;
+		}
+		$ok = $this->setSetting('maintenance.enabled', $enabled ? '1' : '0');
+		if (trim($message) !== '') {
+			$ok = $this->setSetting('maintenance.message', trim($message)) && $ok;
+		}
+		return (bool)$ok;
+	}
+
+	/**
+	 * Applies a grant to many players at once.
+	 *
+	 * @param string   $kind   One of: naq, turns, untrained.
+	 * @param int[]    $uids   Player ids to receive the grant.
+	 * @param int      $amount Amount per player.
+	 * @return array{ok:int,failed:int,kind:string,amount:int}
+	 */
+	public function massGrant(string $kind, array $uids, int $amount): array
+	{
+		$okCount = 0;
+		$failed = 0;
+		foreach ($uids as $uid) {
+			$uid = (int)$uid;
+			if ($uid <= 0) {
+				$failed++;
+				continue;
+			}
+			if ($kind === 'naq') {
+				$res = $this->grantNaq($uid, $amount);
+			} elseif ($kind === 'turns') {
+				$res = $this->grantTurns($uid, $amount);
+			} elseif ($kind === 'untrained') {
+				$res = $this->grantUntrained($uid, $amount);
+			} else {
+				$res = false;
+			}
+			if ($res) {
+				$okCount++;
+			} else {
+				$failed++;
+			}
+		}
+		$this->log('mass.grant', ['kind' => $kind, 'amount' => $amount, 'ok' => $okCount, 'failed' => $failed], 0);
+		return ['ok' => $okCount, 'failed' => $failed, 'kind' => $kind, 'amount' => $amount];
+	}
+
+	/**
+	 * Returns every active player uid (all access levels).
+	 */
+	public function allPlayerUids(): array
+	{
+		$uids = [];
+		if (!$this->connected() || !$this->db_link) {
+			return $uids;
+		}
+		$q = $this->query("SELECT `uid` FROM `users` ORDER BY `uid` ASC");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$uids[] = (int)$row->uid;
+			}
+		}
+		return $uids;
+	}
+
+	/**
+	 * Ensures the GameTick engine class is loadable.
+	 */
+	private function loadTickEngine(): void
+	{
+		if (!class_exists('GameTick', false)) {
+			include_once(SCRIPT_PATH . 'GameTick.class.php');
+		}
 	}
 
 	/**

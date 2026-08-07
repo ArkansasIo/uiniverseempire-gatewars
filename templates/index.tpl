@@ -280,8 +280,15 @@ SOFTWARE.
         <a href="javascript:void(0)" onclick="sendData('progressinfo','get','mainDisplay'); return false">Progress Info</a>
         <a href="javascript:void(0)" onclick="sendData('action','get','mainDisplay'); return false">Actions</a>
       </details>
+
+      <details>
+        <summary><span class="menu-summary"><img src="images/ui/help.svg" alt="Settings" /><span>Pilot Settings</span></span></summary>
+        <a href="javascript:void(0)" onclick="sendData('settings','get','mainDisplay'); return false">Account &amp; Preferences</a>
+      </details>
     </aside>
 {ADMIN_MENU}
+
+    {ANNOUNCEMENT_BANNER}
 
     <section class="content-panel">
       <div class="content-header">
@@ -326,6 +333,9 @@ SOFTWARE.
     </div>
     <div>
       &quot;Because it is so clear it takes a long time to realise it.&quot;
+    </div>
+    <div class="footer-version">
+      Version <?= defined('SGW_VERSION') ? SGW_VERSION : '' ?>
     </div>
   </footer>
 </div>

@@ -52,6 +52,51 @@ class Game extends User
 		}
 	}
 
+	/**
+	 * Reads a value from the application settings table with a fallback default.
+	 * Creates the table on demand so callers do not depend on migration order.
+	 */
+	public function getAppSetting(string $key, string $default = ''): string
+	{
+		if (!$this->connected() || !$this->db_link || $key === '') {
+			return $default;
+		}
+		$this->query("CREATE TABLE IF NOT EXISTS `app_settings` (
+			`setting_key` varchar(128) NOT NULL,
+			`setting_value` text NOT NULL,
+			`updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (`setting_key`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+		$stmt = $this->db_link->prepare("SELECT `setting_value` FROM `app_settings` WHERE `setting_key`=? LIMIT 1");
+		if (!$stmt) {
+			return $default;
+		}
+		$stmt->bind_param("s", $key);
+		$stmt->execute();
+		$row = $stmt->get_result()->fetch_object();
+		return $row ? (string)$row->setting_value : $default;
+	}
+
+	/**
+	 * Writes a value into the application settings table (upsert).
+	 */
+	public function setAppSetting(string $key, string $value): bool
+	{
+		if (!$this->connected() || !$this->db_link || $key === '') {
+			return false;
+		}
+		$this->getAppSetting($key, '');
+		$stmt = $this->db_link->prepare(
+			"INSERT INTO `app_settings` (`setting_key`, `setting_value`) VALUES (?, ?)
+			 ON DUPLICATE KEY UPDATE `setting_value`=VALUES(`setting_value`)"
+		);
+		if (!$stmt) {
+			return false;
+		}
+		$stmt->bind_param("ss", $key, $value);
+		return (bool)$stmt->execute();
+	}
+
 	/*Vars*/
 	public int $gameTime; 		//Time In Game
 	public int $isRank; 		//Players Rank out of all active users

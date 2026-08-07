@@ -371,7 +371,7 @@ class User extends Chive
 
 			$uid = (int)$this->db_link->insert_id;
 
-			$query = "INSERT INTO ".$this->db_prefix."bank (uid, inbank, onHand) VALUES (?, 0, 250000)";
+			$query = "INSERT INTO ".$this->db_prefix."bank (uid, inbank, onHand) VALUES (?, 0, 350000)";
 			$stmt = $this->db_link->prepare($query);
 			$stmt->bind_param("i", $uid);
 			$stmt->execute();
@@ -389,7 +389,7 @@ class User extends Chive
 				PRIMARY KEY (`uid`)
 			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
 
-			$query = "INSERT INTO ".$this->db_prefix."player_resources (uid, metal, crystal, deuterium, food, water, population, energy, last_tick_at) VALUES (?, 1200, 900, 600, 80000, 70000, 150000, 15000, ?)
+			$query = "INSERT INTO ".$this->db_prefix."player_resources (uid, metal, crystal, deuterium, food, water, population, energy, last_tick_at) VALUES (?, 11200, 19000, 16000, 80000, 70000, 150000, 15000, ?)
 			";
 			$stmt = $this->db_link->prepare($query);
 			$now = time();
@@ -454,6 +454,163 @@ class User extends Chive
 		}
 		$uniqID .= $time;
 		return $uniqID;	
+	}
+
+	/**
+	 * Creates the per-player preference table used by the in-game
+	 * Pilot Settings page. Safe to call on every request.
+	 */
+	public function ensureUserPrefsTable(int $uid = 0): void
+	{
+		if (!$this->connected() || !$this->db_link) {
+			return;
+		}
+		$this->query("CREATE TABLE IF NOT EXISTS `user_prefs` (
+			`uid` int(11) NOT NULL,
+			`theme` varchar(16) NOT NULL DEFAULT 'blue',
+			`notify_attack` tinyint(1) NOT NULL DEFAULT 1,
+			`notify_message` tinyint(1) NOT NULL DEFAULT 1,
+			`notify_market` tinyint(1) NOT NULL DEFAULT 1,
+			`updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+			PRIMARY KEY (`uid`)
+		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+		if ($uid <= 0) {
+			$uid = (int)$this->userid;
+		}
+		if ($uid > 0) {
+			$this->query("INSERT IGNORE INTO `user_prefs` (`uid`) VALUES (" . $uid . ")");
+		}
+	}
+
+	/**
+	 * Reads a player's stored preferences with safe defaults.
+	 */
+	public function getUserPrefs(int $uid): array
+	{
+		$defaults = [
+			'theme' => 'blue',
+			'notify_attack' => 1,
+			'notify_message' => 1,
+			'notify_market' => 1,
+		];
+		if (!$this->connected() || !$this->db_link || $uid <= 0) {
+			return $defaults;
+		}
+		$this->ensureUserPrefsTable($uid);
+		$stmt = $this->db_link->prepare("SELECT `theme`, `notify_attack`, `notify_message`, `notify_market` FROM `user_prefs` WHERE `uid`=? LIMIT 1");
+		if (!$stmt) {
+			return $defaults;
+		}
+		$stmt->bind_param("i", $uid);
+		$stmt->execute();
+		$row = $stmt->get_result()->fetch_object();
+		if (!$row) {
+			return $defaults;
+		}
+		return [
+			'theme' => in_array((string)$row->theme, ['white', 'og', 'blue', 'stargate'], true) ? (string)$row->theme : 'blue',
+			'notify_attack' => (int)$row->notify_attack,
+			'notify_message' => (int)$row->notify_message,
+			'notify_market' => (int)$row->notify_market,
+		];
+	}
+
+	/**
+	 * Persists a player's preference set.
+	 */
+	public function saveUserPrefs(int $uid, array $prefs): bool
+	{
+		if (!$this->connected() || !$this->db_link || $uid <= 0) {
+			return false;
+		}
+		$this->ensureUserPrefsTable($uid);
+		$theme = in_array((string)($prefs['theme'] ?? 'blue'), ['white', 'og', 'blue', 'stargate'], true)
+			? (string)$prefs['theme'] : 'blue';
+		$notifyAttack = !empty($prefs['notify_attack']) ? 1 : 0;
+		$notifyMessage = !empty($prefs['notify_message']) ? 1 : 0;
+		$notifyMarket = !empty($prefs['notify_market']) ? 1 : 0;
+		$stmt = $this->db_link->prepare(
+			"INSERT INTO `user_prefs` (`uid`, `theme`, `notify_attack`, `notify_message`, `notify_market`)
+			 VALUES (?, ?, ?, ?, ?)
+			 ON DUPLICATE KEY UPDATE `theme`=VALUES(`theme`), `notify_attack`=VALUES(`notify_attack`),
+			   `notify_message`=VALUES(`notify_message`), `notify_market`=VALUES(`notify_market`)"
+		);
+		if (!$stmt) {
+			return false;
+		}
+		$stmt->bind_param("isiii", $uid, $theme, $notifyAttack, $notifyMessage, $notifyMarket);
+		return (bool)$stmt->execute();
+	}
+
+	/**
+	 * Updates the player's email address.
+	 *
+	 * @return array<string,string> list of error messages (empty on success).
+	 */
+	public function updateEmail(int $uid, string $email): array
+	{
+		$errors = [];
+		if (!$this->connected() || !$this->db_link) {
+			return ['Database connection is unavailable.'];
+		}
+		if ($uid <= 0) {
+			return ['Invalid account id.'];
+		}
+		$email = trim($email);
+		if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+			return ['A valid email address is required.'];
+		}
+		$stmt = $this->db_link->prepare("SELECT `uid` FROM `users` WHERE `email`=? AND `uid`<>? LIMIT 1");
+		if ($stmt) {
+			$stmt->bind_param("si", $email, $uid);
+			$stmt->execute();
+			if ($stmt->get_result()->num_rows > 0) {
+				return ['That email address is already in use.'];
+			}
+		}
+		$stmt = $this->db_link->prepare("UPDATE `users` SET `email`=? WHERE `uid`=? LIMIT 1");
+		if (!$stmt) {
+			return ['Database error while updating email.'];
+		}
+		$stmt->bind_param("si", $email, $uid);
+		if (!$stmt->execute()) {
+			return ['Database error while updating email.'];
+		}
+		return $errors;
+	}
+
+	/**
+	 * Updates the player's password and keeps the session in sync.
+	 *
+	 * @return array<string,string> list of error messages (empty on success).
+	 */
+	public function updatePassword(int $uid, string $newPassword): array
+	{
+		$errors = [];
+		if (!$this->connected() || !$this->db_link) {
+			return ['Database connection is unavailable.'];
+		}
+		if ($uid <= 0) {
+			return ['Invalid account id.'];
+		}
+		$newPassword = trim($newPassword);
+		if (strlen($newPassword) < 6) {
+			return ['Password must be at least 6 characters.'];
+		}
+		$hash = $this->salt($newPassword);
+		$stmt = $this->db_link->prepare("UPDATE `users` SET `password`=? WHERE `uid`=? LIMIT 1");
+		if (!$stmt) {
+			return ['Database error while updating password.'];
+		}
+		$stmt->bind_param("si", $hash, $uid);
+		if (!$stmt->execute()) {
+			return ['Database error while updating password.'];
+		}
+		if ($uid === (int)$this->userid) {
+			$this->password = $newPassword;
+			$_SESSION['password'] = $newPassword;
+		}
+		return $errors;
 	}
 }
 ?>

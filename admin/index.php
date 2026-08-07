@@ -207,6 +207,93 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && $admin->isAdmin()) {
                 $redirect = 'index.php?view=settings';
                 break;
 
+            case 'player_reset':
+                $uid = (int)($_POST['uid'] ?? 0);
+                $errors = $admin->resetPlayer($uid);
+                if (count($errors)) {
+                    adminFlash('err', implode(' ', $errors));
+                } else {
+                    adminFlash('ok', 'Player reset to a fresh state.');
+                }
+                $redirect = 'index.php?view=player&uid=' . $uid;
+                break;
+
+            case 'player_delete':
+                $uid = (int)($_POST['uid'] ?? 0);
+                $errors = $admin->deletePlayer($uid);
+                if (count($errors)) {
+                    adminFlash('err', implode(' ', $errors));
+                    $redirect = 'index.php?view=player&uid=' . $uid;
+                } else {
+                    adminFlash('ok', 'Player account deleted.');
+                    $redirect = 'index.php?view=players';
+                }
+                break;
+
+            case 'announcement_publish':
+                if ($admin->publishAnnouncement((string)($_POST['title'] ?? ''), (string)($_POST['body'] ?? ''))) {
+                    adminFlash('ok', 'Announcement published.');
+                } else {
+                    adminFlash('err', 'Announcement requires a title or a body.');
+                }
+                $redirect = 'index.php?view=announcements';
+                break;
+
+            case 'announcement_clear':
+                if ($admin->clearAnnouncement()) {
+                    adminFlash('ok', 'Announcement hidden.');
+                } else {
+                    adminFlash('err', 'Could not hide announcement.');
+                }
+                $redirect = 'index.php?view=announcements';
+                break;
+
+            case 'maintenance_set':
+                $enabled = isset($_POST['enabled']) && (string)$_POST['enabled'] === '1';
+                if ($admin->setMaintenance($enabled, (string)($_POST['message'] ?? ''))) {
+                    adminFlash('ok', 'Maintenance mode ' . ($enabled ? 'enabled.' : 'disabled.'));
+                } else {
+                    adminFlash('err', 'Could not update maintenance mode.');
+                }
+                $redirect = 'index.php?view=maintenance';
+                break;
+
+            case 'mass_grant':
+                $kind = (string)($_POST['kind'] ?? 'naq');
+                $amount = (int)($_POST['amount'] ?? 0);
+                $uids = [];
+                if (isset($_POST['all_players']) && (string)$_POST['all_players'] === '1') {
+                    $uids = $admin->allPlayerUids();
+                } else {
+                    foreach (preg_split('/[\s,]+/', (string)($_POST['uids'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) as $part) {
+                        $uids[] = (int)$part;
+                    }
+                }
+                $uids = array_values(array_unique(array_filter($uids, static fn ($v) => $v > 0)));
+                if (count($uids) === 0) {
+                    adminFlash('err', 'No valid player ids provided.');
+                } else {
+                    $result = $admin->massGrant($kind, $uids, $amount);
+                    adminFlash('ok', 'Grant applied to ' . $result['ok'] . ' player(s), ' . $result['failed'] . ' failed.');
+                }
+                $redirect = 'index.php?view=mass';
+                break;
+
+            case 'tick_run':
+                $result = $admin->runGameTick(['dry_run' => isset($_POST['dry_run']) && (string)$_POST['dry_run'] === '1']);
+                if ($result['ok']) {
+                    $intents = $result['intents'];
+                    adminFlash('ok', $result['message'] . ' Processed: ' . $result['processed']
+                        . ' | Income: ' . number_format($intents['income_total'])
+                        . ' | Upkeep: ' . number_format($intents['upkeep_total'])
+                        . ' | Turns: ' . number_format($intents['turns_granted'])
+                        . ' | Untrained: ' . number_format($intents['untrained_granted']));
+                } else {
+                    adminFlash('err', $result['message']);
+                }
+                $redirect = 'index.php?view=tick';
+                break;
+
             default:
                 adminFlash('err', 'Unknown action.');
                 $redirect = 'index.php';
@@ -242,7 +329,7 @@ if (!$admin->isAdmin()) {
 
 // ---- View routing ----------------------------------------------------------------
 $view = (string)($_GET['view'] ?? 'dashboard');
-$views = ['dashboard', 'players', 'player', 'messages', 'logs', 'market', 'adminlog', 'settings'];
+$views = ['dashboard', 'players', 'player', 'messages', 'logs', 'market', 'adminlog', 'settings', 'tick', 'announcements', 'maintenance', 'mass'];
 if (!in_array($view, $views, true)) {
     $view = 'dashboard';
 }
@@ -253,13 +340,17 @@ $csrf = adminCsrfToken();
 function adminShellStart(string $view, string $csrf, string $title = 'Admin Control Panel'): void
 {
     $navItems = [
-        'dashboard' => ['Dashboard', 'index.php'],
-        'players'   => ['Players', 'index.php?view=players'],
-        'messages'  => ['Broadcast', 'index.php?view=messages'],
-        'logs'      => ['Action Logs', 'index.php?view=logs'],
-        'market'    => ['Market', 'index.php?view=market'],
-        'adminlog'  => ['Staff Log', 'index.php?view=adminlog'],
-        'settings'  => ['Settings', 'index.php?view=settings'],
+        'dashboard'     => ['Dashboard', 'index.php'],
+        'players'       => ['Players', 'index.php?view=players'],
+        'messages'      => ['Broadcast', 'index.php?view=messages'],
+        'tick'          => ['Game Tick', 'index.php?view=tick'],
+        'mass'          => ['Mass Grants', 'index.php?view=mass'],
+        'announcements' => ['Announcements', 'index.php?view=announcements'],
+        'maintenance'   => ['Maintenance', 'index.php?view=maintenance'],
+        'logs'          => ['Action Logs', 'index.php?view=logs'],
+        'market'        => ['Market', 'index.php?view=market'],
+        'adminlog'      => ['Staff Log', 'index.php?view=adminlog'],
+        'settings'      => ['Settings', 'index.php?view=settings'],
     ];
     $nav = '';
     foreach ($navItems as $key => $item) {
@@ -335,7 +426,9 @@ function adminShellEnd(): void
 {
     echo '</main>
 </div>
-<footer class="admin-footer">Admin Control Panel &middot; actions are logged to the staff log</footer>
+<footer class="admin-footer">Admin Control Panel &middot; actions are logged to the staff log &middot; version '
+    . (defined('SGW_VERSION') ? htmlspecialchars(SGW_VERSION, ENT_QUOTES, 'UTF-8') : '')
+    . '</footer>
 </body>
 </html>';
 }
@@ -596,9 +689,137 @@ switch ($view) {
                     <button class="admin-btn danger" type="submit" onclick="return confirm('Ban this player? They will be unable to log in.');">Ban Player</button>
                 <?php endif; ?>
             </form>
+            <form method="post" action="index.php" style="display:inline-block;vertical-align:top;">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="player_reset">
+                <input type="hidden" name="uid" value="<?= (int)$p->uid ?>">
+                <button class="admin-btn warn" type="submit" onclick="return confirm('Reset this player to a fresh state? This wipes all their resources, units, planets, technology and power. The account remains.');">Reset Player</button>
+            </form>
+            <form method="post" action="index.php" style="display:inline-block;vertical-align:top;">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="player_delete">
+                <input type="hidden" name="uid" value="<?= (int)$p->uid ?>">
+                <button class="admin-btn danger" type="submit" onclick="return confirm('Permanently delete this player and all their data? This cannot be undone.');">Delete Player</button>
+            </form>
             <?php else: ?>
-            <span class="admin-meta">You cannot ban yourself.</span>
+            <span class="admin-meta">You cannot ban, reset or delete yourself.</span>
             <?php endif; ?>
+        </div>
+        <?php
+        break;
+
+    case 'tick':
+        $tick = $admin->tickStatus();
+        $lastRun = (int)($tick['last_run'] ?? 0);
+        ?>
+        <h2>Game Tick</h2>
+        <div class="admin-card">
+            <h3>Last Run</h3>
+            <table class="admin-tbl">
+                <tr><th>Last Run</th><td><?= $lastRun > 0 ? Admin::clean(date('Y-m-d H:i', $lastRun)) : 'never' ?></td></tr>
+                <tr><th>Status</th><td><?= Admin::clean((string)($tick['last_status'] ?? 'never')) ?></td></tr>
+                <tr><th>Duration</th><td><?= number_format((float)($tick['last_duration'] ?? 0.0), 2) ?>s</td></tr>
+                <tr><th>Processed</th><td><?= number_format((int)($tick['last_processed'] ?? 0)) ?></td></tr>
+                <tr><th>Naquadah Income (total)</th><td><?= number_format((int)($tick['last_income'] ?? 0)) ?></td></tr>
+                <tr><th>Unit Upkeep (total)</th><td><?= number_format((int)($tick['last_upkeep'] ?? 0)) ?></td></tr>
+                <tr><th>Turns Granted</th><td><?= number_format((int)($tick['last_turns'] ?? 0)) ?></td></tr>
+                <tr><th>Untrained Granted</th><td><?= number_format((int)($tick['last_units'] ?? 0)) ?></td></tr>
+            </table>
+        </div>
+        <div class="admin-card">
+            <h3>Run Tick Now</h3>
+            <p class="admin-meta">Runs the full turn-tick engine: income, unit upkeep, action-turn refill, untrained growth and rank recalculation. The cron runner is <code>scripts/backend/turn_tick.php</code>.</p>
+            <form method="post" action="index.php" class="admin-form" style="display:inline-block;vertical-align:top;">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="tick_run">
+                <button class="admin-btn" type="submit" onclick="return confirm('Run the game tick for all players now?');">Run Tick</button>
+            </form>
+            <form method="post" action="index.php" class="admin-form" style="display:inline-block;vertical-align:top;">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="tick_run">
+                <input type="hidden" name="dry_run" value="1">
+                <button class="admin-btn warn" type="submit">Dry Run (no changes)</button>
+            </form>
+        </div>
+        <?php
+        break;
+
+    case 'mass':
+        ?>
+        <h2>Mass Grants</h2>
+        <div class="admin-card">
+            <p class="admin-meta">Apply a grant to many players at once. Provide a comma or whitespace separated list of player ids, or grant to every account.</p>
+            <form method="post" action="index.php" class="admin-form">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="mass_grant">
+                <div class="row">
+                    <label>Grant type:</label>
+                    <select name="kind">
+                        <option value="naq">Naquadah</option>
+                        <option value="turns">Action Turns</option>
+                        <option value="untrained">Untrained Units</option>
+                    </select>
+                </div>
+                <div class="row"><label>Amount per player:</label><input type="number" name="amount" min="0" value="0"></div>
+                <div class="row"><label>Player ids:</label><textarea name="uids" placeholder="e.g. 1, 2, 3"></textarea></div>
+                <div class="row"><label>All players:</label><input type="checkbox" name="all_players" value="1"></div>
+                <button class="admin-btn" type="submit">Apply Grant</button>
+            </form>
+        </div>
+        <?php
+        break;
+
+    case 'announcements':
+        $ann = $admin->announcementStatus();
+        ?>
+        <h2>Announcements</h2>
+        <?php if ($ann['active']): ?><div class="admin-ok">An announcement is currently visible to players.</div><?php endif; ?>
+        <div class="admin-card">
+            <h3>Current Announcement</h3>
+            <?php if ($ann['title'] === '' && $ann['body'] === ''): ?>
+                <p class="admin-meta">No announcement content set.</p>
+            <?php else: ?>
+            <table class="admin-tbl">
+                <tr><th>Title</th><td><?= Admin::clean($ann['title']) ?></td></tr>
+                <tr><th>Body</th><td><?= Admin::clean($ann['body']) ?></td></tr>
+            </table>
+            <?php endif; ?>
+        </div>
+        <div class="admin-card">
+            <h3>Publish Announcement</h3>
+            <form method="post" action="index.php" class="admin-form">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="announcement_publish">
+                <div class="row"><label>Title:</label><input type="text" name="title" value="<?= Admin::clean($ann['title']) ?>" maxlength="128"></div>
+                <div class="row"><label>Body:</label><textarea name="body" placeholder="Message shown to every player"></textarea></div>
+                <button class="admin-btn" type="submit">Publish</button>
+            </form>
+        </div>
+        <?php if ($ann['active']): ?>
+        <div class="admin-card">
+            <form method="post" action="index.php" class="admin-form">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="announcement_clear">
+                <button class="admin-btn warn" type="submit">Hide Announcement</button>
+            </form>
+        </div>
+        <?php endif; ?>
+        <?php
+        break;
+
+    case 'maintenance':
+        $maint = $admin->maintenanceStatus();
+        ?>
+        <h2>Maintenance Mode</h2>
+        <?php if ($maint['enabled']): ?><div class="admin-err">Maintenance mode is ON. Regular players cannot access the game; staff accounts are unaffected.</div><?php endif; ?>
+        <div class="admin-card">
+            <form method="post" action="index.php" class="admin-form">
+                <input type="hidden" name="csrf" value="<?= Admin::clean($csrf) ?>">
+                <input type="hidden" name="action" value="maintenance_set">
+                <div class="row"><label>Enable maintenance:</label><input type="checkbox" name="enabled" value="1"<?= $maint['enabled'] ? ' checked' : '' ?>></div>
+                <div class="row"><label>Message:</label><input type="text" name="message" value="<?= Admin::clean($maint['message']) ?>" placeholder="Shown to players while maintenance is active"></div>
+                <button class="admin-btn" type="submit">Save</button>
+            </form>
         </div>
         <?php
         break;
