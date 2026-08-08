@@ -91,20 +91,6 @@ foreach ($catalog as $entry) {
     $catalogMap[$entry['key']] = $entry;
 }
 
-$s->query("CREATE TABLE IF NOT EXISTS player_resources (
-    uid INT NOT NULL PRIMARY KEY,
-    metal BIGINT NOT NULL DEFAULT 80000,
-    crystal BIGINT NOT NULL DEFAULT 60000,
-    deuterium BIGINT NOT NULL DEFAULT 45000,
-    food BIGINT NOT NULL DEFAULT 55000,
-    water BIGINT NOT NULL DEFAULT 55000,
-    population BIGINT NOT NULL DEFAULT 120000,
-    energy BIGINT NOT NULL DEFAULT 50000,
-    last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-$s->query("ALTER TABLE player_resources ADD COLUMN IF NOT EXISTS energy BIGINT NOT NULL DEFAULT 50000");
-
 $s->query("CREATE TABLE IF NOT EXISTS ogame_building_levels (
     uid INT NOT NULL,
     building_key VARCHAR(64) NOT NULL,
@@ -214,6 +200,7 @@ foreach ($catalog as $entry) {
             <h4><?= ob_h($category); ?> Buildings</h4>
             <table class="mini-table" border="0" width="100%">
                 <tr>
+                    <th align="left">Image</th>
                     <th align="left">Building</th>
                     <th align="left">Level</th>
                     <th align="left">Next Cost (M/C/D/E)</th>
@@ -228,6 +215,7 @@ foreach ($catalog as $entry) {
                     $needE = (int)round($entry['base']['energy'] * pow($entry['scale'], $curr));
                 ?>
                 <tr>
+                    <td><img src="images/buildings/ogame/<?= ob_h($entry['key']); ?>.jpg" alt="<?= ob_h($entry['name']); ?>" width="60" style="vertical-align: middle;" /></td>
                     <td><?= ob_h($entry['name']); ?> (<?= ob_h($entry['key']); ?>)</td>
                     <td><?= ob_num($curr); ?></td>
                     <td><?= ob_num($needM); ?>/<?= ob_num($needC); ?>/<?= ob_num($needD); ?>/<?= ob_num($needE); ?></td>

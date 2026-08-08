@@ -15,9 +15,9 @@ sendData(page, type, id, atype, subject, message)
 - `type`   → `get` (query) or `post` (serialize the active form)
 - `id`     → target player id (attacker/spy/support target) — `0` when n/a
 - `atype`  → action slug handled by the module
-- `subject` / `message` → used by `sendmessage`/`c_ally` forms
+- `subject` / `message` → appended to the request URL when non-empty (e.g. the weapon id for `armory` sell/repair, or an `artillery` piece id + battery)
 
-Request URL shape: `modules/<page>.php?id=<id>&atype=<atype>&time=<ts>&<extra>`,
+Request URL shape: `modules/<page>.php?id=<id>&atype=<atype>&time=<ts>[&subject=<s>][&message=<m>]&<extra>`,
 with `time` mandatory for the login guard. **Every** module entry must:
 
 ```php
@@ -68,6 +68,7 @@ From `modules/pages.php` `$mainTitles` / `$subLabels`:
 | `actionLogs.php` | View `actionlog` reports (defense tabs) |
 | `armory.php` | Buy/sell attack & defense weapons; sell-link handler fixed at line 101 |
 | `armoryold.php` | Legacy armory view (superseded by `armory.php`) |
+| `artillery.php` | Artillery Command: 180-piece offense/defense catalog (9 classes x 2 sub-classes x 5 types x 2 sub-types); buy/convert/sell/deploy into offense/defense/reserve batteries; powers feed `Game::updatePower()` |
 | `bank.php` | Naquadah deposit/withdraw (`Game::bank()`) |
 | `base.php` | Empire base/overview + news feed |
 | `c_ally.php` | Alliance management (create/join/roster) |
@@ -137,6 +138,11 @@ Exact dispatch for the modules with explicit `atype` routing (verified against
 | | `repair` | repair/restore weapon strength |
 | | `sellweps` | sell selected weapons (fixed handler at line 101 uses `sellweps`) |
 | `armoryold.php` | `repair` | legacy armory repair view |
+| `artillery.php` | `(default)` → view | catalog + inventory fragment |
+| | `buy` | buy pieces with Naquadah + units + resources (`id`=qty, `subject`=artillery_id, `message`=battery) |
+| | `convert` | convert units into pieces (`id`=qty, `subject`=artillery_id, `message`=unit source) |
+| | `sell` | scrap owned pieces for a Naquadah refund (`id`=qty, `subject`=artillery_id, `message`=battery) |
+| | `deploy` | move pieces between reserve/offense/defense batteries (`id`=qty, `subject`=artillery_id, `message`=target) |
 | `bank.php` | `view`, `deposit`, `withdrawl` (from `$_GET['atype']`) | `Game::bank()` |
 | `c_ally.php` | `Send` | alliance action (accept/send) vs. default view |
 | `commandergov.php` | lowercase slug | governance systems + options views |

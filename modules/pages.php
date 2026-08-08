@@ -277,7 +277,6 @@ function ensureUniversePlagueTables(Game $s): void {
 }
 
 function universeCreatePlague(Game $s, int $uid, array $world, string $targetType, int $moonNo, string $biomeName): string {
-    ensureUniversePlagueTables($s);
     $targetType = in_array($targetType, ['planet', 'moon', 'biome'], true) ? $targetType : 'planet';
     $worldIndex = max(1, (int)($world['idx'] ?? 0));
     $moonNo = max(0, (int)$moonNo);
@@ -304,7 +303,6 @@ function universeCreatePlague(Game $s, int $uid, array $world, string $targetTyp
 }
 
 function universePlagueRowsForWorld(Game $s, int $uid, int $worldIndex): array {
-    ensureUniversePlagueTables($s);
     $worldIndex = max(1, (int)$worldIndex);
     $q = $s->query("SELECT world_index, target_type, moon_no, biome_name, plague_name, severity, effect_type, effect_value, symptom, status, UNIX_TIMESTAMP(created_at) AS created_ts
         FROM universe_world_plagues
@@ -382,7 +380,6 @@ function ensureUniverseWaterTables(Game $s): void {
 }
 
 function universeCreateWater(Game $s, int $uid, array $world, string $targetType, int $moonNo, string $biomeName): string {
-    ensureUniverseWaterTables($s);
     $targetType = in_array($targetType, ['planet', 'moon', 'biome'], true) ? $targetType : 'planet';
     $worldIndex = max(1, (int)($world['idx'] ?? 0));
     $moonNo = max(0, (int)$moonNo);
@@ -409,7 +406,6 @@ function universeCreateWater(Game $s, int $uid, array $world, string $targetType
 }
 
 function universeWaterRowsForWorld(Game $s, int $uid, int $worldIndex): array {
-    ensureUniverseWaterTables($s);
     $worldIndex = max(1, (int)$worldIndex);
     $q = $s->query("SELECT world_index, target_type, moon_no, biome_name, water_name, effect_type, effect_value, potency, description, status, UNIX_TIMESTAMP(created_at) AS created_ts
         FROM universe_world_water_sources
@@ -719,19 +715,6 @@ function universeColonizeWorld(Game $s, int $uid, array $cfg, array $ownedPlanet
         return 'Colonization failed: insufficient Naquadah on hand.';
     }
 
-    $s->query("CREATE TABLE IF NOT EXISTS player_resources (
-        uid INT NOT NULL PRIMARY KEY,
-        metal BIGINT NOT NULL DEFAULT 80000,
-        crystal BIGINT NOT NULL DEFAULT 60000,
-        deuterium BIGINT NOT NULL DEFAULT 45000,
-        food BIGINT NOT NULL DEFAULT 55000,
-        water BIGINT NOT NULL DEFAULT 55000,
-        population BIGINT NOT NULL DEFAULT 120000,
-        energy BIGINT NOT NULL DEFAULT 50000,
-        last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("ALTER TABLE player_resources ADD COLUMN IF NOT EXISTS energy BIGINT NOT NULL DEFAULT 50000");
     $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . (int)$uid . ")");
 
     $resQ = $s->query("SELECT deuterium,food,water,population FROM player_resources WHERE uid=" . (int)$uid . " LIMIT 1");
@@ -908,20 +891,6 @@ function buildResearchDirectorate(int $uid, $techView, $personnel): array {
 }
 
 function resourceEnsureAndTick(Game $s, int $uid, $baseData, array $planets, $techView): array {
-    $s->query("CREATE TABLE IF NOT EXISTS player_resources (
-        uid INT NOT NULL PRIMARY KEY,
-        metal BIGINT NOT NULL DEFAULT 80000,
-        crystal BIGINT NOT NULL DEFAULT 60000,
-        deuterium BIGINT NOT NULL DEFAULT 45000,
-        food BIGINT NOT NULL DEFAULT 55000,
-        water BIGINT NOT NULL DEFAULT 55000,
-        population BIGINT NOT NULL DEFAULT 120000,
-        energy BIGINT NOT NULL DEFAULT 50000,
-        last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("ALTER TABLE player_resources ADD COLUMN IF NOT EXISTS energy BIGINT NOT NULL DEFAULT 50000");
-
     $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . (int)$uid . ")");
     $s->query("CREATE TABLE IF NOT EXISTS resource_structures (
         uid INT NOT NULL PRIMARY KEY,
@@ -934,7 +903,6 @@ function resourceEnsureAndTick(Game $s, int $uid, $baseData, array $planets, $te
         energy_reactor INT NOT NULL DEFAULT 1,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )");
-    $s->query("ALTER TABLE resource_structures ADD COLUMN IF NOT EXISTS energy_reactor INT NOT NULL DEFAULT 1");
     $s->query("INSERT IGNORE INTO resource_structures (uid) VALUES (" . (int)$uid . ")");
 
     $strQ = $s->query("SELECT metal_mine,crystal_lab,deuterium_refinery,hydroponics,water_plant,habitat_dome,energy_reactor FROM resource_structures WHERE uid=" . (int)$uid . " LIMIT 1");
@@ -1532,42 +1500,6 @@ function blueprintCatalog(): array {
 }
 
 function blueprintEnsureTables(Game $s, array $catalog): void {
-    $s->query("CREATE TABLE IF NOT EXISTS blueprint_catalog (
-        blueprint_id INT NOT NULL PRIMARY KEY,
-        bp_name VARCHAR(96) NOT NULL,
-        hull_class VARCHAR(40) NOT NULL,
-        bp_kind VARCHAR(16) NOT NULL DEFAULT 'ship',
-        target_key VARCHAR(32) NOT NULL DEFAULT '',
-        tier INT NOT NULL DEFAULT 1,
-        copy_cost INT NOT NULL DEFAULT 0,
-        base_metal INT NOT NULL DEFAULT 0,
-        base_crystal INT NOT NULL DEFAULT 0,
-        base_deuterium INT NOT NULL DEFAULT 0,
-        base_turns INT NOT NULL DEFAULT 1,
-        base_power INT NOT NULL DEFAULT 0
-    )");
-
-    $s->query("CREATE TABLE IF NOT EXISTS player_blueprints (
-        uid INT NOT NULL,
-        blueprint_id INT NOT NULL,
-        owned_copies INT NOT NULL DEFAULT 0,
-        me_level INT NOT NULL DEFAULT 0,
-        te_level INT NOT NULL DEFAULT 0,
-        run_count INT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY(uid, blueprint_id)
-    )");
-
-    $s->query("CREATE TABLE IF NOT EXISTS blueprint_hangar (
-        uid INT NOT NULL,
-        blueprint_id INT NOT NULL,
-        hull_class VARCHAR(40) NOT NULL,
-        quantity INT NOT NULL DEFAULT 0,
-        total_power BIGINT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY(uid, blueprint_id)
-    )");
-
     foreach ($catalog as $id => $bp) {
         $id = (int)$id;
         $name = preg_replace('/[^A-Za-z0-9 _-]/', '', (string)$bp['name']);
@@ -1673,6 +1605,8 @@ function militaryTroopCatalog(): array {
         ['rank' => 'Counter Agent', 'title' => 'Signal Warden', 'class' => 'Security', 'subclass' => 'Counterintel', 'type' => 'Counter-Covert', 'subtype' => 'Interceptor', 'a1' => 'Awareness', 'a2' => 'Control'],
         ['rank' => 'Warden', 'title' => 'Citadel Warden', 'class' => 'Security', 'subclass' => 'Fortress', 'type' => 'Defense', 'subtype' => 'Sentinel', 'a1' => 'Fortitude', 'a2' => 'Discipline'],
         ['rank' => 'Ascendant', 'title' => 'Star Legate', 'class' => 'Elite', 'subclass' => 'Ascended', 'type' => 'Mythic', 'subtype' => 'Paragon', 'a1' => 'Resolve', 'a2' => 'Command'],
+        ['rank' => 'Bombardier', 'title' => 'Siege Bombardier', 'class' => 'Heavy', 'subclass' => 'Artillery', 'type' => 'Siege', 'subtype' => 'Bombardment', 'a1' => 'Barrage', 'a2' => 'Breach'],
+        ['rank' => 'Guardian', 'title' => 'Aegis Guardian', 'class' => 'Heavy', 'subclass' => 'Artillery', 'type' => 'Bulwark', 'subtype' => 'Guardian', 'a1' => 'Fortitude', 'a2' => 'Control'],
     ];
 
     $rows = [];
@@ -2185,7 +2119,7 @@ $subDefaults = [
 
 $subLabels = [
     'empire' => ['home' => 'Home', 'overview' => 'Overview', 'planets' => 'Planets', 'command' => 'Command', 'progress' => 'Progression', 'logistics' => 'Logistics Hub', 'doctrine' => 'Doctrine Board'],
-    'military' => ['personnel' => 'Personnel', 'troops' => 'Troop Catalog', 'armory' => 'Armory', 'training' => 'Training', 'fleet' => 'Fleet', 'navy' => 'Navy Ops', 'defensegrid' => 'Defense Grid'],
+    'military' => ['personnel' => 'Personnel', 'troops' => 'Troop Catalog', 'armory' => 'Armory', 'artillery' => 'Artillery', 'training' => 'Training', 'fleet' => 'Fleet', 'navy' => 'Navy Ops', 'defensegrid' => 'Defense Grid'],
     'operations' => ['attack' => 'Attack', 'raid' => 'Raid', 'spy' => 'Spy', 'logs' => 'Combat Logs', 'commandqueue' => 'Command Queue', 'diplomacyops' => 'Diplomatic Ops', 'rts' => 'RTS Turn System'],
     'economy' => ['banking' => 'Banking', 'market' => 'Market', 'technology' => 'Technology', 'production' => 'Production', 'resources' => 'Resource Hub', 'buildings' => 'OGame Buildings', 'logistics' => 'Supply Logistics', 'treasury' => 'Treasury Policy', 'store' => 'In-Game Store', 'battlepass' => 'Battle Pass', 'seasonpass' => 'Season Pass'],
     'diplomacy' => ['alliance' => 'Alliance', 'relations' => 'Relations', 'messages' => 'Messages', 'commander' => 'Commander Chain', 'governance' => 'Commander Governance', 'treaties' => 'Treaties', 'councils' => 'Councils'],
@@ -3026,7 +2960,7 @@ if (($main === 'economy' && ($sub === 'store' || $sub === 'battlepass' || $sub =
 }
 
 if ($main === 'military' || strpos($cmd, 'mil_') === 0) {
-    $s->query("CREATE TABLE IF NOT EXISTS military_command_state (
+    $s->query("CREATE TABLE IF NOT EXISTS military_command_state ( -- This table is created in the new SQL migration file
         uid INT NOT NULL PRIMARY KEY,
         readiness_index INT NOT NULL DEFAULT 50,
         drill_xp INT NOT NULL DEFAULT 0,
@@ -3035,52 +2969,6 @@ if ($main === 'military' || strpos($cmd, 'mil_') === 0) {
         logistics_posture VARCHAR(24) NOT NULL DEFAULT 'steady',
         war_games INT NOT NULL DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("INSERT IGNORE INTO military_command_state (uid) VALUES (" . $uid . ")");
-    $s->query("CREATE TABLE IF NOT EXISTS military_troop_queue (
-        queue_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        uid INT NOT NULL,
-        troop_id INT NOT NULL,
-        quantity INT NOT NULL DEFAULT 1,
-        priority_order INT NOT NULL DEFAULT 0,
-        eta_seconds INT NOT NULL DEFAULT 300,
-        status VARCHAR(20) NOT NULL DEFAULT 'queued',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        completed_at TIMESTAMP NULL DEFAULT NULL
-    )");
-    $prioColQ = $s->query("SHOW COLUMNS FROM military_troop_queue LIKE 'priority_order'");
-    $hasPriority = $prioColQ ? (int)$prioColQ->num_rows : 0;
-    if ($hasPriority === 0) {
-        $s->query("ALTER TABLE military_troop_queue ADD COLUMN priority_order INT NOT NULL DEFAULT 0 AFTER quantity");
-    }
-    $troopCatalog = militaryTroopCatalog();
-    $s->query("CREATE TABLE IF NOT EXISTS military_troop_catalog (
-        troop_id INT NOT NULL PRIMARY KEY,
-        troop_code VARCHAR(20) NOT NULL,
-        troop_name VARCHAR(120) NOT NULL,
-        troop_rank VARCHAR(60) NOT NULL,
-        troop_title VARCHAR(120) NOT NULL,
-        class_name VARCHAR(40) NOT NULL,
-        class_subclass VARCHAR(60) NOT NULL,
-        troop_type VARCHAR(60) NOT NULL,
-        troop_subtype VARCHAR(60) NOT NULL,
-        power_stat INT NOT NULL DEFAULT 0,
-        attack_stat INT NOT NULL DEFAULT 0,
-        defense_stat INT NOT NULL DEFAULT 0,
-        covert_stat INT NOT NULL DEFAULT 0,
-        anti_covert_stat INT NOT NULL DEFAULT 0,
-        mobility_stat INT NOT NULL DEFAULT 0,
-        morale_stat INT NOT NULL DEFAULT 0,
-        logistics_stat INT NOT NULL DEFAULT 0,
-        tactic_substat INT NOT NULL DEFAULT 0,
-        resilience_substat INT NOT NULL DEFAULT 0,
-        discipline_substat INT NOT NULL DEFAULT 0,
-        attribute_primary VARCHAR(60) NOT NULL,
-        attribute_secondary VARCHAR(60) NOT NULL,
-        sub_attribute_a INT NOT NULL DEFAULT 0,
-        sub_attribute_b INT NOT NULL DEFAULT 0,
-        legion_name VARCHAR(60) NOT NULL,
-        tier INT NOT NULL DEFAULT 1
     )");
     $troopCountQ = $s->query("SELECT COUNT(*) AS c FROM military_troop_catalog");
     $troopCount = $troopCountQ ? (int)($troopCountQ->fetch_object()->c ?? 0) : 0;
@@ -3411,20 +3299,6 @@ if ($main === 'military' || strpos($cmd, 'mil_') === 0) {
 }
 
 if ($main === 'operations' || strpos($cmd, 'ops_') === 0) {
-    $s->query("CREATE TABLE IF NOT EXISTS operations_rts_state (
-        uid INT NOT NULL PRIMARY KEY,
-        doctrine VARCHAR(24) NOT NULL DEFAULT 'balanced',
-        tempo_mode VARCHAR(24) NOT NULL DEFAULT 'standard',
-        theater_level INT NOT NULL DEFAULT 1,
-        command_xp INT NOT NULL DEFAULT 0,
-        cycle_index INT NOT NULL DEFAULT 0,
-        frontline_pressure INT NOT NULL DEFAULT 45,
-        reserve_integrity INT NOT NULL DEFAULT 60,
-        morale_index INT NOT NULL DEFAULT 55,
-        last_cycle_at TIMESTAMP NULL DEFAULT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("INSERT IGNORE INTO operations_rts_state (uid) VALUES (" . $uid . ")");
     $s->query("CREATE TABLE IF NOT EXISTS operations_turn_queue (
         queue_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         uid INT NOT NULL,
@@ -3438,11 +3312,6 @@ if ($main === 'operations' || strpos($cmd, 'ops_') === 0) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         completed_at TIMESTAMP NULL DEFAULT NULL
     )");
-    $prioColQ = $s->query("SHOW COLUMNS FROM operations_turn_queue LIKE 'priority_order'");
-    $hasPriority = $prioColQ ? (int)$prioColQ->num_rows : 0;
-    if ($hasPriority === 0) {
-        $s->query("ALTER TABLE operations_turn_queue ADD COLUMN priority_order INT NOT NULL DEFAULT 0 AFTER reward_focus");
-    }
 
     $turnQ = $s->query("SELECT actionTurns FROM userdata WHERE uid=" . $uid . " LIMIT 1");
     $operationsRtsTurnBalance = $turnQ ? (int)($turnQ->fetch_object()->actionTurns ?? 0) : 0;
@@ -3602,93 +3471,6 @@ if ($main === 'operations' || strpos($cmd, 'ops_') === 0) {
 }
 
 if ($main === 'universe' || strpos($cmd, 'uni_') === 0) {
-    ensureUniversePlagueTables($s);
-    ensureUniverseWaterTables($s);
-    $s->query("CREATE TABLE IF NOT EXISTS universe_event_state (
-        uid INT NOT NULL PRIMARY KEY,
-        event_cycle INT NOT NULL DEFAULT 1,
-        current_event VARCHAR(80) NOT NULL DEFAULT 'Calm Front',
-        event_points INT NOT NULL DEFAULT 0,
-        threat_level INT NOT NULL DEFAULT 20,
-        last_event_at TIMESTAMP NULL DEFAULT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("INSERT IGNORE INTO universe_event_state (uid) VALUES (" . $uid . ")");
-    $s->query("CREATE TABLE IF NOT EXISTS universe_event_log (
-        event_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        uid INT NOT NULL,
-        galaxy_no INT NOT NULL,
-        event_name VARCHAR(90) NOT NULL,
-        event_type VARCHAR(40) NOT NULL,
-        resolution_status VARCHAR(20) NOT NULL DEFAULT 'open',
-        reward_points INT NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        resolved_at TIMESTAMP NULL DEFAULT NULL
-    )");
-    $s->query("CREATE TABLE IF NOT EXISTS universe_world_boss (
-        uid INT NOT NULL PRIMARY KEY,
-        boss_name VARCHAR(90) NOT NULL DEFAULT 'Dormant Leviathan',
-        boss_level INT NOT NULL DEFAULT 1,
-        boss_hp BIGINT NOT NULL DEFAULT 0,
-        boss_hp_max BIGINT NOT NULL DEFAULT 0,
-        status VARCHAR(20) NOT NULL DEFAULT 'idle',
-        last_spawn_at TIMESTAMP NULL DEFAULT NULL,
-        last_defeated_at TIMESTAMP NULL DEFAULT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("INSERT IGNORE INTO universe_world_boss (uid) VALUES (" . $uid . ")");
-    $s->query("CREATE TABLE IF NOT EXISTS universe_story_progress (
-        uid INT NOT NULL PRIMARY KEY,
-        prologue_unlocked TINYINT(1) NOT NULL DEFAULT 0,
-        current_act INT NOT NULL DEFAULT 1,
-        current_chapter INT NOT NULL DEFAULT 1,
-        chapter_points INT NOT NULL DEFAULT 0,
-        completed_acts INT NOT NULL DEFAULT 0,
-        last_story_at TIMESTAMP NULL DEFAULT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )");
-    $s->query("INSERT IGNORE INTO universe_story_progress (uid) VALUES (" . $uid . ")");
-    $s->query("CREATE TABLE IF NOT EXISTS universe_story_log (
-        log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        uid INT NOT NULL,
-        act_no INT NOT NULL DEFAULT 1,
-        chapter_no INT NOT NULL DEFAULT 1,
-        entry_code VARCHAR(30) NOT NULL,
-        entry_text VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )");
-    $s->query("CREATE TABLE IF NOT EXISTS universe_colony_profiles (
-        uid INT NOT NULL,
-        world_index INT NOT NULL,
-        target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
-        moon_no INT NOT NULL DEFAULT 0,
-        world_type VARCHAR(40) NOT NULL,
-        biome VARCHAR(80) NOT NULL,
-        sub_biome VARCHAR(80) NOT NULL,
-        city_name VARCHAR(90) NOT NULL,
-        district_focus VARCHAR(40) NOT NULL DEFAULT 'balanced',
-        field_total INT NOT NULL DEFAULT 16,
-        field_used INT NOT NULL DEFAULT 0,
-        infrastructure_tier INT NOT NULL DEFAULT 1,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        PRIMARY KEY(uid, world_index, target_type, moon_no)
-    )");
-    $s->query("CREATE TABLE IF NOT EXISTS universe_colony_fields (
-        field_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        uid INT NOT NULL,
-        world_index INT NOT NULL,
-        target_type VARCHAR(10) NOT NULL DEFAULT 'planet',
-        moon_no INT NOT NULL DEFAULT 0,
-        slot_no INT NOT NULL DEFAULT 1,
-        building_code VARCHAR(24) NOT NULL,
-        building_name VARCHAR(90) NOT NULL,
-        building_level INT NOT NULL DEFAULT 1,
-        power_draw INT NOT NULL DEFAULT 0,
-        population_use INT NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY uniq_field_slot (uid, world_index, target_type, moon_no, slot_no)
-    )");
-
     $fieldWorldIndex = $targetWorld > 0 ? $targetWorld : (int)$worldSlice['start'];
     $fieldWorldIndex = max(1, min((int)$uCfg['maxWorlds'], $fieldWorldIndex));
     $fieldTargetType = ($fieldTargetType === 'moon') ? 'moon' : 'planet';
@@ -4199,8 +3981,6 @@ if ($main === 'research') {
 }
 
 if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && $sub === 'seeds') || strpos($cmd, 'bp_') === 0 || $cmd === 'seed_bookmark') {
-    blueprintEnsureTables($s, $blueprintCatalog);
-    $blueprintBuildingCatalog = [];
     $bpBuildQ = $s->query("SELECT blueprint_id,bp_name,hull_class,bp_kind,target_key,tier,copy_cost,base_metal,base_crystal,base_deuterium,base_turns,base_power
         FROM blueprint_catalog WHERE bp_kind='building' ORDER BY tier ASC, blueprint_id ASC");
     if ($bpBuildQ) {
@@ -4224,15 +4004,6 @@ if (($main === 'research' && $sub === 'blueprints') || ($main === 'universe' && 
         if (isset($blueprintBuildingCatalog[(int)$id])) { continue; }
         $s->query("INSERT IGNORE INTO player_blueprints (uid, blueprint_id) VALUES (" . $uid . ", " . (int)$id . ")");
     }
-
-    $s->query("CREATE TABLE IF NOT EXISTS universe_seed_bookmarks (
-        uid INT NOT NULL,
-        seed_index INT NOT NULL,
-        seed_key VARCHAR(64) NOT NULL,
-        note VARCHAR(120) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY(uid, seed_index)
-    )");
 
     if (strpos($cmd, 'bp_') === 0 && (isset($blueprintCatalog[$bpId]) || isset($blueprintBuildingCatalog[$bpId]))) {
         $bp = isset($blueprintCatalog[$bpId]) ? $blueprintCatalog[$bpId] : $blueprintBuildingCatalog[$bpId];
@@ -4385,6 +4156,7 @@ $featureButtons = [
     ],
     'military' => [
         ['label' => 'Armory', 'js' => "sendData('armory','get','mainDisplay'); return false"],
+        ['label' => 'Artillery', 'js' => "sendData('artillery','get','mainDisplay'); return false"],
         ['label' => 'Training', 'js' => "sendData('train','get','mainDisplay'); return false"],
         ['label' => 'Troop Catalog', 'js' => "sendData('pages','get','military','troops'); return false"],
         ['label' => 'Fleet Dock', 'js' => "sendData('fleetdock','get','mainDisplay'); return false"],
@@ -4939,7 +4711,7 @@ if ($main === 'military') {
 
         echo '<div class="card full"><h4>Troop Matrix</h4>';
         echo '<table class="mini-table" border="0" width="100%">';
-        echo '<tr><th align="left">Code</th><th align="left">Name</th><th align="left">Rank & Title</th><th align="left">Class Tree</th><th align="left">Type Tree</th><th align="left">Stats</th><th align="left">Sub Stats / Attributes</th><th align="left">Action</th></tr>';
+        echo '<tr><th align="left">Image</th><th align="left">Code</th><th align="left">Name</th><th align="left">Rank & Title</th><th align="left">Class Tree</th><th align="left">Type Tree</th><th align="left">Stats</th><th align="left">Sub Stats / Attributes</th><th align="left">Action</th></tr>';
         foreach ($sliceTroops as $tt) {
             $statsText = 'PWR ' . fnum((int)$tt['power_stat'])
                 . ' | ATK ' . fnum((int)$tt['attack_stat'])
@@ -4956,6 +4728,7 @@ if ($main === 'military') {
                 . ' | SUB-A ' . fnum((int)$tt['sub_attribute_a'])
                 . ' | SUB-B ' . fnum((int)$tt['sub_attribute_b']);
             echo '<tr>';
+            echo '<td><img src="images/units/troops/' . h((string)$tt['troop_code']) . '.jpg" alt="' . h((string)$tt['troop_name']) . '" width="60" style="vertical-align: middle;" /></td>';
             echo '<td>' . h((string)$tt['troop_code']) . '</td>';
             echo '<td>' . h((string)$tt['troop_name']) . ' <br><small>Legion: ' . h((string)$tt['legion_name']) . ' | Tier ' . fnum((int)$tt['tier']) . '</small></td>';
             echo '<td>' . h((string)$tt['troop_rank']) . '<br><small>' . h((string)$tt['troop_title']) . '</small></td>';

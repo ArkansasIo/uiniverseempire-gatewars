@@ -125,7 +125,9 @@ SOFTWARE.
       <details>
         <summary><span class="menu-summary"><img src="images/ui/military.svg" alt="Military" /><span>Military</span></span></summary>
         <a href="javascript:void(0)" onclick="sendData('pages','get','military','personnel'); return false">Personnel</a>
+        <a href="javascript:void(0)" onclick="sendData('unitcatalog','get','mainDisplay'); return false">Unit Catalog</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','military','armory'); return false">Armory</a>
+        <a href="javascript:void(0)" onclick="sendData('artillery','get','mainDisplay'); return false">Artillery</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','military','training'); return false">Training</a>
         <a href="javascript:void(0)" onclick="sendData('pages','get','military','fleet'); return false">Fleet</a>
         <a href="javascript:void(0)" onclick="sendData('stations','get','mainDisplay'); return false">Stations Command</a>

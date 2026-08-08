@@ -1,6 +1,8 @@
 # Universe Civilization: Empire at Wars
 
-Universe Civilization: Empire at Wars is an open-source PHP/MySQL browser strategy game with a universe civilization : empire at war  scifi pushtogithub-inspired command experience, deep empire management, research and technology trees, and a custom theme system.
+Universe Civilization: Empire at Wars is an open-source PHP/MySQL browser strategy game with a universe civilization : empire at war  scifi pushtogithub
+
+-inspired command experience, deep empire management, research and technology trees, and a custom theme system.
 
 ## Project Guide
 

@@ -1358,6 +1358,27 @@ class Game extends User
 		return $weapons;
 	}
 	
+	public function getArtilleryBatteryPower(int $uid): array
+	{
+		Debug::printMsg(__CLASS__, __FUNCTION__, "Retrieving Artillery Battery Power for UserID($uid)");
+		$powers = ['offense' => 0, 'defense' => 0, 'reserve' => 0];
+		if (!$this->connected() || !$this->db_link) {
+			return $powers;
+		}
+		$check = $this->query("SHOW TABLES LIKE 'player_artillery'");
+		if (!$check || $check->num_rows === 0) {
+			return $powers;
+		}
+		$q = $this->query("SELECT battery, SUM(total_power) AS tp FROM player_artillery WHERE uid=" . (int)$uid . " AND quantity > 0 GROUP BY battery");
+		if ($q) {
+			while ($row = $q->fetch_object()) {
+				$key = isset($powers[$row->battery]) ? $row->battery : 'reserve';
+				$powers[$key] = (int)$row->tp;
+			}
+		}
+		return $powers;
+	}
+	
 	public function updatePower(int $uid): void
 	{
 		Debug::printMsg(__CLASS__, __FUNCTION__, "Updating User Power Totals");
@@ -1609,6 +1630,10 @@ class Game extends User
 		}
 		$attackpower += (($comboObj->techattack/10) *$attackpower);
 		$defensepower += (($comboObj->techdefense/10) *$defensepower);
+		/*Artillery battery power contribution (offense/defense batteries)*/
+		$artilleryPowers = $this->getArtilleryBatteryPower($uid);
+		$attackpower += $artilleryPowers['offense'];
+		$defensepower += $artilleryPowers['defense'];
 		/*Queries Planets for Bonuses*/
 		while($pBonObj=$pBonus->fetch_object())
 		{

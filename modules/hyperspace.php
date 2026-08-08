@@ -53,59 +53,6 @@ function hs_random(int $min, int $max): int {
     }
 }
 
-$s->query("CREATE TABLE IF NOT EXISTS player_resources (
-    uid INT NOT NULL PRIMARY KEY,
-    metal BIGINT NOT NULL DEFAULT 80000,
-    crystal BIGINT NOT NULL DEFAULT 60000,
-    deuterium BIGINT NOT NULL DEFAULT 45000,
-    food BIGINT NOT NULL DEFAULT 55000,
-    water BIGINT NOT NULL DEFAULT 55000,
-    population BIGINT NOT NULL DEFAULT 120000,
-    last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS hyperspace_systems (
-    uid INT NOT NULL PRIMARY KEY,
-    jump_gate_level INT NOT NULL DEFAULT 0,
-    stargate_level INT NOT NULL DEFAULT 0,
-    hyperspace_core_level INT NOT NULL DEFAULT 0,
-    lane_stability INT NOT NULL DEFAULT 0,
-    range_bonus INT NOT NULL DEFAULT 0,
-    cooldown_reduction INT NOT NULL DEFAULT 0,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS hyperspace_routes (
-    route_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    uid INT NOT NULL,
-    route_name VARCHAR(80) NOT NULL,
-    destination VARCHAR(80) NOT NULL,
-    threat_tier INT NOT NULL DEFAULT 1,
-    distance_ly INT NOT NULL DEFAULT 10,
-    status VARCHAR(16) NOT NULL DEFAULT 'open',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_uid_status (uid, status)
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS hyperspace_transits (
-    transit_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    uid INT NOT NULL,
-    route_id INT NOT NULL,
-    transit_type VARCHAR(20) NOT NULL,
-    fleet_tonnage INT NOT NULL DEFAULT 0,
-    depart_at DATETIME NOT NULL,
-    eta_at DATETIME NOT NULL,
-    return_at DATETIME NOT NULL,
-    status VARCHAR(16) NOT NULL DEFAULT 'enroute',
-    reward_metal INT NOT NULL DEFAULT 0,
-    reward_crystal INT NOT NULL DEFAULT 0,
-    reward_deuterium INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_uid_status (uid, status),
-    INDEX idx_uid_eta (uid, eta_at)
-)");
-
 $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . $uid . ")");
 $s->query("INSERT IGNORE INTO hyperspace_systems (uid) VALUES (" . $uid . ")");
 

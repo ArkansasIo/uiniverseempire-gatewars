@@ -48,6 +48,7 @@ Use phpMyAdmin from Hostinger and import the SQL files in this order:
 5. database/sql/05_seed_backend_defaults.sql
 6. database/sql/06_starship_planet_moon_details.sql
 7. database/sql/07_unit_catalog_seed.sql
+8. database/sql/08_game_systems_v2.sql
 8. game.sql
 
 If you prefer a minimal bootstrap, the README also references importing the initial database and game.sql.

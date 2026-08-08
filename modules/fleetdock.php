@@ -214,58 +214,6 @@ function fd_missionLabel(string $missionType): string {
         return $labels[$missionType] ?? 'Fleet Mission';
 }
 
-$s->query("CREATE TABLE IF NOT EXISTS shipyard (
-        uid INT NOT NULL PRIMARY KEY,
-        level INT NOT NULL DEFAULT 1,
-        mothership_bay INT NOT NULL DEFAULT 0,
-        dock_efficiency INT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS fleet (
-        uid INT NOT NULL PRIMARY KEY,
-        probe INT NOT NULL DEFAULT 0,
-        light_fighter INT NOT NULL DEFAULT 0,
-        heavy_fighter INT NOT NULL DEFAULT 0,
-        cruiser INT NOT NULL DEFAULT 0,
-        battleship INT NOT NULL DEFAULT 0,
-        carrier INT NOT NULL DEFAULT 0,
-        recycler INT NOT NULL DEFAULT 0,
-        colony_ship INT NOT NULL DEFAULT 0,
-        mothership INT NOT NULL DEFAULT 0,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS fleet_missions (
-        mission_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        uid INT NOT NULL,
-        mission_type VARCHAR(24) NOT NULL,
-        ship_type VARCHAR(32) NOT NULL,
-        ship_count INT NOT NULL DEFAULT 0,
-        target_uid INT NOT NULL DEFAULT 0,
-        duration_minutes INT NOT NULL DEFAULT 15,
-        eta_at DATETIME NOT NULL,
-        return_at DATETIME NOT NULL,
-        status VARCHAR(16) NOT NULL DEFAULT 'enroute',
-        reward_naquadah INT NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_uid_status (uid, status),
-        INDEX idx_uid_eta (uid, eta_at),
-        INDEX idx_uid_return (uid, return_at)
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS player_resources (
-        uid INT NOT NULL PRIMARY KEY,
-        metal BIGINT NOT NULL DEFAULT 80000,
-        crystal BIGINT NOT NULL DEFAULT 60000,
-        deuterium BIGINT NOT NULL DEFAULT 45000,
-        food BIGINT NOT NULL DEFAULT 55000,
-        water BIGINT NOT NULL DEFAULT 55000,
-        population BIGINT NOT NULL DEFAULT 120000,
-        last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-
 $s->query("INSERT IGNORE INTO shipyard (uid) VALUES (" . $uid . ")");
 $s->query("INSERT IGNORE INTO fleet (uid) VALUES (" . $uid . ")");
 $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . $uid . ")");
@@ -800,6 +748,7 @@ $bayUpgradeCost = 250000 * ((int)$yard->mothership_bay + 1);
             <form action="javascript:void(0)" onsubmit="sendData('fleetdock','post','build_ship'); return false;">
                 <table class="mini-table" border="0" width="100%">
                     <tr>
+                        <th align="left">Image</th>
                         <th align="left">Ship</th>
                         <th align="left">Metal</th>
                         <th align="left">Crystal</th>
@@ -810,6 +759,7 @@ $bayUpgradeCost = 250000 * ((int)$yard->mothership_bay + 1);
                     </tr>
                     <?php foreach ($defs as $k => $ship) { ?>
                     <tr>
+                        <td><img src="images/ships/legacy/<?= fd_h($k); ?>.jpg" alt="<?= fd_h($ship['name']); ?>" width="60" style="vertical-align: middle;" /></td>
                         <td><?= fd_h($ship['name']); ?> (<?= fd_h($k); ?>)</td>
                         <td><?= fd_num((int)$ship['metal']); ?></td>
                         <td><?= fd_num((int)$ship['crystal']); ?></td>
@@ -843,6 +793,7 @@ $bayUpgradeCost = 250000 * ((int)$yard->mothership_bay + 1);
                         <p>Construct from 90 named starship titles with class/subclass, type/subtype, and stat/sub-stat game logic.</p>
                         <form action="javascript:void(0)" onsubmit="sendData('fleetdock','post','build_starship90'); return false;">
                                 <table class="mini-table" border="0" width="100%">
+                                        <tr><th align="left">Image</th><th align="left">Info</th><th align="left">Stats</th><th align="left">Cost</th><th align="left">Owned</th></tr>
                                         <tr>
                                                 <th align="left">Code</th>
                                                 <th align="left">Name &amp; Title</th>
@@ -856,6 +807,7 @@ $bayUpgradeCost = 250000 * ((int)$yard->mothership_bay + 1);
                                         </tr>
                                         <?php foreach ($starshipRows as $row) { ?>
                                         <tr>
+                                                <td><img src="images/ships/catalog/<?= fd_h($row['ship_code']); ?>.jpg" alt="<?= fd_h($row['ship_name']); ?>" width="80" /></td>
                                                 <td><?= fd_h($row['ship_code']); ?></td>
                                                 <td><?= fd_h($row['ship_name']); ?> - <?= fd_h($row['ship_title']); ?></td>
                                                 <td><?= fd_h($row['class_letter']); ?>-<?= fd_h($row['class_subclass']); ?> (T<?= fd_num((int)$row['tier']); ?>)</td>

@@ -79,49 +79,8 @@ foreach ($catalog as $item) {
     $catalogByKey[$item['key']] = $item;
 }
 
-$allowedSettings = [
-    'commander_mode' => ['strategist', 'warlord', 'architect', 'shadow'],
-    'governance_style' => ['balanced', 'technocracy', 'militarist', 'mercantile'],
-    'policy_cycle' => ['adaptive', 'fixed', 'rapid', 'conservative'],
-    'visual_pack' => ['ogame_classic', 'stargate_naval', 'strategic_grid'],
-    'alert_level' => ['standard', 'high', 'war_only'],
-    'auto_delegate' => ['0', '1'],
-];
-
-$s->query("CREATE TABLE IF NOT EXISTS player_resources (
-    uid INT NOT NULL PRIMARY KEY,
-    metal BIGINT NOT NULL DEFAULT 80000,
-    crystal BIGINT NOT NULL DEFAULT 60000,
-    deuterium BIGINT NOT NULL DEFAULT 45000,
-    food BIGINT NOT NULL DEFAULT 55000,
-    water BIGINT NOT NULL DEFAULT 55000,
-    population BIGINT NOT NULL DEFAULT 120000,
-    energy BIGINT NOT NULL DEFAULT 50000,
-    last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-$s->query("ALTER TABLE player_resources ADD COLUMN IF NOT EXISTS energy BIGINT NOT NULL DEFAULT 50000");
 $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . $uid . ")");
 
-$s->query("CREATE TABLE IF NOT EXISTS governance_system_levels (
-    uid INT NOT NULL,
-    gov_key VARCHAR(64) NOT NULL,
-    level INT NOT NULL DEFAULT 0,
-    enabled TINYINT(1) NOT NULL DEFAULT 1,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY(uid, gov_key)
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS commander_settings (
-    uid INT NOT NULL PRIMARY KEY,
-    commander_mode VARCHAR(24) NOT NULL DEFAULT 'strategist',
-    governance_style VARCHAR(24) NOT NULL DEFAULT 'balanced',
-    policy_cycle VARCHAR(24) NOT NULL DEFAULT 'adaptive',
-    visual_pack VARCHAR(24) NOT NULL DEFAULT 'ogame_classic',
-    alert_level VARCHAR(24) NOT NULL DEFAULT 'standard',
-    auto_delegate TINYINT(1) NOT NULL DEFAULT 0,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
 $s->query("INSERT IGNORE INTO commander_settings (uid) VALUES (" . $uid . ")");
 
 foreach ($catalog as $gov) {

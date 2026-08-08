@@ -39,41 +39,6 @@ if (!$s->loggedIn || !isset($_GET['time'])) {
 $uid = (int)$_SESSION['userid'];
 $status = '';
 
-function sb_h($value): string {
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
-}
-
-function sb_num($value): string {
-    return number_format((float)$value);
-}
-
-$s->query("CREATE TABLE IF NOT EXISTS player_resources (
-    uid INT NOT NULL PRIMARY KEY,
-    metal BIGINT NOT NULL DEFAULT 80000,
-    crystal BIGINT NOT NULL DEFAULT 60000,
-    deuterium BIGINT NOT NULL DEFAULT 45000,
-    food BIGINT NOT NULL DEFAULT 55000,
-    water BIGINT NOT NULL DEFAULT 55000,
-    population BIGINT NOT NULL DEFAULT 120000,
-    last_tick_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-
-$s->query("CREATE TABLE IF NOT EXISTS space_installations (
-    uid INT NOT NULL PRIMARY KEY,
-    space_station_level INT NOT NULL DEFAULT 0,
-    starbase_level INT NOT NULL DEFAULT 0,
-    moon_base_level INT NOT NULL DEFAULT 0,
-    defense_grid INT NOT NULL DEFAULT 0,
-    dock_matrix INT NOT NULL DEFAULT 0,
-    scan_array INT NOT NULL DEFAULT 0,
-    starbase_name VARCHAR(64) NOT NULL DEFAULT 'Starbase',
-    moon_base_name VARCHAR(64) NOT NULL DEFAULT 'Moon Base',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-)");
-$s->query("ALTER TABLE space_installations ADD COLUMN IF NOT EXISTS starbase_name VARCHAR(64) NOT NULL DEFAULT 'Starbase'");
-$s->query("ALTER TABLE space_installations ADD COLUMN IF NOT EXISTS moon_base_name VARCHAR(64) NOT NULL DEFAULT 'Moon Base'");
-
 $s->query("INSERT IGNORE INTO player_resources (uid) VALUES (" . $uid . ")");
 $s->query("INSERT IGNORE INTO space_installations (uid) VALUES (" . $uid . ")");
 

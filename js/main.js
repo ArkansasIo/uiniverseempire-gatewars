@@ -128,13 +128,18 @@ function sendData(page,type,id,atype,subject,message){
         atype = "";
     }
 	date = new Date();
+	var url = "modules/"+page+".php?id="+id+"&time="+date.getTime()+"&atype="+atype;
+	if (typeof subject !== "undefined" && subject !== null && subject !== "") {
+		url += "&subject="+encodeURIComponent(subject);
+	}
+	if (typeof message !== "undefined" && message !== null && message !== "") {
+		url += "&message="+encodeURIComponent(message);
+	}
 	if (type =="post")
 	{
 	setQueryString();
-    var url = "modules/"+page+".php?id="+id+"&time="+date.getTime()+"&atype="+atype;
     httpRequest("POST",url,true);
 	}else{
-    var url = "modules/"+page+".php?id="+id+"&time="+date.getTime()+"&atype="+atype;
     httpRequest("GET",url,true);
 	}
 }

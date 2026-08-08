@@ -36,17 +36,6 @@ $db = $s->db_link;
 $myUID = (int)$_SESSION['userid'];
 
 // Ensure market_listings table exists
-$db->query("CREATE TABLE IF NOT EXISTS `market_listings` (
-    `lid` int(11) NOT NULL AUTO_INCREMENT,
-    `uid` int(11) NOT NULL,
-    `resource` varchar(32) NOT NULL,
-    `amount` int(11) NOT NULL DEFAULT 0,
-    `price_per` float NOT NULL DEFAULT 0,
-    `created` int(11) NOT NULL DEFAULT 0,
-    `active` tinyint(1) DEFAULT 1,
-    PRIMARY KEY (`lid`),
-    KEY `idx_active` (`active`,`resource`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1");
 
 $msg = '';
 $atype = $_GET['atype'] ?? $_POST['atype'] ?? '';
