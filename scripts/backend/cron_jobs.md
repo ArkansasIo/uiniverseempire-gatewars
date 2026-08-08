@@ -1,12 +1,22 @@
 # Cron Jobs
 
-## Game Tick
+## Unified Game Tick
 
-Run every 5 minutes to process:
-- resource economy ticks (30-minute cadence)
-- food/water/energy upkeep and population penalties
+A single run of `game_tick.php` advances every time-based game system through
+the `GameTick` engine (`base/GameTick.class.php`). Run every 5 minutes:
+
+- legacy turn economy: naquadah income, unit upkeep, action-turn refill,
+  untrained unit production
+- strategic resource economy (30-minute cadence): metal/crystal/deuterium/
+  food/water/population/energy production
 - hyperspace transit arrivals and returns
-- expedition rewards
+- fleet mission arrivals, completions and expedition rewards
+- trade route transfers
+- military troop training queues
+- RTS operations turn queues
+- colony power-grid catch-up and node upgrades
+- market listing expiry sweep
+- inactive account purge
 
 Command:
 
@@ -14,7 +24,7 @@ Command:
 php /home/codespace/Stargate-Wars/scripts/backend/game_tick.php
 ```
 
-Dry-run test:
+Dry-run test (no writes):
 
 ```bash
 php /home/codespace/Stargate-Wars/scripts/backend/game_tick.php --dry-run
@@ -24,6 +34,18 @@ Single player test:
 
 ```bash
 php /home/codespace/Stargate-Wars/scripts/backend/game_tick.php --uid=1
+```
+
+Select specific systems (`turn,res,hyper,fleet,trade,mil,ops,grid,market,purge`):
+
+```bash
+php /home/codespace/Stargate-Wars/scripts/backend/game_tick.php --systems=turn,res
+```
+
+Legacy turn-only tick (same engine, restricted to the turn economy):
+
+```bash
+php /home/codespace/Stargate-Wars/scripts/backend/turn_tick.php
 ```
 
 Example crontab:

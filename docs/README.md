@@ -29,3 +29,9 @@ This folder organizes technical documents for the Universe Civilization: Empire 
 - [../BACKEND_SETUP.md](../BACKEND_SETUP.md): backend environment setup and scripts.
 - [../database/README.md](../database/README.md): database import and SQL bundle notes.
 - [../scripts/backend/cron_jobs.md](../scripts/backend/cron_jobs.md): scheduled tasks.
+
+## Release Documents
+
+- [../PATCHLOG.md](../PATCHLOG.md): chronological patch history for every build.
+- [../indexpages/updates.php](../indexpages/updates.php): public in-game Update Log.
+- [../modules/faq.php](../modules/faq.php): in-game FAQ module.

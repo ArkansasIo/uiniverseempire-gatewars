@@ -12,6 +12,7 @@ This repository now includes a full folder-level documentation layout for the ga
 - Full layout map: [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 - Backend setup: [BACKEND_SETUP.md](BACKEND_SETUP.md)
 - Hostinger deployment: [docs/HOSTINGER_DEPLOYMENT.md](docs/HOSTINGER_DEPLOYMENT.md)
+- Patch history: [PATCHLOG.md](PATCHLOG.md)
 - Legacy readme retained: [README](README)
 
 ## Current Experience

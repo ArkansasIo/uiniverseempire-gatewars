@@ -22,9 +22,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// Turn tick processor (economy + ranks) for cron usage. The resource tick
-// (resource production / hyperspace transits) lives in game_tick.php; run both
-// via scripts/backend/run_game_tick.sh.
+// Turn tick processor (economy + ranks) for cron usage. This delegates to the
+// unified GameTick engine restricted to the legacy turn-economy system; the
+// full tick (resources, hyperspace, fleet, trade, queues, power grid, purge)
+// runs via scripts/backend/game_tick.php.
 //
 // Usage:
 //   php scripts/backend/turn_tick.php
@@ -46,7 +47,7 @@ if (!class_exists('mysqli')) {
 $root = dirname(__DIR__, 2);
 require_once $root . "/config.php";
 
-$options = [];
+$options = ['systems' => ['turn']];
 foreach ($argv as $arg) {
     if (strpos($arg, "--uid=") === 0) {
         $options['uid'] = (int)substr($arg, 6);
