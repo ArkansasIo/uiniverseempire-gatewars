@@ -93,4 +93,77 @@ if (GameTick::computeTradeTransfer(50, 20, 100) !== 20) {
     exit(1);
 }
 
+// --- computeElapsedIntervals(): whole-interval flooring + catch-up cap.
+$el = GameTick::computeElapsedIntervals(1000, 970, 10);
+if ($el !== ['intervals' => 3, 'advanced' => 30]) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeElapsedIntervals exact = " . json_encode($el) . "\n");
+    exit(1);
+}
+$el = GameTick::computeElapsedIntervals(1000, 991, 10);
+if ($el !== ['intervals' => 0, 'advanced' => 0]) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeElapsedIntervals partial = " . json_encode($el) . "\n");
+    exit(1);
+}
+$el = GameTick::computeElapsedIntervals(1000, 1000, 10);
+if ($el['intervals'] !== 0) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeElapsedIntervals zero elapsed\n");
+    exit(1);
+}
+$el = GameTick::computeElapsedIntervals(1000, 0, 10);
+if ($el['intervals'] !== 0 || $el['advanced'] !== 0) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeElapsedIntervals unset last = " . json_encode($el) . "\n");
+    exit(1);
+}
+$el = GameTick::computeElapsedIntervals(10000, 9000, 10);
+if ($el['intervals'] !== GameTick::FAST_MAX_CATCHUP || $el['advanced'] !== GameTick::FAST_MAX_CATCHUP * 10) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeElapsedIntervals catch-up cap = " . json_encode($el) . "\n");
+    exit(1);
+}
+$el = GameTick::computeElapsedIntervals(10000, 9000, 10, 5);
+if ($el['intervals'] !== 5 || $el['advanced'] !== 50) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeElapsedIntervals custom cap = " . json_encode($el) . "\n");
+    exit(1);
+}
+
+// --- computeFastTurnGrant(): bounded by max turns, capping granted delta.
+$g = GameTick::computeFastTurnGrant(0, 6, 3, 250);
+if ($g !== ['granted' => 18, 'total' => 18]) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastTurnGrant fresh = " . json_encode($g) . "\n");
+    exit(1);
+}
+$g = GameTick::computeFastTurnGrant(240, 6, 3, 250);
+if ($g !== ['granted' => 10, 'total' => 250]) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastTurnGrant capped = " . json_encode($g) . "\n");
+    exit(1);
+}
+$g = GameTick::computeFastTurnGrant(250, 6, 5, 250);
+if ($g['granted'] !== 0 || $g['total'] !== 250) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastTurnGrant at cap\n");
+    exit(1);
+}
+$g = GameTick::computeFastTurnGrant(100, 6, 0, 250);
+if ($g['granted'] !== 0 || $g['total'] !== 100) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastTurnGrant zero ticks\n");
+    exit(1);
+}
+
+// --- computeFastResourceGrant(): n% of the formal per-minute rate per minute.
+// Baseline metal rate = 390 per 30 minutes -> 13 per minute.
+if (GameTick::computeFastResourceGrant(390, 100, 1) !== 13) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastResourceGrant 1 min\n");
+    exit(1);
+}
+if (GameTick::computeFastResourceGrant(390, 100, 30) !== 390) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastResourceGrant 30 min\n");
+    exit(1);
+}
+if (GameTick::computeFastResourceGrant(390, 50, 2) !== 13) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastResourceGrant 50% x 2min\n");
+    exit(1);
+}
+if (GameTick::computeFastResourceGrant(390, 100, 0) !== 0) {
+    fwrite(STDERR, "cron_pure_functions_test failed: computeFastResourceGrant zero minutes\n");
+    exit(1);
+}
+
 echo "cron pure functions checks passed\n";

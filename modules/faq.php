@@ -53,13 +53,15 @@ if (!$s->loggedIn || !isset($_GET['time'])) {
   <p><strong>What is an action turn?</strong><br />
   Action turns fuel most actions (attacks, training, fleets, recruitment). They refill on the turn cycle up to your cap, so spend them before they hit the ceiling.</p>
   <p><strong>How often does the turn cycle run?</strong><br />
-  A turn advances every 30 minutes. Each turn grants action turns, Naquadah income and untrained-unit production. A unified server tick also advances strategic resources and long-running systems.</p>
+  The 30-minute turn cycle grants action turns, Naquadah income and untrained-unit production, and a unified server tick advances strategic resources and long-running systems.</p>
+  <p><strong>What is the fast cadence?</strong><br />
+  On top of the 30-minute cycle, you earn 6 action turns every 10 seconds, and every minute you receive a grant equal to 100% of your formal per-minute production rate for metal, crystal, deuterium, food, water, population and energy. Progress applies while you are logged in and playing &mdash; it advances on every page load and backfills when you return.</p>
   <p><strong>What is Naquadah?</strong><br />
   Naquadah is the core currency. Income is generated each turn by your miners and lifers, boosted by your race, income technology and planet bonuses. Upkeep is subtracted from your treasury each turn based on your trained units.</p>
   <p><strong>Why is my unit upkeep so high?</strong><br />
   Every trained unit costs upkeep per turn. Growing a large trained force requires the income to support it &mdash; check the upkeep rate on your status panel.</p>
   <p><strong>What are strategic resources?</strong><br />
-  Metal, crystal, deuterium, food, water, population and energy. They are produced by structures on your planets and accumulate every 30 minutes. Energy and food are also consumed by upkeep; running out can slow production or cost population.</p>
+  Metal, crystal, deuterium, food, water, population and energy. They are produced by structures on your planets and accumulate every 30 minutes, with a smaller per-minute fast grant in between. Energy and food are also consumed by upkeep; running out can slow production or cost population.</p>
 
   <h4>Units &amp; Training</h4>
   <p><strong>What is the difference between untrained and trained units?</strong><br />

@@ -4,6 +4,24 @@
 > Newest first. In-game players see the public-facing version in the Update
 > Log (`indexpages/updates.php`); the FAQ lives in `modules/faq.php`.
 
+## 1.5.0-d (Unreleased) — Fast Cadence
+
+A pace layer on top of the 30-minute economy: quick action turns and
+per-minute production, live in the browser.
+
+- **Fast cadence** (`game_tick.fast_*` settings, defaults enabled): +6 action
+  turns per 10-second tick, and once per minute a grant of n% (default 100%) of
+  the formal per-minute OGame production rate for metal, crystal, deuterium,
+  food, water, population and energy.
+- New `GameTick` statics `computeElapsedIntervals()`,
+  `computeFastTurnGrant()`, `computeFastResourceGrant()` with unit-test
+  coverage; per-player progress tracked in the new `fast_tick_state` table.
+- **On-page-load hook**: logged-in players advance their fast cadence on every
+  in-game page load, so progress accrues live without waiting for cron;
+  catches up at most `FAST_MAX_CATCHUP` intervals per call.
+- `game_tick.php --systems=fast` supports a 10-second cron job;
+  `cron_jobs.md` documents both schedules.
+
 ## 1.5.0-c (Unreleased) — Unified Game Tick
 
 Backend stability and a single engine for every time-based system.

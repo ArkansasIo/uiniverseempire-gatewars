@@ -27,6 +27,8 @@
 //
 //   turn   - naquadah income, unit upkeep, action turn refill, untrained
 //            production, rank recalculation (legacy 30-minute turn economy)
+//   fast   - fast cadence layered on top: +6 action turns per 10-second tick
+//            and n% of the formal per-minute OGame production every minute
 //   res    - strategic resource economy (metal/crystal/deuterium/food/water/
 //            population/energy) on a 30-minute cadence with stargate bonuses
 //   hyper  - hyperspace transit state machine (enroute -> arrived -> completed)
@@ -44,11 +46,16 @@
 // a database connection.
 //
 // Tick tuning knobs are read from app_settings:
-//   game_tick.upkeep_per_unit     - naquadah upkeep per trained unit per tick (1)
-//   game_tick.max_turns           - action turn cap per player (250)
-//   game_tick.turns_per_tick      - action turns granted per tick (180)
-//   game_tick.resource_seconds    - strategic resource tick cadence (1800)
-//   game_tick.purge_days          - inactive account purge threshold (30)
+//   game_tick.upkeep_per_unit          - naquadah upkeep per trained unit per tick (1)
+//   game_tick.max_turns                - action turn cap per player (250)
+//   game_tick.turns_per_tick           - action turns granted per legacy tick (180)
+//   game_tick.resource_seconds         - strategic resource tick cadence (1800)
+//   game_tick.purge_days               - inactive account purge threshold (30)
+//   game_tick.fast_enabled             - fast cadence master switch (1)
+//   game_tick.fast_tick_seconds        - fast turn tick cadence (10)
+//   game_tick.fast_turns_per_tick      - action turns per fast tick (6)
+//   game_tick.fast_resource_seconds    - fast resource grant cadence (60)
+//   game_tick.fast_resource_percent    - n% of formal per-minute production (100)
 
 class GameTick extends Game
 {
@@ -76,6 +83,32 @@ class GameTick extends Game
 	 * Default inactive-account purge threshold in days.
 	 */
 	public const PURGE_DAYS = 30;
+
+	/**
+	 * Fast turn tick cadence: one fast turn tick every 10 seconds.
+	 */
+	public const FAST_TICK_SECONDS = 10;
+
+	/**
+	 * Action turns granted per fast tick (6 turns per 10-second tick).
+	 */
+	public const FAST_TURNS_PER_TICK = 6;
+
+	/**
+	 * Fast resource grant cadence: one grant every 60 seconds (every minute).
+	 */
+	public const FAST_RESOURCE_SECONDS = 60;
+
+	/**
+	 * Fast resource grant size: n% of the formal per-minute OGame production.
+	 */
+	public const FAST_RESOURCE_PERCENT = 100;
+
+	/**
+	 * Maximum elapsed fast intervals consumed in one call, so a long-offline
+	 * player (or a heavily delayed cron) cannot drain the server in one run.
+	 */
+	public const FAST_MAX_CATCHUP = 60;
 
 	/**
 	 * Pure naquadah income formula, mirroring the Income column used by
@@ -126,6 +159,60 @@ class GameTick extends Game
 			'total' => $total,
 			'granted' => max(0, $total - $current),
 		];
+	}
+
+	/**
+	 * Pure elapsed-interval counter, bounded by a catch-up ceiling so a single
+	 * call can never drain the server with unbounded offline time.
+	 *
+	 * @return array{intervals:int, advanced:int}
+	 */
+	public static function computeElapsedIntervals(int $now, int $last, int $intervalSeconds, int $maxIntervals = self::FAST_MAX_CATCHUP): array
+	{
+		$intervalSeconds = max(1, (int)$intervalSeconds);
+		$last = max(0, (int)$last);
+		if ($last <= 0) {
+			$last = $now;
+		}
+		$intervals = (int)floor(max(0, $now - $last) / $intervalSeconds);
+		$intervals = min(max(0, $intervals), max(1, (int)$maxIntervals));
+		return [
+			'intervals' => $intervals,
+			'advanced' => $intervals * $intervalSeconds,
+		];
+	}
+
+	/**
+	 * Pure fast-turn grant for one player: per-tick turns x elapsed ticks,
+	 * bounded by the action-turn cap.
+	 *
+	 * @return array{granted:int, total:int}
+	 */
+	public static function computeFastTurnGrant(int $currentTurns, int $turnsPerFastTick, int $elapsedTicks, int $maxTurns): array
+	{
+		$current = max(0, (int)$currentTurns);
+		$elapsedTicks = max(0, (int)$elapsedTicks);
+		if ($elapsedTicks === 0) {
+			return ['granted' => 0, 'total' => $current];
+		}
+		$total = (int)$turnsPerFastTick * $elapsedTicks;
+		$total = min(max(0, (int)$maxTurns), $current + $total);
+		return [
+			'granted' => max(0, $total - $current),
+			'total' => $total,
+		];
+	}
+
+	/**
+	 * Pure fast resource grant for one player: n% of the formal per-minute
+	 * OGame production rate, granted once per elapsed minute.
+	 */
+	public static function computeFastResourceGrant(int $ratePerThirtyMinutes, int $percent, int $elapsedMinutes): int
+	{
+		$percent = max(0, (int)$percent);
+		$elapsedMinutes = max(0, (int)$elapsedMinutes);
+		$perMinute = (int)round(max(0, $ratePerThirtyMinutes) / 30);
+		return (int)round($perMinute * ($percent / 100) * $elapsedMinutes);
 	}
 
 	/**
@@ -230,6 +317,13 @@ class GameTick extends Game
 			'last_power' => 0,
 			'last_market' => 0,
 			'last_purged' => 0,
+			'fast_enabled' => true,
+			'fast_tick_seconds' => self::FAST_TICK_SECONDS,
+			'fast_turns_per_tick' => self::FAST_TURNS_PER_TICK,
+			'fast_resource_seconds' => self::FAST_RESOURCE_SECONDS,
+			'fast_resource_percent' => self::FAST_RESOURCE_PERCENT,
+			'last_fast_turns' => 0,
+			'last_fast_resources' => 0,
 		];
 		if (!$this->connected() || !$this->db_link) {
 			return $status;
@@ -306,6 +400,27 @@ class GameTick extends Game
 					case 'game_tick.last_purged':
 						$status['last_purged'] = (int)$val;
 						break;
+					case 'game_tick.fast_enabled':
+						$status['fast_enabled'] = $val === '1';
+						break;
+					case 'game_tick.fast_tick_seconds':
+						$status['fast_tick_seconds'] = max(1, (int)$val);
+						break;
+					case 'game_tick.fast_turns_per_tick':
+						$status['fast_turns_per_tick'] = max(0, (int)$val);
+						break;
+					case 'game_tick.fast_resource_seconds':
+						$status['fast_resource_seconds'] = max(1, (int)$val);
+						break;
+					case 'game_tick.fast_resource_percent':
+						$status['fast_resource_percent'] = max(0, (int)$val);
+						break;
+					case 'game_tick.last_fast_turns':
+						$status['last_fast_turns'] = (int)$val;
+						break;
+					case 'game_tick.last_fast_resources':
+						$status['last_fast_resources'] = (int)$val;
+						break;
 				}
 			}
 		}
@@ -321,7 +436,7 @@ class GameTick extends Game
 	 *   dry_run  - compute and report without writing any data
 	 *   rank     - (default true) recalculate overall ranks this tick
 	 *   systems  - optional array of system names to restrict processing, e.g.
-	 *              ['turn','res','hyper','fleet','trade','mil','ops','grid','market','purge']
+	 *              ['turn','res','hyper','fleet','trade','mil','ops','grid','market','purge','fast']
 	 *
 	 * @return array<string,mixed> summary with per-step totals.
 	 */
@@ -331,7 +446,7 @@ class GameTick extends Game
 		$dryRun = !empty($options['dry_run']);
 		$doRank = !array_key_exists('rank', $options) || (bool)$options['rank'];
 
-		$allowed = ['turn', 'res', 'hyper', 'fleet', 'trade', 'mil', 'ops', 'grid', 'market', 'purge'];
+		$allowed = ['turn', 'res', 'hyper', 'fleet', 'trade', 'mil', 'ops', 'grid', 'market', 'purge', 'fast'];
 		$systems = [];
 		if (isset($options['systems']) && is_array($options['systems'])) {
 			foreach ($options['systems'] as $sys) {
@@ -377,6 +492,9 @@ class GameTick extends Game
 			'power_failed' => 0,
 			'listings_expired' => 0,
 			'purged' => 0,
+			'fast_turns_granted' => 0,
+			'fast_resource_minutes' => 0,
+			'fast_resource_updates' => 0,
 			'duration' => 0.0,
 			'last_run' => time(),
 		];
@@ -391,6 +509,12 @@ class GameTick extends Game
 		$maxTurns = max(1, (int)$this->getAppSetting('game_tick.max_turns', '250'));
 		$turnsPerTick = max(0, (int)$this->getAppSetting('game_tick.turns_per_tick', (string)self::TURNS_PER_TICK));
 		$resourceSeconds = max(1, (int)$this->getAppSetting('game_tick.resource_seconds', (string)self::RESOURCE_TICK_SECONDS));
+
+		$fastEnabled = $this->getAppSetting('game_tick.fast_enabled', '1') === '1';
+		$fastTickSeconds = max(1, (int)$this->getAppSetting('game_tick.fast_tick_seconds', (string)self::FAST_TICK_SECONDS));
+		$fastTurnsPerTick = max(0, (int)$this->getAppSetting('game_tick.fast_turns_per_tick', (string)self::FAST_TURNS_PER_TICK));
+		$fastResourceSeconds = max(1, (int)$this->getAppSetting('game_tick.fast_resource_seconds', (string)self::FAST_RESOURCE_SECONDS));
+		$fastResourcePercent = max(0, (int)$this->getAppSetting('game_tick.fast_resource_percent', (string)self::FAST_RESOURCE_PERCENT));
 
 		$start = microtime(true);
 
@@ -431,7 +555,16 @@ class GameTick extends Game
 				}
 			}
 
-			// --- 2. Strategic resource economy (30-minute cadence).
+			// --- 2. Fast cadence (10s turn tick + 1min resource grant), layered
+			// on top of the legacy 30-minute economy.
+			if ($fastEnabled && isset($systems['fast'])) {
+				$fast = $this->processFastTick($uid, $fastTickSeconds, $fastTurnsPerTick, $fastResourceSeconds, $fastResourcePercent, $maxTurns, $dryRun);
+				$result['fast_turns_granted'] += $fast['turns_granted'];
+				$result['fast_resource_minutes'] += $fast['resource_minutes'];
+				$result['fast_resource_updates'] += $fast['resource_updates'];
+			}
+
+			// --- 3. Strategic resource economy (30-minute cadence).
 			if (isset($systems['res'])) {
 				$res = $this->processResources($uid, $resourceSeconds, $dryRun);
 				$result['resource_updates'] += $res['updates'];
@@ -520,6 +653,8 @@ class GameTick extends Game
 			$this->setAppSetting('game_tick.last_power', (string)$result['power_ticks']);
 			$this->setAppSetting('game_tick.last_market', (string)$result['listings_expired']);
 			$this->setAppSetting('game_tick.last_purged', (string)$result['purged']);
+			$this->setAppSetting('game_tick.last_fast_turns', (string)$result['fast_turns_granted']);
+			$this->setAppSetting('game_tick.last_fast_resources', (string)$result['fast_resource_minutes']);
 			$this->setAppSetting('game_tick.last_status', $result['error'] === '' ? 'ok' : 'error');
 		}
 
@@ -573,18 +708,14 @@ class GameTick extends Game
 	}
 
 	/**
-	 * Strategic resource economy catch-up for one player on the configured
-	 * 30-minute cadence, including food/water/energy upkeep and the
-	 * starvation population penalty. Also advances hyperspace systems.
+	 * Formal (OGame logic) production rates for one player, used by both the
+	 * 30-minute resource economy and the per-minute fast grant. Pure math on
+	 * top of GameTick::resourceRates().
 	 *
-	 * @return array{updates:int,ticks:int,starvation:int}
+	 * @return array{metal:int,crystal:int,deuterium:int,food:int,water:int,population:int,energy:int}
 	 */
-	private function processResources(int $uid, int $resourceSeconds, bool $dryRun): array
+	private function formalResourceRatesFor(int $uid): array
 	{
-		$this->query("INSERT IGNORE INTO `player_resources` (`uid`) VALUES (" . $uid . ")");
-		$this->query("INSERT IGNORE INTO `resource_structures` (`uid`) VALUES (" . $uid . ")");
-		$this->query("INSERT IGNORE INTO `hyperspace_systems` (`uid`) VALUES (" . $uid . ")");
-
 		$baseRow = $this->query("SELECT
 			IFNULL(((units.miners*(80+technology.income)) + (units.lifers*(80+technology.income)) + IFNULL(SUM(planets.income_bonus),0) + (race.income_bonus*((units.miners*(80+technology.income)) + (units.lifers*(80+technology.income))))),220) AS income,
 			IFNULL(((technology.unitProd*(3+technology.uppl)) + IFNULL(SUM(planets.up_bonus),0) + (race.up_bonus*(technology.unitProd*(3+technology.uppl)))),10) AS up,
@@ -622,7 +753,129 @@ class GameTick extends Game
 			'energy_reactor' => (int)($s->energy_reactor ?? 1),
 		];
 
-		$rates = self::resourceRates($ctx, $levels, $this->stargateBonus($uid));
+		return self::resourceRates($ctx, $levels, $this->stargateBonus($uid));
+	}
+
+	/**
+	 * Fast cadence for one player: +6 action turns per 10-second tick and, once
+	 * per minute, n% of the formal per-minute OGame production rate. Tracked
+	 * per player in fast_tick_state so cron and on-page-load runs never
+	 * double-grant. Runs layered on top of the legacy 30-minute economy.
+	 *
+	 * @return array{turns_granted:int,resource_minutes:int,resource_updates:int}
+	 */
+	private function processFastTick(int $uid, int $fastTickSeconds, int $fastTurnsPerTick, int $fastResourceSeconds, int $fastResourcePercent, int $maxTurns, bool $dryRun): array
+	{
+		$this->query("INSERT IGNORE INTO `bank` (`uid`,`onHand`,`inBank`) VALUES (" . $uid . ", 0, 0)");
+		$this->query("INSERT IGNORE INTO `userdata` (`uid`,`actionTurns`,`rid`,`cid`,`progress`,`alevel`) VALUES (" . $uid . ", 250, 1, 0, 0, 1)");
+		$this->query("INSERT IGNORE INTO `player_resources` (`uid`) VALUES (" . $uid . ")");
+		$this->query("INSERT IGNORE INTO `resource_structures` (`uid`) VALUES (" . $uid . ")");
+		$this->query("INSERT IGNORE INTO `fast_tick_state` (`uid`) VALUES (" . $uid . ")");
+
+		$stateRow = $this->query("SELECT last_turn_at, last_resource_at FROM fast_tick_state WHERE uid=" . $uid . " LIMIT 1");
+		$state = $stateRow ? $stateRow->fetch_object() : null;
+		$now = time();
+		$lastTurn = (int)($state->last_turn_at ?? 0);
+		$lastResource = (int)($state->last_resource_at ?? 0);
+		if ($lastTurn <= 0) {
+			$lastTurn = $now;
+		}
+		if ($lastResource <= 0) {
+			$lastResource = $now;
+		}
+
+		$turnsGranted = 0;
+		$turnElapsed = self::computeElapsedIntervals($now, $lastTurn, $fastTickSeconds);
+		if ($turnElapsed['intervals'] > 0 && $fastTurnsPerTick > 0) {
+			$current = $this->currentTurnsFor($uid);
+			$grant = self::computeFastTurnGrant($current, $fastTurnsPerTick, $turnElapsed['intervals'], $maxTurns);
+			$turnsGranted = $grant['granted'];
+			if ($turnsGranted > 0 && !$dryRun) {
+				$this->query("UPDATE `userdata` SET `actionTurns`=" . $grant['total'] . " WHERE `uid`=" . $uid . " LIMIT 1");
+			}
+		}
+
+		$resourceMinutes = 0;
+		$resourceUpdates = 0;
+		$resElapsed = self::computeElapsedIntervals($now, $lastResource, $fastResourceSeconds);
+		if ($resElapsed['intervals'] > 0 && $fastResourcePercent > 0) {
+			$rates = $this->formalResourceRatesFor($uid);
+			$metal = self::computeFastResourceGrant($rates['metal'], $fastResourcePercent, $resElapsed['intervals']);
+			$crystal = self::computeFastResourceGrant($rates['crystal'], $fastResourcePercent, $resElapsed['intervals']);
+			$deuterium = self::computeFastResourceGrant($rates['deuterium'], $fastResourcePercent, $resElapsed['intervals']);
+			$food = self::computeFastResourceGrant($rates['food'], $fastResourcePercent, $resElapsed['intervals']);
+			$water = self::computeFastResourceGrant($rates['water'], $fastResourcePercent, $resElapsed['intervals']);
+			$population = self::computeFastResourceGrant($rates['population'], $fastResourcePercent, $resElapsed['intervals']);
+			$energy = self::computeFastResourceGrant($rates['energy'], $fastResourcePercent, $resElapsed['intervals']);
+			$resourceMinutes = $resElapsed['intervals'];
+			if (!$dryRun) {
+				$this->query("UPDATE `player_resources` SET
+					metal=metal+" . $metal . ",
+					crystal=crystal+" . $crystal . ",
+					deuterium=deuterium+" . $deuterium . ",
+					food=food+" . $food . ",
+					water=water+" . $water . ",
+					population=population+" . $population . ",
+					energy=energy+" . $energy . "
+					WHERE uid=" . $uid . " LIMIT 1");
+			}
+			$resourceUpdates = 1;
+		}
+
+		if (!$dryRun) {
+			$this->query("UPDATE `fast_tick_state` SET
+				last_turn_at=" . ($lastTurn + $turnElapsed['advanced']) . ",
+				last_resource_at=" . ($lastResource + $resElapsed['advanced']) . "
+				WHERE uid=" . $uid . " LIMIT 1");
+		}
+
+		return [
+			'turns_granted' => $turnsGranted,
+			'resource_minutes' => $resourceMinutes,
+			'resource_updates' => $resourceUpdates,
+		];
+	}
+
+	/**
+	 * One-shot fast tick for a single player (on-page-load hook).
+	 *
+	 * @return array{turns_granted:int,resource_minutes:int,resource_updates:int}
+	 */
+	public function fastTickFor(int $uid): array
+	{
+		if ($uid <= 0 || !$this->connected() || !$this->db_link) {
+			return ['turns_granted' => 0, 'resource_minutes' => 0, 'resource_updates' => 0];
+		}
+		$fastTickSeconds = max(1, (int)$this->getAppSetting('game_tick.fast_tick_seconds', (string)self::FAST_TICK_SECONDS));
+		$fastTurnsPerTick = max(0, (int)$this->getAppSetting('game_tick.fast_turns_per_tick', (string)self::FAST_TURNS_PER_TICK));
+		$fastResourceSeconds = max(1, (int)$this->getAppSetting('game_tick.fast_resource_seconds', (string)self::FAST_RESOURCE_SECONDS));
+		$fastResourcePercent = max(0, (int)$this->getAppSetting('game_tick.fast_resource_percent', (string)self::FAST_RESOURCE_PERCENT));
+		$maxTurns = max(1, (int)$this->getAppSetting('game_tick.max_turns', '250'));
+		return $this->processFastTick($uid, $fastTickSeconds, $fastTurnsPerTick, $fastResourceSeconds, $fastResourcePercent, $maxTurns, false);
+	}
+
+	/**
+	 * Whether the fast cadence is enabled (game_tick.fast_enabled setting).
+	 */
+	public function fastEnabled(): bool
+	{
+		return $this->getAppSetting('game_tick.fast_enabled', '1') === '1';
+	}
+
+	/**
+	 * Strategic resource economy catch-up for one player on the configured
+	 * 30-minute cadence, including food/water/energy upkeep and the
+	 * starvation population penalty. Also advances hyperspace systems.
+	 *
+	 * @return array{updates:int,ticks:int,starvation:int}
+	 */
+	private function processResources(int $uid, int $resourceSeconds, bool $dryRun): array
+	{
+		$this->query("INSERT IGNORE INTO `player_resources` (`uid`) VALUES (" . $uid . ")");
+		$this->query("INSERT IGNORE INTO `resource_structures` (`uid`) VALUES (" . $uid . ")");
+		$this->query("INSERT IGNORE INTO `hyperspace_systems` (`uid`) VALUES (" . $uid . ")");
+
+		$rates = $this->formalResourceRatesFor($uid);
 
 		$rRow = $this->query("SELECT metal,crystal,deuterium,food,water,population,energy,last_tick_at FROM player_resources WHERE uid=" . $uid . " LIMIT 1");
 		if (!$rRow) {
@@ -1467,6 +1720,13 @@ class GameTick extends Game
 	private function ensureTickTables(): void
 	{
 		$this->getAppSetting('game_tick.last_status', '');
+
+		$this->query("CREATE TABLE IF NOT EXISTS fast_tick_state (
+			uid INT NOT NULL PRIMARY KEY,
+			last_turn_at INT NOT NULL DEFAULT 0,
+			last_resource_at INT NOT NULL DEFAULT 0,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+		)");
 
 		$this->query("CREATE TABLE IF NOT EXISTS player_resources (
 			uid INT NOT NULL PRIMARY KEY,

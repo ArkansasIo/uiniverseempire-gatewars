@@ -3,8 +3,13 @@
 ## Unified Game Tick
 
 A single run of `game_tick.php` advances every time-based game system through
-the `GameTick` engine (`base/GameTick.class.php`). Run every 5 minutes:
+the `GameTick` engine (`base/GameTick.class.php`).
 
+- **fast cadence**: +6 action turns every 10-second tick and n% (default 100%)
+  of the formal per-minute OGame production rate every minute. Because each
+  player's elapsed time is tracked in `fast_tick_state`, this also advances on
+  in-game page loads for logged-in players, so the fast cadence stays live even
+  between cron runs.
 - legacy turn economy: naquadah income, unit upkeep, action-turn refill,
   untrained unit production
 - strategic resource economy (30-minute cadence): metal/crystal/deuterium/
@@ -17,6 +22,19 @@ the `GameTick` engine (`base/GameTick.class.php`). Run every 5 minutes:
 - colony power-grid catch-up and node upgrades
 - market listing expiry sweep
 - inactive account purge
+
+Recommended scheduling: run the full engine every 5 minutes, and add a light
+`--systems=fast` job every 10 seconds for the fast turn cadence:
+
+```cron
+* * * * * /usr/bin/php /path/to/project/scripts/backend/game_tick.php --systems=fast
+*/5 * * * * /usr/bin/php /path/to/project/scripts/backend/game_tick.php >> exports/game_tick.log 2>&1
+```
+
+> Because the on-page-load hook already advances the fast cadence for logged-in
+> players, the 10-second job is optional; without it, fast progress accrues
+> while the game is being played and backfills with `FAST_MAX_CATCHUP` on the
+> next load.
 
 Command:
 
@@ -36,7 +54,7 @@ Single player test:
 php /home/codespace/Stargate-Wars/scripts/backend/game_tick.php --uid=1
 ```
 
-Select specific systems (`turn,res,hyper,fleet,trade,mil,ops,grid,market,purge`):
+Select specific systems (`turn,res,hyper,fleet,trade,mil,ops,grid,market,purge,fast`):
 
 ```bash
 php /home/codespace/Stargate-Wars/scripts/backend/game_tick.php --systems=turn,res

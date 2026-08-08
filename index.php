@@ -208,6 +208,15 @@ if(!$s->loggedIn || (isset($_GET['logout']) && $_GET['logout']))
 }
 else {
 
+    // Fast cadence: advance the logged-in player's fast turn/resource grants on
+    // every page load, layered on top of the 30-minute cron economy.
+    if (isset($_SESSION['userid']) && (int)$_SESSION['userid'] > 0) {
+        $gameTick = new GameTick();
+        if ($gameTick->fastEnabled()) {
+            $gameTick->fastTickFor((int)$_SESSION['userid']);
+        }
+    }
+
 showPage();
 
 }

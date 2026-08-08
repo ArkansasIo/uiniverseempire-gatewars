@@ -34,6 +34,15 @@ $s = new Game();
     </div>
   </div>
 
+  <p style="margin-top:10px;"><strong>Build 2026-08-08 &mdash; Fast Cadence</strong></p>
+  <ul>
+    <li><strong>Fast cadence.</strong> A new pace layer runs alongside the 30-minute economy: action turns refill every 10 seconds and production grants arrive every minute.</li>
+    <li><strong>10-second action turns.</strong> Earn 6 action turns per 10-second tick, layered on the existing 30-minute turn economy.</li>
+    <li><strong>Per-minute production.</strong> Every minute you receive a grant equal to 100% of your formal per-minute production rate for metal, crystal, deuterium, food, water, population and energy.</li>
+    <li><strong>Always live.</strong> The fast cadence advances while you play &mdash; every in-game page load applies your accrued turns and resources, and the cron job backfills idle time.</li>
+    <li><strong>Balanced and capped.</strong> Gains respect the action-turn cap (250) and a catch-up ceiling, so the fast pace can never be farmed by staying offline.</li>
+  </ul>
+
   <p style="margin-top:10px;"><strong>Build 2026-08-07 &mdash; Unified Command</strong></p>
   <ul>
     <li><strong>Unified game tick engine.</strong> A single process now advances the turn economy, strategic resources, hyperspace transits, fleet missions, trade routes, military training queues, RTS operations, colony power grids, market listings and inactive-account cleanup.</li>
