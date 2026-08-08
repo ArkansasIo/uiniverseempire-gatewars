@@ -2,7 +2,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2026 Universe Civilization : Empire at wars
+ * Copyright (c) 2026 Stephen, Universe Civilization : Empire at wars
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -452,6 +452,35 @@ function universeMoonProfile(int &$seed, string $moonClass, int $moonCount): arr
     return ['moonBiome' => $moonBiome, 'moonSubBiome' => $moonSubBiome];
 }
 
+function universeNpcRaces(): array {
+    return [
+        ['key' => 'goauld', 'name' => "Goa'uld", 'alignment' => 'hostile', 'description' => 'Parasitic host-symbionts who enslave worlds through fear and military might.', 'focus' => 'warfare', 'power' => 380],
+        ['key' => 'replicator', 'name' => 'Replicator', 'alignment' => 'hostile', 'description' => 'Self-replicating machines that consume worlds into block swarms.', 'focus' => 'industry', 'power' => 460],
+        ['key' => 'wraith', 'name' => 'Wraith', 'alignment' => 'hostile', 'description' => 'Feeding predators who cull entire populations across the dark reaches.', 'focus' => 'warfare', 'power' => 410],
+        ['key' => 'ori', 'name' => 'Ori', 'alignment' => 'hostile', 'description' => 'Ascended zealots who demand worship and burn the unenlightened.', 'focus' => 'research', 'power' => 500],
+        ['key' => 'genii', 'name' => 'Genii', 'alignment' => 'neutral', 'description' => 'Secretive industrial factions hoarding nuclear arsenals and old technology.', 'focus' => 'industry', 'power' => 260],
+        ['key' => 'jaffa', 'name' => 'Jaffa', 'alignment' => 'neutral', 'description' => 'Warrior-clans freed from their gods, now carving out independent dominions.', 'focus' => 'defense', 'power' => 300],
+        ['key' => 'unas', 'name' => 'Unas', 'alignment' => 'neutral', 'description' => 'Ancient burly survivors of the first host-symbiont wars.', 'focus' => 'defense', 'power' => 210],
+        ['key' => 'reetou', 'name' => 'Reetou', 'alignment' => 'hostile', 'description' => 'Invisible phased assassins who flicker in and out of normal reality.', 'focus' => 'espionage', 'power' => 240],
+        ['key' => 'vanir', 'name' => 'Vanir', 'alignment' => 'neutral', 'description' => 'Cryo-preserved Asgard offshoots experimenting on worlds for survival.', 'focus' => 'research', 'power' => 330],
+        ['key' => 'nox', 'name' => 'Nox', 'alignment' => 'friendly', 'description' => 'Gentle pacifists who hide their worlds behind illusions and ancient power.', 'focus' => 'research', 'power' => 190],
+    ];
+}
+
+function universeNpcRaceForWorld(int &$seed): array {
+    $races = universeNpcRaces();
+    $race = $races[universeRand($seed, 0, count($races) - 1)];
+    $powerScale = universeRand($seed, 8000, 26000);
+    return [
+        'npcRace' => $race['key'],
+        'npcName' => $race['name'],
+        'npcAlignment' => $race['alignment'],
+        'npcDescription' => $race['description'],
+        'npcFocus' => $race['focus'],
+        'npcPower' => (int)($race['power'] * ($powerScale / 1000)),
+    ];
+}
+
 function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
     $seed = (($uid + 11) * 7919) & 0x7fffffff;
     $taxonomy = universeTaxonomy();
@@ -464,6 +493,7 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
     $ownedIdx = 0;
     $moonTotal = 0;
     $colonizable = 0;
+    $npcWorlds = 0;
 
     for ($g = 1; $g <= 4; $g++) {
         $galName = 'G' . $g;
@@ -490,10 +520,17 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
 
                 $owner = 'Unclaimed';
                 $planetLabel = $galName . '-' . $sector . ':' . $orbit;
+                $npc = null;
                 if ($ownedIdx < count($ownedPlanets)) {
                     $owner = 'Player Colony';
                     $planetLabel = (string)$ownedPlanets[$ownedIdx]['name'];
                     $ownedIdx++;
+                } else {
+                    $npcRoll = universeRand($seed, 1, 100);
+                    if ($npcRoll <= 40) {
+                        $npc = universeNpcRaceForWorld($seed);
+                        $owner = $npc['npcName'] . ' Territory';
+                    }
                 }
 
                 $worlds[] = [
@@ -512,6 +549,12 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
                     'moonBiome' => (string)$moonProfile['moonBiome'],
                     'moonSubBiome' => (string)$moonProfile['moonSubBiome'],
                     'owner' => $owner,
+                    'npcRace' => $npc['npcRace'] ?? '',
+                    'npcName' => $npc['npcName'] ?? '',
+                    'npcAlignment' => $npc['npcAlignment'] ?? '',
+                    'npcDescription' => $npc['npcDescription'] ?? '',
+                    'npcFocus' => $npc['npcFocus'] ?? '',
+                    'npcPower' => $npc['npcPower'] ?? 0,
                 ];
 
                 $totalHabitability += $habitability;
@@ -519,6 +562,9 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
                 $galWorldCount++;
                 if ($habitability >= 48 && $owner === 'Unclaimed') {
                     $colonizable++;
+                }
+                if ($npc !== null) {
+                    $npcWorlds++;
                 }
             }
         }
@@ -553,6 +599,7 @@ function buildUniverseSnapshot(int $uid, array $ownedPlanets): array {
             'totalWorlds' => count($worlds),
             'totalMoons' => $moonTotal,
             'colonizableWorlds' => $colonizable,
+            'npcWorlds' => $npcWorlds,
             'ownedColonies' => count($ownedPlanets),
         ],
     ];
@@ -605,9 +652,16 @@ function universeWorldByIndex(int $uid, array $ownedPlanets, int $index, array $
 
     $owner = 'Unclaimed';
     $planetLabel = 'G' . $galaxyIndex . '-' . $system . ':' . $position;
+    $npc = null;
     if ($index <= count($ownedPlanets)) {
         $owner = 'Player Colony';
         $planetLabel = (string)($ownedPlanets[$index - 1]['name'] ?? $planetLabel);
+    } else {
+        $npcRoll = universeRand($seed, 1, 100);
+        if ($npcRoll <= 40) {
+            $npc = universeNpcRaceForWorld($seed);
+            $owner = $npc['npcName'] . ' Territory';
+        }
     }
 
     return [
@@ -629,6 +683,12 @@ function universeWorldByIndex(int $uid, array $ownedPlanets, int $index, array $
         'moonBiome' => (string)$moonProfile['moonBiome'],
         'moonSubBiome' => (string)$moonProfile['moonSubBiome'],
         'owner' => $owner,
+        'npcRace' => $npc['npcRace'] ?? '',
+        'npcName' => $npc['npcName'] ?? '',
+        'npcAlignment' => $npc['npcAlignment'] ?? '',
+        'npcDescription' => $npc['npcDescription'] ?? '',
+        'npcFocus' => $npc['npcFocus'] ?? '',
+        'npcPower' => $npc['npcPower'] ?? 0,
     ];
 }
 
@@ -756,6 +816,51 @@ function universeColonizeWorld(Game $s, int $uid, array $cfg, array $ownedPlanet
     $s->updatePower($uid);
 
     return 'Colonization successful: ' . $safeName . ' established at ' . (string)$world['coord'] . ' (Cost: ' . fnum($costs['naq']) . ' Naquadah, ' . fnum($costs['turns']) . ' turns).';
+}
+
+function universeSeedWorldCities(Game $s, int $uid, array $worlds): void {
+    $planetRows = [];
+    $moonRows = [];
+    foreach ($worlds as $world) {
+        $worldIndex = (int)($world['idx'] ?? 0);
+        if ($worldIndex < 1) {
+            continue;
+        }
+        if (trim((string)($world['biome'] ?? '')) === '') {
+            continue;
+        }
+        $habitability = (int)($world['habitability'] ?? 0);
+        $slots = (int)($world['slots'] ?? 2);
+        $planetFieldTotal = max(16, ($slots * 8) + (int)floor($habitability / 5));
+        $planetCityName = 'Colony City ' . $worldIndex;
+        $planetRows[] = "(" . $uid . "," . $worldIndex . ",'planet',0,"
+            . "'" . pageSafeToken((string)$world['type']) . "',"
+            . "'" . pageSafeToken((string)$world['biome']) . "',"
+            . "'" . pageSafeToken((string)$world['subBiome']) . "',"
+            . "'" . pageSafeToken($planetCityName) . "',"
+            . $planetFieldTotal . ")";
+        $moonCount = (int)($world['moons'] ?? 0);
+        for ($mn = 1; $mn <= $moonCount; $mn++) {
+            $moonFieldTotal = max(6, 4 + ($mn * 2) + (int)floor($habitability / 18));
+            $moonCity = 'Moon Outpost ' . $worldIndex . '-' . $mn;
+            $moonRows[] = "(" . $uid . "," . $worldIndex . ",'moon'," . $mn . ","
+                . "'" . pageSafeToken((string)$world['moonClass'] . ' Moon') . "',"
+                . "'" . pageSafeToken((string)$world['moonBiome']) . "',"
+                . "'" . pageSafeToken((string)$world['moonSubBiome']) . "',"
+                . "'" . pageSafeToken($moonCity) . "',"
+                . $moonFieldTotal . ")";
+        }
+    }
+    if (count($planetRows) > 0) {
+        $s->query("INSERT IGNORE INTO universe_colony_profiles
+            (uid, world_index, target_type, moon_no, world_type, biome, sub_biome, city_name, field_total)
+            VALUES " . implode(", ", $planetRows));
+    }
+    if (count($moonRows) > 0) {
+        $s->query("INSERT IGNORE INTO universe_colony_profiles
+            (uid, world_index, target_type, moon_no, world_type, biome, sub_biome, city_name, field_total)
+            VALUES " . implode(", ", $moonRows));
+    }
 }
 
 function researchPick(int &$seed, array $list): string {
@@ -3476,40 +3581,11 @@ if ($main === 'universe' || strpos($cmd, 'uni_') === 0) {
     $fieldTargetType = ($fieldTargetType === 'moon') ? 'moon' : 'planet';
     $selectedWorld = universeWorldByIndex($uid, $planets, $fieldWorldIndex, $uCfg);
 
-    $planetFieldTotal = max(16, ((int)$selectedWorld['slots'] * 8) + (int)floor((int)$selectedWorld['habitability'] / 5));
-    $planetCityName = 'Colony City ' . $fieldWorldIndex;
-    $s->query("INSERT IGNORE INTO universe_colony_profiles
-        (uid, world_index, target_type, moon_no, world_type, biome, sub_biome, city_name, field_total)
-        VALUES (
-            " . $uid . ",
-            " . $fieldWorldIndex . ",
-            'planet',
-            0,
-            '" . pageSafeToken((string)$selectedWorld['type']) . "',
-            '" . pageSafeToken((string)$selectedWorld['biome']) . "',
-            '" . pageSafeToken((string)$selectedWorld['subBiome']) . "',
-            '" . pageSafeToken($planetCityName) . "',
-            " . $planetFieldTotal . "
-        )");
+    $seedWorlds = $worldSlice['rows'];
+    $seedWorlds[] = $selectedWorld;
+    universeSeedWorldCities($s, $uid, $seedWorlds);
 
     $moonCount = (int)($selectedWorld['moons'] ?? 0);
-    for ($mn = 1; $mn <= $moonCount; $mn++) {
-        $moonFieldTotal = max(6, 4 + ($mn * 2) + (int)floor((int)$selectedWorld['habitability'] / 18));
-        $moonCity = 'Moon Outpost ' . $fieldWorldIndex . '-' . $mn;
-        $s->query("INSERT IGNORE INTO universe_colony_profiles
-            (uid, world_index, target_type, moon_no, world_type, biome, sub_biome, city_name, field_total)
-            VALUES (
-                " . $uid . ",
-                " . $fieldWorldIndex . ",
-                'moon',
-                " . $mn . ",
-                '" . pageSafeToken((string)$selectedWorld['moonClass']) . " Moon',
-                '" . pageSafeToken((string)$selectedWorld['moonBiome']) . "',
-                '" . pageSafeToken((string)$selectedWorld['moonSubBiome']) . "',
-                '" . pageSafeToken($moonCity) . "',
-                " . $moonFieldTotal . "
-            )");
-    }
 
     $fieldBuildCatalog = [
         'habdome' => ['name' => 'Habitat Dome', 'turns' => 1, 'naq' => 18000, 'metal' => 12000, 'crystal' => 8000, 'deut' => 2000, 'food' => 1200, 'water' => 1200, 'power' => 12, 'pop' => 0],
@@ -5264,7 +5340,12 @@ if ($main === 'universe') {
         echo '<p><strong>Galaxy Clusters:</strong> ' . fnum($uCfg['galaxies']) . '</p>';
         echo '<p><strong>Systems per Galaxy:</strong> ' . fnum((int)($uCfg['systemsPerGalaxy'] ?? $uCfg['sectorsPerGalaxy'])) . ' | <strong>Positions per System:</strong> ' . fnum((int)($uCfg['positionsPerSystem'] ?? $uCfg['orbitsPerSector'])) . '</p>';
         echo '<p><strong>Total Worlds:</strong> ' . fnum($uCfg['maxWorlds']) . '</p>';
-        echo '<p><strong>Colonizable Worlds:</strong> ~' . fnum((int)floor($uCfg['maxWorlds'] * 0.52)) . '</p>';
+        echo '<p><strong>Colonizable Worlds:</strong> ~' . fnum((int)floor($uCfg['maxWorlds'] * 0.31)) . ' <em style="color:#aaa">(after NPC territory claim)</em></p>';
+        echo '<p><strong>NPC Territory:</strong> ~' . fnum((int)floor($uCfg['maxWorlds'] * 0.40)) . ' worlds held by alien factions';
+        if (isset($universe['summary']['npcWorlds']) && $universe['summary']['npcWorlds'] > 0) {
+            echo ' <em style="color:#aaa">(sample: ' . fnum($universe['summary']['npcWorlds']) . ' of ' . fnum($universe['summary']['totalWorlds']) . ' sampled worlds)</em>';
+        }
+        echo '</p>';
         echo '</div>';
 
         echo '<div class="card"><h4>Expansion Command</h4>';
@@ -5322,6 +5403,7 @@ if ($main === 'universe') {
                     'biome'  => $w['biome'],  'subBiome' => $w['subBiome'], 'hab'   => $w['habitability'], 'slots' => $w['slots'],
                     'metal'  => $w['metal'],  'crystal' => $w['crystal'], 'deut' => $w['deut'],
                     'moons'  => $w['moons'],  'moonClass' => $w['moonClass'], 'moonBiome' => $w['moonBiome'], 'moonSubBiome' => $w['moonSubBiome'], 'owner' => $w['owner'],
+                    'npcRace' => $w['npcRace'] ?? '', 'npcName' => $w['npcName'] ?? '', 'npcAlignment' => $w['npcAlignment'] ?? '', 'npcFocus' => $w['npcFocus'] ?? '', 'npcPower' => (int)($w['npcPower'] ?? 0),
                 ]), ENT_QUOTES);
                 $moonOnclick = '';
                 if ($w['moons'] > 0) {
@@ -5343,7 +5425,14 @@ if ($main === 'universe') {
                 echo '<td' . $moonOnclick . '>' . h($w['moonClass']) . '</td>';
                 echo '<td>' . h($plagueLabel) . '</td>';
                 echo '<td>' . h($waterLabel) . '</td>';
-                echo '<td>' . h($w['owner']) . '</td>';
+                echo '<td>';
+                if (($w['npcRace'] ?? '') !== '' && ($w['owner'] ?? '') !== 'Unclaimed') {
+                    $npcAlignColor = ($w['npcAlignment'] === 'friendly') ? '#6f6' : (($w['npcAlignment'] === 'neutral') ? '#ff9' : '#f77');
+                    echo '<span title="' . h($w['npcDescription'] ?? '') . '">' . h($w['npcName'] . ' Territory') . ' <em style="color:' . $npcAlignColor . '">[' . h($w['npcAlignment']) . ']</em></span>';
+                } else {
+                    echo h($w['owner']);
+                }
+                echo '</td>';
                 echo '</tr>';
             }
         echo '</table>';
@@ -5446,6 +5535,7 @@ if ($main === 'universe') {
                 'biome'  => $w['biome'],  'subBiome' => $w['subBiome'], 'hab'   => $w['habitability'], 'slots' => $w['slots'],
                 'metal'  => $w['metal'],  'crystal' => $w['crystal'], 'deut' => $w['deut'],
                 'moons'  => $w['moons'],  'moonClass' => $w['moonClass'], 'moonBiome' => $w['moonBiome'], 'moonSubBiome' => $w['moonSubBiome'], 'owner' => $w['owner'],
+                'npcRace' => $w['npcRace'] ?? '', 'npcName' => $w['npcName'] ?? '', 'npcAlignment' => $w['npcAlignment'] ?? '', 'npcFocus' => $w['npcFocus'] ?? '', 'npcPower' => (int)($w['npcPower'] ?? 0),
             ]), ENT_QUOTES);
             $moonOnclick = '';
             if ($w['moons'] > 0) {
@@ -5467,7 +5557,14 @@ if ($main === 'universe') {
             echo '<td>' . $resSig . '</td>';
             echo '<td>' . h($plagueLabel) . '</td>';
             echo '<td>' . h($waterLabel) . '</td>';
-            echo '<td>' . h($w['owner']) . '</td>';
+            echo '<td>';
+            if (($w['npcRace'] ?? '') !== '' && ($w['owner'] ?? '') !== 'Unclaimed') {
+                $npcAlignColor = ($w['npcAlignment'] === 'friendly') ? '#6f6' : (($w['npcAlignment'] === 'neutral') ? '#ff9' : '#f77');
+                echo '<span title="' . h($w['npcDescription'] ?? '') . '">' . h($w['npcName'] . ' Territory') . ' <em style="color:' . $npcAlignColor . '">[' . h($w['npcAlignment']) . ']</em></span>';
+            } else {
+                echo h($w['owner']);
+            }
+            echo '</td>';
             if ((string)$w['owner'] === 'Unclaimed' && (int)$w['habitability'] >= 46) {
                 echo '<td><a href="javascript:void(0)" onclick="httpRequest(\'GET\',\'' . $actBase . (int)$w['idx'] . '&time=\'+(new Date().getTime()),true); return false">Colonize</a><br><small>' . fnum($costs['naq']) . ' Naq / ' . fnum($costs['turns']) . 'T</small></td>';
             } elseif ((string)$w['owner'] === 'Unclaimed') {
@@ -6362,6 +6459,16 @@ function showPlanetDetail(d){
     var moonStr = d.moons > 0
         ? '<span style="cursor:pointer;color:#8cf;text-decoration:underline" onclick="showMoonDetail({parent:\''+esc(d.name)+'\',coord:\''+esc(d.coord)+'\',count:'+d.moons+',\'class\':\''+esc(d.moonClass)+'\',moonBiome:\''+esc(d.moonBiome || '')+'\',moonSubBiome:\''+esc(d.moonSubBiome || '')+'\'})">'+d.moons+' &times; '+esc(d.moonClass)+'</span>'
         : '<em>None</em>';
+    var npcStr = '';
+    if(d.npcRace && d.npcAlignment && d.owner !== 'Unclaimed'){
+        var alignCol = (d.npcAlignment === 'friendly') ? '#6f6' : ((d.npcAlignment === 'neutral') ? '#ff9' : '#f77');
+        npcStr = '<div style="margin-top:10px;padding:10px;background:#14142a;border:1px solid #333;border-radius:6px">'+
+            '<strong style="color:'+alignCol+'">&#x1F47E; '+esc(d.npcName)+' Territory</strong> '+
+            '<em style="color:'+alignCol+'">['+esc(d.npcAlignment)+']</em>'+
+            '<p style="margin:6px 0 0;color:#bbb">'+esc(d.npcDescription || '')+'</p>'+
+            '<p style="margin:4px 0 0;color:#aaa"><small>Focus: '+esc(d.npcFocus || '')+' &middot; Estimated Power: '+num(d.npcPower||0)+'</small></p>'+
+            '</div>';
+    }
     var colonizeBtn = (d.owner === 'Unclaimed' && hab >= 48)
         ? '<p><a href="javascript:void(0)" onclick="sendData(\'pages\',\'get\',\'universe\',\'expedition\'); closeSgwModal();" style="color:#6cf">&#x1F680; Plan Colonization Mission</a></p>'
         : '';
@@ -6379,7 +6486,7 @@ function showPlanetDetail(d){
         row('Deuterium Deposit', num(d.deut))+
         row('Moons', moonStr)+
         row('Status', esc(d.owner))+
-        '</table>'+colonizeBtn;
+        '</table>'+npcStr+colonizeBtn;
     document.getElementById('sgw-detail-modal').style.display = 'block';
 }
 function showMoonDetail(d){

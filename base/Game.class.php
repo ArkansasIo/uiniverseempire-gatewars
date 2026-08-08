@@ -39,17 +39,86 @@ class Game extends User
 		5 => 'Tok\'ra',
 	];
 
+	/**
+	 * Runtime schema version used to gate the self-healing schema checks.
+	 * Bump this constant whenever an ensure* method above changes the DDL,
+	 * so the (comparatively expensive) CREATE/ALTER/seed queries re-run once
+	 * per database instead of on every single page load.
+	 */
+	private const RUNTIME_SCHEMA_VERSION = '2026.1.0';
+
+	private static bool $schemaSyncChecked = false;
+	private static bool $schemaUpToDate = false;
+	private static bool $appSettingsReady = false;
+
 	public function __construct(string $userName = "", string $password = "DoodleCakes and Rofl Sundae4278vsid")
 	{
 		parent::__construct($userName, $password);
 		if ($this->connected()) {
+			$this->syncRuntimeSchema();
+		}
+	}
+
+	/**
+	 * Runs the runtime schema self-heal checks only when the stored schema
+	 * version is stale. The version marker is upserted into app_settings once
+	 * the schema is known to be current, so the CREATE/ALTER/seed queries only
+	 * run once per database instead of on every page load.
+	 */
+	private function syncRuntimeSchema(): void
+	{
+		if (self::$schemaSyncChecked) {
+			return;
+		}
+		self::$schemaSyncChecked = true;
+
+		if (!$this->connected() || !$this->db_link) {
+			return;
+		}
+
+		if (!$this->schemaIsCurrent()) {
 			$this->ensureRaceCatalog();
 			$this->ensureMessagesTable();
 			$this->ensureUnitMetadataTables();
 			$this->ensureActionLogTable();
 			$this->ensureUnitCatalogTable();
 			$this->ensurePlayerStateTables();
+			$this->setAppSetting('schema.runtime_version', self::RUNTIME_SCHEMA_VERSION);
+		} else {
+			self::$appSettingsReady = true;
 		}
+
+		self::$schemaUpToDate = true;
+	}
+
+	/**
+	 * Cheap single-row probe that avoids issuing any DDL. Returns true only
+	 * when app_settings exists and carries the current runtime schema version.
+	 */
+	private function schemaIsCurrent(): bool
+	{
+		try {
+			$stmt = $this->db_link->prepare("SELECT `setting_value` FROM `app_settings` WHERE `setting_key`=? LIMIT 1");
+			if (!$stmt) {
+				return false;
+			}
+			$key = 'schema.runtime_version';
+			$stmt->bind_param("s", $key);
+			$stmt->execute();
+			$row = $stmt->get_result()->fetch_object();
+			return $row && (string)$row->setting_value === self::RUNTIME_SCHEMA_VERSION;
+		} catch (Throwable $e) {
+			return false;
+		}
+	}
+
+	/**
+	 * True when the runtime schema checks have run for this request and the
+	 * schema was confirmed current, so callers can skip redundant DDL.
+	 */
+	private function schemaReady(): bool
+	{
+		return self::$schemaSyncChecked && self::$schemaUpToDate;
 	}
 
 	/**
@@ -61,12 +130,15 @@ class Game extends User
 		if (!$this->connected() || !$this->db_link || $key === '') {
 			return $default;
 		}
-		$this->query("CREATE TABLE IF NOT EXISTS `app_settings` (
-			`setting_key` varchar(128) NOT NULL,
-			`setting_value` text NOT NULL,
-			`updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			PRIMARY KEY (`setting_key`)
-		) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+		if (!self::$appSettingsReady) {
+			$this->query("CREATE TABLE IF NOT EXISTS `app_settings` (
+				`setting_key` varchar(128) NOT NULL,
+				`setting_value` text NOT NULL,
+				`updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+				PRIMARY KEY (`setting_key`)
+			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
+			self::$appSettingsReady = true;
+		}
 		$stmt = $this->db_link->prepare("SELECT `setting_value` FROM `app_settings` WHERE `setting_key`=? LIMIT 1");
 		if (!$stmt) {
 			return $default;
@@ -460,61 +532,18 @@ class Game extends User
 		$auto = null;
 
 		if ($this->connected() && $this->db_link) {
-			$this->query("CREATE TABLE IF NOT EXISTS `bank` (
-				`uid` int(11) NOT NULL,
-				`onHand` bigint(20) NOT NULL DEFAULT 0,
-				`inBank` bigint(20) NOT NULL DEFAULT 0,
-				PRIMARY KEY (`uid`)
-			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
-			$this->query("ALTER TABLE `bank` ADD COLUMN IF NOT EXISTS `onHand` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `bank` ADD COLUMN IF NOT EXISTS `inBank` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("INSERT IGNORE INTO `bank` (`uid`,`onHand`,`inBank`) VALUES (" . (int)$_SESSION['userid'] . ", 250000, 0)");
-
-			$this->query("CREATE TABLE IF NOT EXISTS `rank` (
-				`uid` int(11) NOT NULL,
-				`overall` int(11) NOT NULL DEFAULT 0,
-				PRIMARY KEY (`uid`)
-			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
-			$this->query("INSERT IGNORE INTO `rank` (`uid`,`overall`) VALUES (" . (int)$_SESSION['userid'] . ", 0)");
-
-			$this->query("CREATE TABLE IF NOT EXISTS `userdata` (
-				`uid` int(11) NOT NULL,
-				`uname` varchar(64) NOT NULL DEFAULT '',
-				`actionTurns` int(11) NOT NULL DEFAULT 250,
-				`rid` int(11) NOT NULL DEFAULT 1,
-				`cid` int(11) NOT NULL DEFAULT 0,
-				`progress` int(11) NOT NULL DEFAULT 0,
-				`alevel` int(11) NOT NULL DEFAULT 1,
-				PRIMARY KEY (`uid`)
-			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
-			$this->query("INSERT IGNORE INTO `userdata` (`uid`,`uname`,`actionTurns`,`rid`,`cid`,`progress`,`alevel`) VALUES (" . (int)$_SESSION['userid'] . ", '" . addslashes((string)($_SESSION['username'] ?? '')) . "', 250, 1, 0, 0, 1)");
-
-			$this->query("CREATE TABLE IF NOT EXISTS `player_resources` (
-				`uid` int(11) NOT NULL,
-				`metal` bigint(20) NOT NULL DEFAULT 0,
-				`crystal` bigint(20) NOT NULL DEFAULT 0,
-				`deuterium` bigint(20) NOT NULL DEFAULT 0,
-				`food` bigint(20) NOT NULL DEFAULT 0,
-				`water` bigint(20) NOT NULL DEFAULT 0,
-				`population` bigint(20) NOT NULL DEFAULT 0,
-				`energy` bigint(20) NOT NULL DEFAULT 50000,
-				`last_tick_at` int(11) NOT NULL DEFAULT 0,
-				PRIMARY KEY (`uid`)
-			) ENGINE=InnoDB DEFAULT CHARSET=latin1");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `metal` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `crystal` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `deuterium` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `food` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `water` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `population` bigint(20) NOT NULL DEFAULT 0");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `energy` bigint(20) NOT NULL DEFAULT 50000");
-			$this->query("ALTER TABLE `player_resources` ADD COLUMN IF NOT EXISTS `last_tick_at` int(11) NOT NULL DEFAULT 0");
-			$this->query("INSERT IGNORE INTO `player_resources` (`uid`,`metal`,`crystal`,`deuterium`,`food`,`water`,`population`,`energy`,`last_tick_at`) VALUES (" . (int)$_SESSION['userid'] . ", 1200, 900, 600, 80000, 70000, 150000, 15000, UNIX_TIMESTAMP())");
+			if (!$this->schemaReady()) {
+				$this->ensurePlayerStateTables();
+			}
 
 			$messageJoin = "";
 			$messageSelect = "0 AS messageCount";
-			$messageTable = $this->query("SHOW TABLES LIKE 'messages'");
-			if ($messageTable && $messageTable->num_rows > 0) {
+			$messagesExist = $this->schemaReady();
+			if (!$messagesExist) {
+				$messageTable = $this->query("SHOW TABLES LIKE 'messages'");
+				$messagesExist = $messageTable && $messageTable->num_rows > 0;
+			}
+			if ($messagesExist) {
 				$messageSelect = "IFNULL(msg.messageCount, 0) AS messageCount";
 				$messageJoin = "LEFT JOIN (
 						SELECT toUID, COUNT(*) AS messageCount
@@ -561,8 +590,12 @@ class Game extends User
 		if ($this->connected() && $this->db_link) {
 			$resTable = $this->query("SHOW TABLES LIKE 'player_resources'");
 			if ($resTable && $resTable->num_rows > 0) {
-				$energyCol = $this->query("SHOW COLUMNS FROM player_resources LIKE 'energy'");
-				if ($energyCol && $energyCol->num_rows > 0) {
+				$hasEnergy = $this->schemaReady();
+				if (!$hasEnergy) {
+					$energyCol = $this->query("SHOW COLUMNS FROM player_resources LIKE 'energy'");
+					$hasEnergy = $energyCol && $energyCol->num_rows > 0;
+				}
+				if ($hasEnergy) {
 					$resQ = $this->query("SELECT metal,crystal,deuterium,food,water,population,energy FROM player_resources WHERE uid=" . (int)$_SESSION['userid'] . " LIMIT 1");
 				} else {
 					$resQ = $this->query("SELECT metal,crystal,deuterium,food,water,population FROM player_resources WHERE uid=" . (int)$_SESSION['userid'] . " LIMIT 1");

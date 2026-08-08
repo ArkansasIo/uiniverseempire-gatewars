@@ -14,9 +14,13 @@ Data lives in one MySQL database (`sgw` by default). Three groups of tables exis
    `CREATE TABLE IF NOT EXISTS` statements (strategic resources, fleets,
    hyperspace, governance, universe events, stores, etc.).
 
-The runtime schema is the reason `config.php` bootstrap and many modules call
-`CREATE TABLE IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS` on each request:
-new features deploy themselves without a manual migration.
+The runtime schema lets new features deploy themselves without a manual
+migration. To avoid paying the cost of dozens of `CREATE TABLE IF NOT EXISTS` /
+`ADD COLUMN IF NOT EXISTS` statements on every page load, the core bootstrap
+schema checks in `base/Game.class.php` are gated behind a version marker stored
+in `app_settings` (`schema.runtime_version`, constant
+`RUNTIME_SCHEMA_VERSION`): the DDL runs once per database, then is skipped until
+the version constant is bumped.
 
 ## 2. Entity-Relationship View
 
@@ -183,7 +187,7 @@ erDiagram
 | `economy_store_catalog` / `economy_store_purchases` | `pages.php` | In-game store |
 | `economy_pass_progress` / `economy_pass_claims` | `pages.php` | Battle pass / season pass |
 | `space_installations` | `stations.php` | Station command |
-| `universe_colony_fields` / `universe_colony_profiles` | `pages.php` | Colony fields |
+| `universe_colony_fields` / `universe_colony_profiles` | `pages.php` | Colony fields + city profiles |
 | `universe_world_boss` / `universe_world_plagues` / `universe_world_water_sources` | `pages.php` | World boss + world systems |
 | `universe_event_log` / `universe_event_state` | `pages.php` | Universe events |
 | `universe_seed_bookmarks` | `pages.php` | Universe seeds |
@@ -210,7 +214,7 @@ mysql -u sgw -psgwpass sgw < game.sql                    # core legacy schema
 
 ### 4.2 Inline / self-healing migrations
 
-The application deliberately runs idempotent DDL at runtime:
+The application runs idempotent DDL at runtime:
 
 ```sql
 CREATE TABLE IF NOT EXISTS player_resources (...);
@@ -218,9 +222,27 @@ ALTER TABLE player_resources ADD COLUMN IF NOT EXISTS energy BIGINT NOT NULL DEF
 INSERT IGNORE INTO player_resources (uid) VALUES (1);
 ```
 
-**Rule for contributors:** when adding a column or table, ship the idempotent
-DDL in the owning module *and* (for backend-visible tables) add it to the SQL
-bundle so clean installs and live installs converge.
+The `base/Game.class.php` bootstrap checks (`ensureRaceCatalog`,
+`ensureMessagesTable`, `ensureUnitMetadataTables`, `ensureActionLogTable`,
+`ensureUnitCatalogTable`, `ensurePlayerStateTables`) run only when the
+`schema.runtime_version` value in `app_settings` does not match the
+`RUNTIME_SCHEMA_VERSION` constant — i.e. once per database on first boot, and
+again only when the constant is bumped. `autoLoad()` (the in-game stats poll)
+skips the same DDL once the schema is confirmed current.
+
+**Rule for contributors:** when adding a column or table to one of the
+constructor-gated `ensure*` methods in `base/Game.class.php`, bump
+`RUNTIME_SCHEMA_VERSION` there so the DDL re-runs on live installs. For other
+tables, ship the idempotent DDL in the owning module *and* (for
+backend-visible tables) add it to the SQL bundle so clean installs and live
+installs converge.
+
+**City seeding:** whenever a player views a universe world slice (Universe >
+Planets & Moons), `universeSeedWorldCities()` in `modules/pages.php` batch
+`INSERT IGNORE`s a city profile into `universe_colony_profiles` for every world
+in that slice (planet row, plus one row per moon). Rows are keyed on
+`(uid, world_index, target_type, moon_no)`, so revisiting pages is idempotent
+and existing rows are left untouched.
 
 ## 5. Reporting Views
 
