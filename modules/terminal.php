@@ -73,18 +73,20 @@ $filters = [
 <div class="terminal-shell">
     <div class="terminal-head">
         <div>
-            <h3>Terminal Log System</h3>
-            <p>Live command output from recent combat and covert action events.</p>
+            <h3><span class="terminal-icon">&gt;_</span> Stargate Command Terminal</h3>
+            <p>Secure real-time transmission log of combat, tactical raids, intelligence reconnaissance, and sabotage telemetry.</p>
         </div>
         <div class="terminal-meta">
-            <div>Player: <?= terminal_h($_SESSION['userid']); ?></div>
-            <div>Mode: <?= terminal_h(strtoupper($typeFilter)); ?></div>
+            <div class="terminal-pill-meta">OPERATOR: ID #<?= terminal_h($_SESSION['userid']); ?></div>
+            <div class="terminal-pill-meta">FILTER: [<?= terminal_h(strtoupper($typeFilter)); ?>]</div>
         </div>
     </div>
 
     <div class="terminal-filters">
         <?php foreach ($filters as $value => $label) { ?>
-            <a class="<?= $value === $typeFilter ? 'is-active' : ''; ?>" href="javascript:void(0)" onclick="sendData('terminal','get','mainDisplay','<?= terminal_h($value); ?>'); return false"><?= terminal_h($label); ?></a>
+            <a class="terminal-btn-filter <?= $value === $typeFilter ? 'is-active' : ''; ?>" href="javascript:void(0)" onclick="sendData('terminal','get','mainDisplay','<?= terminal_h($value); ?>'); return false">
+                <span class="filter-bullet"></span> <?= terminal_h($label); ?>
+            </a>
         <?php } ?>
     </div>
 
@@ -93,35 +95,50 @@ $filters = [
             <?php while ($row = $rows->fetch_object()) {
                 $actor = $row->attacker_name ?: 'Unknown';
                 $target = $row->target_name ?: 'Unknown';
-                $direction = ((int)$row->uid === (int)$_SESSION['userid']) ? 'OUT' : 'IN';
-                $status = ((int)$row->success === 0) ? 'FAIL' : 'OK';
+                $direction = ((int)$row->uid === (int)$_SESSION['userid']) ? 'OUTBOUND' : 'INBOUND';
+                $dirClass = $direction === 'OUTBOUND' ? 'dir-out' : 'dir-in';
+                $status = ((int)$row->success === 0) ? 'FAILED' : 'SUCCESS';
                 $statusClass = ((int)$row->success === 0) ? 'terminal-failure' : 'terminal-success';
                 $summary = $row->phrase ?: ucfirst((string)$row->type);
                 $result = ((int)$row->success === 0)
-                    ? 'defended'
-                    : number_format((float)$row->stolen);
+                    ? 'intercepted / repelled'
+                    : number_format((float)$row->stolen) . ' resources';
                 ?>
                 <div class="terminal-line">
-                    <div class="terminal-ts"><?= terminal_h($row->time); ?></div>
-                    <div class="terminal-kind"><?= terminal_h($direction . ' ' . $row->type . ' ' . $status); ?></div>
+                    <div class="terminal-ts"><span class="ts-icon">⏱</span> <?= terminal_h($row->time); ?></div>
+                    <div class="terminal-badge-wrap">
+                        <span class="terminal-dir <?= $dirClass; ?>"><?= terminal_h($direction); ?></span>
+                        <span class="terminal-kind-tag"><?= terminal_h(strtoupper($row->type)); ?></span>
+                    </div>
                     <div class="terminal-body">
-                        <span class="terminal-target"><?= terminal_h($actor); ?></span>
-                        -> <span class="terminal-target"><?= terminal_h($target); ?></span>
-                        | <?= terminal_h($summary); ?>
-                        | <span class="<?= $statusClass; ?>"><?= terminal_h($status); ?></span>
-                        | Result: <?= terminal_h($result); ?>
-                        | Turns: <?= terminal_h($row->turnsUsed); ?>
-                        | Atk: <?= terminal_h(number_format((float)$row->attackPower)); ?>
-                        | Def: <?= terminal_h(number_format((float)$row->defensePower)); ?>
+                        <div class="terminal-route">
+                            <span class="terminal-actor"><?= terminal_h($actor); ?></span> 
+                            <span class="route-arrow">➔</span> 
+                            <span class="terminal-target"><?= terminal_h($target); ?></span>
+                            <span class="terminal-status-pill <?= $statusClass; ?>"><?= terminal_h($status); ?></span>
+                        </div>
+                        <div class="terminal-desc"><?= terminal_h($summary); ?></div>
+                        <div class="terminal-stats">
+                            <span>RESULT: <strong><?= terminal_h($result); ?></strong></span>
+                            <span>TURNS: <strong><?= terminal_h($row->turnsUsed); ?></strong></span>
+                            <span>ATK: <strong><?= terminal_h(number_format((float)$row->attackPower)); ?></strong></span>
+                            <span>DEF: <strong><?= terminal_h(number_format((float)$row->defensePower)); ?></strong></span>
+                        </div>
                     </div>
                 </div>
             <?php } ?>
         <?php } else { ?>
-            <div class="terminal-empty">No terminal events captured for this filter.</div>
+            <div class="terminal-empty">
+                <div class="empty-icon">⚡</div>
+                <div>No telemetry logs recorded for active filter criteria.</div>
+            </div>
         <?php } ?>
     </div>
 
-    <div style="margin-top:12px;font-size:11px;color:#8edfd0;">Query Count: <?= terminal_h($s->queryCount); ?></div>
+    <div class="terminal-footer-meta">
+        <span>SECURITY PROTOCOL: ENCRYPTED-STARS-42</span>
+        <span>QUERY COUNT: <?= terminal_h($s->queryCount); ?></span>
+    </div>
 </div>
 <?php
 $pagegen->stop();
