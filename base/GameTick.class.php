@@ -65,9 +65,9 @@ class GameTick extends Game
 	public const TURNS_PER_TICK = 180;
 
 	/**
-	 * Strategic resource economy cadence: one resource tick per 30 minutes.
+	 * Strategic resource economy cadence: one resource tick per 1 minute.
 	 */
-	public const RESOURCE_TICK_SECONDS = 1800;
+	public const RESOURCE_TICK_SECONDS = 60;
 
 	/**
 	 * Power grid catch-up cadence: one grid tick per 5 minutes.

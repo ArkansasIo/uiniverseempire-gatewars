@@ -1053,7 +1053,7 @@ function resourceEnsureAndTick(Game $s, int $uid, $baseData, array $planets, $te
         $lastTickTs = time();
     }
     $nowTs = time();
-    $tickSeconds = 1800;
+    $tickSeconds = 60;
     $ticks = (int)floor(max(0, $nowTs - $lastTickTs) / $tickSeconds);
 
     if ($ticks > 0) {

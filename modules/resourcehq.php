@@ -187,7 +187,7 @@ $lastTickTs = strtotime((string)$res->last_tick_at);
 if ($lastTickTs === false) {
     $lastTickTs = time();
 }
-$ticks = (int)floor(max(0, time() - $lastTickTs) / 1800);
+$ticks = (int)floor(max(0, time() - $lastTickTs) / 60);
 if ($ticks > 0) {
     $metal = max(0, (int)$res->metal + ($rates['metal'] * $ticks));
     $crystal = max(0, (int)$res->crystal + ($rates['crystal'] * $ticks));
